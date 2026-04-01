@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server"
 import { and, desc, eq } from "drizzle-orm"
+import { validateApprovedTaskModel } from "@/features/execution/lib/validate-approved-task-model"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import type { TaskUpdateInput } from "@/features/tasks/schemas/task-input"
@@ -49,11 +50,13 @@ export const updateTask = async ({
     })
   }
 
+  const model = validateApprovedTaskModel({ model: input.model })
+
   const [task] = await db
     .update(taskTable)
     .set({
       descriptionMarkdown: input.descriptionMarkdown,
-      model: input.model,
+      model,
       pipelineVersion: input.pipelineVersion,
       schemaVersion: input.schemaVersion,
       title: input.title,

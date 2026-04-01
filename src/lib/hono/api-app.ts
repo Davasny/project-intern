@@ -2,6 +2,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch"
 import { Hono } from "hono"
 import { auth } from "@/features/auth/lib/auth"
 import { logger } from "@/lib/logger"
+import { mcpApp } from "@/lib/mcp/mcp-app"
 import { createTrpcContext } from "@/lib/trpc/create-context"
 import { appRouter } from "@/lib/trpc/router"
 
@@ -31,3 +32,5 @@ apiApp.on(["GET", "POST"], "/trpc/*", (context) =>
     },
   }),
 )
+
+apiApp.route("/mcp", mcpApp)

@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server"
 import { asc, eq, sql } from "drizzle-orm"
+import { validateApprovedTaskModel } from "@/features/execution/lib/validate-approved-task-model"
 import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get-active-project-schema-version"
 import { fanOutTaskRecordsForTask } from "@/features/task-records/lib/fan-out-task-records-for-task"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
@@ -32,6 +33,8 @@ export const createTask = async ({
     })
   }
 
+  const model = validateApprovedTaskModel({ model: input.model })
+
   const nextSortOrder = await db
     .select({
       sortOrder: sql<number>`coalesce(max(${taskTable.sortOrder}), 0) + 1`,
@@ -45,7 +48,7 @@ export const createTask = async ({
     .values({
       descriptionMarkdown: input.descriptionMarkdown,
       idempotencyKey: crypto.randomUUID(),
-      model: input.model,
+      model,
       pipelineVersion: input.pipelineVersion,
       projectId: activeSchemaVersion.project.id,
       schemaVersion: input.schemaVersion,

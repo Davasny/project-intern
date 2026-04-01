@@ -1,0 +1,36 @@
+import path from "node:path"
+import { getRecordWorkspaceDirectory } from "@/features/execution/lib/get-record-workspace-directory"
+import { ensureDirectory } from "@/utils/ensure-directory"
+
+type EnsureRecordWorkspaceParams = {
+  projectId: string
+  recordId: string
+}
+
+export const ensureRecordWorkspace = async ({
+  projectId,
+  recordId,
+}: EnsureRecordWorkspaceParams) => {
+  const workspaceDirectory = getRecordWorkspaceDirectory({
+    projectId,
+    recordId,
+  })
+
+  await Promise.all([
+    ensureDirectory(workspaceDirectory),
+    ensureDirectory(path.join(workspaceDirectory, "artifacts")),
+    ensureDirectory(path.join(workspaceDirectory, "logs")),
+    ensureDirectory(path.join(workspaceDirectory, "pipeline-assets")),
+    ensureDirectory(path.join(workspaceDirectory, "scratch")),
+    ensureDirectory(path.join(workspaceDirectory, "source-files")),
+  ])
+
+  return {
+    artifactsDirectory: path.join(workspaceDirectory, "artifacts"),
+    logsDirectory: path.join(workspaceDirectory, "logs"),
+    pipelineAssetsDirectory: path.join(workspaceDirectory, "pipeline-assets"),
+    scratchDirectory: path.join(workspaceDirectory, "scratch"),
+    sourceFilesDirectory: path.join(workspaceDirectory, "source-files"),
+    workspaceDirectory,
+  }
+}
