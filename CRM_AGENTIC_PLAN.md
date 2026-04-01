@@ -360,6 +360,10 @@ Repository rules for this plan:
 - feature folders own their Drizzle schema, Zod schemas, services, and tRPC router
 - shared infrastructure lives in `src/lib`
 - reusable UI primitives live in `src/components/ui`
+- if the same UI structure appears in 2+ places, extract a semantic reusable component under `src/components/ui/<component-name>/` built from shadcn primitives and composition
+- avoid generic reusable names like `Container`, `Wrapper`, or `Panel` when a more specific UI concept exists
+- feature folders may keep only feature-specific components; repeated cards, tables, badges, headers, metadata blocks, and editors should move to `src/components/ui`
+- task, record, schema, and relation forms should each have one primary form component reused across modal, drawer, inline, or details-page shells instead of duplicating form markup per surface
 - feature pages compose feature components and call tRPC procedures served through the shared Hono app
 - Better Auth, tRPC, and MCP are all exposed through one Hono mount, not separate Next.js route handlers
 - background orchestration code lives in `src/features/execution`
@@ -979,6 +983,15 @@ That makes a plain task-level `model` field practical.
 
 The system needs a full GUI plan, not only backend execution design.
 
+Screen planning rule for v1:
+
+- do **not** introduce all screens at once
+- each implementation phase should add only the screens needed for the capabilities introduced in that phase
+- prefer full routes for primary work surfaces and heavy editors
+- prefer embedded modals, drawers, and panels for lighter create/edit flows in v1
+- default UI stance: show as much useful scoped data as possible from the backend
+- useful means machine `state`, ids, timestamps, counts, latest run info, relation summaries, schema version, file/artifact summaries, and audit pointers when available
+
 ### 8A.1 Scope model in frontend
 
 Frontend always works inside:
@@ -994,6 +1007,12 @@ Primary app shell:
 - project switcher
 - project navigation
 
+Phase ownership note:
+
+- sign-in, organization bootstrap/select, and project create/select belong to early auth/tenancy phases
+- project overview, tasks, and records belong to the main frontend workflow phase
+- schema, migration, and execution/admin surfaces arrive only after the underlying capabilities exist
+
 ### 8A.2 Main project views
 
 Inside a project, frontend should provide at least:
@@ -1003,6 +1022,17 @@ Inside a project, frontend should provide at least:
 3. task details page
 4. record details page
 5. project settings area
+
+These are the primary full-page work surfaces in v1.
+Most create/edit flows should stay embedded unless the workflow is heavy enough to justify its own route.
+
+Embedded v1 surfaces:
+
+- task create/edit modal or side panel
+- record create/edit modal or side panel
+- relation editor panel on record details
+- file upload/manage panel on record details
+- schema diff modal
 
 ### 8A.3 Task list view
 
@@ -1016,6 +1046,10 @@ Task list should show:
 - total related records
 - counts by processing status
 - whether any agent run is currently active
+- latest updated task-record timestamp when available
+- latest active or last completed run summary when available
+- linked schema version
+- linked pipeline version if present
 
 The task list is user-sorted in v1.
 Agents process tasks in that explicit project order.
@@ -1038,6 +1072,11 @@ Record list should show:
 - whether an agent is currently working on it
 - current queued task / latest run state
 - linked relation summary
+- schema version
+- file count
+- artifact count
+- last run timestamp when available
+- last error summary when available
 
 This view should make processing state visible immediately.
 
@@ -1054,6 +1093,11 @@ Each task needs its own details page with:
 - task metadata
 - list of all related records
 - per-record processing statuses
+- active run summary
+- latest failure summary when relevant
+- schema version linked to the task
+- pipeline version linked to the task if present
+- recent activity log entries related to the task
 
 Task descriptions should have revision history in v1.
 
@@ -1066,6 +1110,10 @@ Per-record status list should show at least:
 - skipped
 
 This page should also show aggregate progress counters.
+
+V1 editing rule:
+
+- task editing should be embedded from this page or the task list, not a separate dedicated route by default
 
 ### 8A.6 Record details page
 
@@ -1081,8 +1129,16 @@ Each record page should show:
 - file list
 - artifact list
 - workspace/pipeline status summary
+- recent agent runs
+- latest failure details when relevant
+- recent activity log entries related to the record
+- lineage pointers for important artifacts when available
 
 Users can fully edit record values in the UI as long as the values match the active schema.
+
+V1 editing rule:
+
+- record editing should be embedded on this page or launched from the record list, not split into a dedicated edit route by default
 
 ### 8A.6A Schema management UI
 
@@ -1160,6 +1216,18 @@ Decision for v1:
 
 The backend state model must support this cleanly.
 
+### 8A.8A Execution and admin surfaces
+
+These should be explicit only after the backend runtime exists.
+
+Later-phase screens should include:
+
+- activity log / audit trail screen
+- execution monitor screen for active runs, retries, and queue-backed processing visibility
+- development/debug controls for manual trigger and autopick toggle
+
+These should not be introduced before queueing, scheduling, and observability are implemented.
+
 ### 8A.9 Concrete frontend route map
 
 Use Next.js protected routes with organization and project slug scope:
@@ -1172,6 +1240,14 @@ Use Next.js protected routes with organization and project slug scope:
 - `/app/[organizationSlug]/[projectSlug]/settings/schema` — schema version browser/editor
 - `/app/[organizationSlug]/[projectSlug]/settings/pipelines` — pipeline definitions and parser bundle visibility
 - `/app/[organizationSlug]/[projectSlug]/settings/members` — organization members visible in project scope
+- `/app/[organizationSlug]/[projectSlug]/activity` — project activity log and audit trail
+- `/app/[organizationSlug]/[projectSlug]/execution` — execution monitor, active runs, and debug controls
+
+Early auth/onboarding routes should also exist for:
+
+- landing / sign-in
+- organization bootstrap or selection
+- project creation or selection
 
 ### 8A.10 Concrete frontend implementation rules
 
@@ -1181,7 +1257,267 @@ Use Next.js protected routes with organization and project slug scope:
 - use `refetchInterval: 3000` only on active execution screens
 - use `react-hook-form` + Zod-derived schema validation for task, record, and schema forms
 - render backend machine states directly; do not derive local fake statuses in the UI
-- use shadcn/ui primitives and semantic reusable components for cards, tables, forms, badges, and panels
+- use shadcn/ui primitives as the base layer and wrap repeated product patterns into semantic reusable components
+- if task, record, schema, activity, or execution screens repeat the same card, table, badge, toolbar, metadata row, empty state, or side-panel structure, extract it to `src/components/ui`
+- keep feature components thin and domain-specific; they should compose shared UI building blocks instead of copying Tailwind/shadcn markup between features
+- embedded create/edit surfaces must reuse the same primary form/body component and only swap the outer shell such as modal, drawer, or page section
+- prefer one reusable status presentation system for machine states so list badges, detail headers, tables, and activity surfaces do not each redefine colors, labels, and icons separately
+
+### 8A.10A Concrete v1 design system decision
+
+Before feature implementation starts, define one app-level design system built on top of shadcn/ui.
+
+V1 design system goals:
+
+- keep product UI visually consistent across tasks, records, schema, activity, and execution screens
+- prevent repeated local Tailwind/shadcn compositions in feature folders
+- make every repeated business pattern map to one semantic reusable component
+- keep high-density CRM screens readable without looking like generic dashboard boilerplate
+
+V1 design style direction:
+
+- dense but calm data-work UI
+- neutral base surfaces with restrained accent color usage
+- status colors reserved primarily for machine/execution state
+- strong typography and spacing hierarchy over heavy borders or decorative elements
+- desktop-first primary experience, with mobile-safe stacking for detail surfaces and drawers
+
+### 8A.10B Foundation tokens and layout rules
+
+Design tokens should be defined once through the app theme and reused everywhere.
+
+Core rules:
+
+- one radius scale for the full app
+- one spacing scale for page, section, card, and inline layouts
+- one border and muted-surface language across all screens
+- one status color mapping shared by every status component
+- one typography hierarchy for page titles, section headers, labels, helper text, and table text
+
+Layout rules:
+
+- page content should use flex column + gap layouts, not margin stacking
+- overview and detail pages should be built from reusable page sections and content grids
+- all dense data screens should align to shared table, filter bar, and metadata layouts
+- drawers, dialogs, and inline panels should share the same internal spacing and header/footer contract
+
+### 8A.10C shadcn primitive baseline
+
+Use shadcn/ui as the primitive layer, not as the final product surface.
+
+Expected base primitives for v1:
+
+- `button`
+- `input`
+- `textarea`
+- `select`
+- `checkbox`
+- `switch`
+- `badge`
+- `table`
+- `tabs`
+- `dialog`
+- `drawer`
+- `sheet`
+- `dropdown-menu`
+- `popover`
+- `tooltip`
+- `separator`
+- `skeleton`
+- `form`
+- `alert-dialog`
+- `scroll-area`
+
+Rule:
+
+- feature code should rarely compose raw primitive combinations directly more than once
+- once a product pattern repeats, wrap it in a semantic component under `src/components/ui`
+
+### 8A.10D Required semantic reusable component map
+
+Create reusable semantic UI components before broad screen implementation.
+
+Recommended `src/components/ui/` structure:
+
+```txt
+src/components/ui/
+  app-shell/
+    app-shell.tsx
+    app-shell-sidebar.tsx
+    app-shell-header.tsx
+    app-shell-project-switcher.tsx
+    app-shell-organization-switcher.tsx
+  page-header/
+    page-header.tsx
+    page-header-actions.tsx
+    page-header-meta.tsx
+  section-card/
+    section-card.tsx
+    section-card-header.tsx
+    section-card-content.tsx
+    section-card-footer.tsx
+  filter-bar/
+    filter-bar.tsx
+    filter-bar-search.tsx
+    filter-bar-facets.tsx
+    filter-bar-actions.tsx
+  data-table/
+    data-table.tsx
+    data-table-toolbar.tsx
+    data-table-empty-state.tsx
+  empty-state/
+    empty-state.tsx
+  status-badge/
+    status-badge.tsx
+    task-status-badge.tsx
+    record-status-badge.tsx
+    run-status-badge.tsx
+  progress-metric/
+    progress-metric.tsx
+    progress-metric-grid.tsx
+  metadata-list/
+    metadata-list.tsx
+    metadata-list-item.tsx
+  activity-timeline/
+    activity-timeline.tsx
+    activity-timeline-item.tsx
+  relation-list/
+    relation-list.tsx
+    relation-list-item.tsx
+  artifact-list/
+    artifact-list.tsx
+    artifact-list-item.tsx
+  file-list/
+    file-list.tsx
+    file-list-item.tsx
+  schema-field-list/
+    schema-field-list.tsx
+    schema-field-row.tsx
+  side-panel/
+    side-panel.tsx
+    side-panel-header.tsx
+    side-panel-footer.tsx
+  confirm-action-dialog/
+    confirm-action-dialog.tsx
+  markdown-viewer/
+    markdown-viewer.tsx
+  json-viewer/
+    json-viewer.tsx
+  loading-state/
+    loading-state.tsx
+  state-icon/
+    state-icon.tsx
+```
+
+Meaning of the map:
+
+- `app-shell` owns the protected product frame and navigation chrome
+- `page-header` standardizes title, secondary metadata, and top-level actions
+- `section-card` is the default container for dashboard/detail sections
+- `filter-bar` standardizes search, filters, sort, and create actions above list screens
+- `data-table` is the shared CRM table shell for tasks, records, members, activity, and execution rows
+- `status-badge` owns the visual language for machine states
+- `progress-metric` standardizes KPI/count cards and progress summaries
+- `metadata-list` standardizes label/value detail blocks
+- `activity-timeline`, `relation-list`, `artifact-list`, `file-list`, and `schema-field-list` cover repeated business list patterns
+- `side-panel` is the shared shell for lightweight embedded editing and management flows
+- `markdown-viewer` and `json-viewer` centralize rich read-only content rendering
+
+### 8A.10E Required feature form architecture
+
+Every major editable entity should have one primary form component reused in all shells.
+
+Required form components:
+
+- `src/features/tasks/components/task-form.tsx`
+- `src/features/records/components/record-form.tsx`
+- `src/features/project-schema/components/schema-field-form.tsx`
+- `src/features/project-schema/components/schema-version-form.tsx`
+- `src/features/record-edges/components/relation-form.tsx`
+- `src/features/files/components/file-upload-form.tsx`
+
+Rules:
+
+- modal, drawer, and page implementations must reuse these primary form components
+- create and edit mode differences should be handled through explicit props or initial values, not duplicated markup
+- field layouts, labels, help text, validation messages, and submit rows should be standardized through shared form subcomponents where repetition appears
+
+### 8A.10F Required screen composition contract
+
+Primary screens should be composed from the same reusable building blocks.
+
+Expected composition patterns:
+
+1. project overview
+   - `PageHeader`
+   - `ProgressMetricGrid`
+   - `SectionCard`
+   - `ActivityTimeline`
+
+2. task list / record list / activity / execution
+   - `PageHeader`
+   - `FilterBar`
+   - `DataTable`
+   - `DataTableEmptyState`
+
+3. task details / record details
+   - `PageHeader`
+   - `ProgressMetricGrid` when relevant
+   - `SectionCard`
+   - `MetadataList`
+   - specialized list components such as `ActivityTimeline`, `ArtifactList`, `RelationList`, or progress table sections
+
+4. settings screens
+   - `PageHeader`
+   - reusable settings navigation pattern
+   - `SectionCard`
+   - specialized editor/list component for the settings domain
+
+### 8A.10G Status and state presentation system
+
+Machine state presentation must be centralized.
+
+Rules:
+
+- one shared mapping from backend machine states to label, tone, icon, and emphasis
+- do not let each feature pick its own badge colors or copy labels freely
+- task, record, task-record, agent-run, pipeline-run, and artifact states may each have different vocabularies, but the presentation contract should stay structurally consistent
+
+Minimum output for every status presentation component:
+
+- label
+- tone
+- icon
+- optional helper text for dense/detail contexts
+
+### 8A.10H Page density and responsiveness rules
+
+V1 should optimize for dense operational work without making screens visually noisy.
+
+Rules:
+
+- tables are the default for large collections
+- cards are for grouped summaries, not for replacing large lists of rows
+- detail pages should use stacked sections on narrow screens and multi-column layouts only when readability remains high
+- avoid nested cards inside cards unless the inner element is a clearly separate semantic block
+- use drawers or sheets for secondary edit flows; reserve full routes for primary work surfaces and complex editors
+
+### 8A.10I Design system implementation gate
+
+Do not start broad feature UI implementation until the following are defined:
+
+- app theme tokens
+- status presentation mapping
+- app shell
+- page header
+- section card
+- filter bar
+- data table shell
+- side panel shell
+- primary form patterns
+- empty/loading/error state patterns
+
+This design system work should happen before or at the very start of the frontend shell phase so feature work composes stable building blocks instead of inventing new ones per screen.
 
 ---
 
@@ -2311,6 +2647,10 @@ Minimum actor attribution fields on `activityLog`:
 - long-lived per-record workspaces
 - persistent app-owned artifacts with lineage
 - schema migration fan-out tasks
+- landing/sign-in plus organization and project bootstrap/select screens
+- project overview dashboard
+- mostly embedded create/edit flows for tasks and records
+- later-phase activity log and execution monitor screens
 
 ### Exclude from v1
 
@@ -2336,57 +2676,65 @@ Minimum actor attribution fields on `activityLog`:
 4. define record envelope + JSON context storage
 5. add Docker Compose Postgres for local development on port `5433` with database/user/password set to `project_intern` / `intern` / `intern`
 6. add one-active-execution-per-record rule against the project task queue
+7. build landing/sign-in flow plus organization bootstrap/select and project create/select screens
 
 ### Phase 2 — state machines and backend lifecycle
 
-7. define Machin machines for `TaskRecord`, `AgentRun`, and `PipelineRun`
-8. persist machine state with Drizzle/Postgres
-9. make backend APIs expose machine states directly for frontend use
+8. define Machin machines for `TaskRecord`, `AgentRun`, and `PipelineRun`
+9. persist machine state with Drizzle/Postgres
+10. make backend APIs expose machine states directly for frontend use
 
 ### Phase 3 — frontend shell and workflow UI
 
-10. build organization/project scoped app shell
-11. build task list and record list views
-12. build task details page with markdown viewer/editor
-13. build per-record progress table on task details page
-14. build record details page with files/artifacts/relations summary
+11. define app theme tokens, status mapping, and the initial design system contract
+12. build organization/project scoped app shell, page header, section card, filter bar, data table shell, and side panel shell
+13. build organization/project scoped app shell and project overview dashboard
+14. build task list and record list views
+15. build task details page with markdown viewer/editor
+16. build per-record progress table on task details page
+17. build record details page with files/artifacts/relations summary
+18. keep task and record create/edit flows mostly embedded as modals, drawers, or side panels
+19. extract shared semantic UI building blocks before repeating the same task/record/schema surface markup across features
 
 ### Phase 4 — OpenCode runtime
 
-15. stand up `opencode serve`
-16. integrate `@opencode-ai/sdk`
-17. add task executor service
-18. add task-level `model` field handling
+20. stand up `opencode serve`
+21. integrate `@opencode-ai/sdk`
+22. add task executor service
+23. add task-level `model` field handling
 
 ### Phase 5 — Hono API app and MCP tools
 
-19. mount one Hono app in the Next.js API catch-all route
-20. route Better Auth, tRPC, and shared middleware through that Hono app
-21. implement MCP record/schema tools
-22. implement MCP task completion and artifact/file tools
-23. implement MCP relation tools
+24. mount one Hono app in the Next.js API catch-all route
+25. route Better Auth, tRPC, and shared middleware through that Hono app
+26. implement MCP record/schema tools
+27. implement MCP task completion and artifact/file tools
+28. implement MCP relation tools
+29. expose embedded relation editor and file management surfaces once their backend contracts exist
 
 ### Phase 6 — queues, schedules, and file processing
 
-24. add pg-bosser queues, workers, and schedules for executor orchestration
-25. define `source_file`, `artifact`, `pipeline_definition`, `pipeline_run`
-26. define canonical local disk storage layout
-27. create record workspace hydrator
-28. create first parser asset bundle
-29. support artifact reuse rules
+30. add pg-bosser queues, workers, and schedules for executor orchestration
+31. define `source_file`, `artifact`, `pipeline_definition`, `pipeline_run`
+32. define canonical local disk storage layout
+33. create record workspace hydrator
+34. create first parser asset bundle
+35. support artifact reuse rules
 
 ### Phase 7 — migrations
 
-30. add schema versioning
-31. add schema migration task family
-32. add project migration controller
-33. add migration auditing
+36. add schema versioning
+37. add schema migration task family
+38. add project migration controller
+39. add migration auditing
+40. build schema settings page, schema diff modal, and migration status surfaces
 
 ### Phase 8 — hardening
 
-34. add plugin-based telemetry and guardrails
-35. add cleanup/invalidation logic for workspaces
-36. add cost reporting and retry dashboards
+41. add plugin-based telemetry and guardrails
+42. add cleanup/invalidation logic for workspaces
+43. add cost reporting and retry dashboards
+44. build activity log screen, execution monitor screen, and dev debug controls
 
 ---
 
@@ -2467,6 +2815,9 @@ This section now resolves the immediate planning targets into a concrete v1 buil
 - task detail is the main execution visibility page
 - polling via tRPC + React Query every 3 seconds is the v1 realtime strategy
 - all visible statuses come from persisted backend machine state
+- screens are introduced incrementally by implementation phase, not all at once
+- create/edit flows are mostly embedded in v1 unless they are heavy editors
+- frontend should show as much useful scoped data as practical on lists, details, execution, and audit surfaces
 
 ### 25.6 Finalized implementation sequence
 
