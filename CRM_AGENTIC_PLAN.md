@@ -61,7 +61,7 @@ Why:
 Main terms:
 
 - `Project` — top-level workspace and schema boundary
-- `ProjectSchema` — required + custom field definition set for the project
+- `ProjectSchemaVersion` — one versioned required + custom field definition set for the project
 - `Record` — one CRM/task object instance
 - `Task` — one unit of work assigned to one record
 - `AgentRun` — one OpenCode execution for one record-task pair
@@ -130,9 +130,9 @@ Owns:
 - file processing definitions
 - OpenCode execution policy
 
-#### ProjectSchema
+#### ProjectSchemaVersion
 
-Defines a shared schema for all records inside one project.
+Defines one versioned shared schema for all records inside one project.
 
 Must include required system fields:
 
@@ -155,7 +155,7 @@ type RecordEnvelope = {
   projectId: string
   name: string
   schemaVersion: number
-  status: "active" | "archived" | "processing" | "error"
+  state: "active" | "archived" | "processing" | "error"
   context: Record<string, unknown>
   version: number
   createdAt: Date
@@ -167,7 +167,7 @@ Machine note:
 
 - `Record` should be machine-driven in v1
 - the stored record state should come from a Machin actor, not ad hoc status flags
-- `status` here represents machine state, not a freeform column concept
+- `state` here represents machine state, not a freeform business column concept
 
 #### Task
 
@@ -182,6 +182,7 @@ Suggested shape:
 type Task = {
   id: string
   projectId: string
+  title: string
   sortOrder: number
   model?: string
   schemaVersion: number
@@ -199,6 +200,14 @@ Important:
 - per-agent / per-record progress does **not** live on `Task`
 - progress is tracked on `TaskRecord` and `AgentRun`
 - `model` is a plain optional string override passed to OpenCode for this task
+- `title` is required and is the primary UI label in lists, details pages, and activity views
+
+Task fan-out rule for v1:
+
+- when a task is created, create `TaskRecord` rows for all records that currently exist in the project
+- when a new record is later created, automatically create missing `TaskRecord` rows for existing applicable project tasks
+- deduplicate with a unique `(taskId, recordId)` constraint
+- task execution still respects project task ordering and one-active-execution-per-record rules
 
 #### AgentRun
 
@@ -209,7 +218,7 @@ Stores:
 - session reference
 - selected model
 - selected agent
-- execution status
+- execution state
 - tool activity summary
 - result payload
 - failure payload
@@ -238,7 +247,7 @@ type RecordEdge = {
   toRecordId: string
   relationType: string
   direction: "outbound" | "bidirectional"
-  status: "active" | "inactive"
+  state: "active" | "inactive"
   metadata: Record<string, unknown>
   createdByTaskId?: string
   createdAt: Date
@@ -568,9 +577,9 @@ Better Auth plugin note:
 #### Concrete table responsibilities
 
 - `project` stores org ownership, slug, display name, active schema version id, and executor defaults
-- `projectSchemaVersion` stores the full validated schema JSON, version number, and optional parent version id
+- `projectSchemaVersion` stores the full validated ProjectSchemaVersion JSON, version number, and optional parent version id
 - `record` stores project envelope fields, active schema version, machine state, JSONB `context`, and optimistic `version`
-- `task` stores ordering, markdown description, optional model override, optional pipeline version, and idempotency key
+- `task` stores title, ordering, markdown description, optional model override, optional pipeline version, and idempotency key
 - `taskDescriptionRevision` stores append-only task description history for the UI diff/revision view
 - `taskRecord` stores the per-record lifecycle row for one `(taskId, recordId)` pair
 - `agentRun` stores one execution attempt for one `taskRecord`
@@ -605,6 +614,22 @@ Resolve the earlier ambiguity as follows for v1:
 - all organization members can access all projects in that organization in v1
 - if project-specific access is needed later, add `projectMembership` in v2 without changing core record/task design
 
+### 5.8A Task fan-out semantics
+
+Decision:
+
+- project tasks target all records in the project
+- task fan-out is **not** snapshot-only in v1
+- new records created after a task exists should automatically get missing `TaskRecord` rows for existing applicable tasks
+
+Required rules:
+
+- task creation fans out to all current records in project scope
+- record creation backfills missing `TaskRecord` rows for existing project tasks
+- backfill must be idempotent and rely on the unique `(taskId, recordId)` constraint
+- task details and aggregate progress always read from `TaskRecord`, never from ad hoc counters
+- scheduler only claims from persisted `TaskRecord` rows
+
 ### 5.9 Local database runtime blueprint
 
 For local development, use Docker Compose the same way as in the reference projects.
@@ -613,7 +638,7 @@ Concrete local database defaults for **Project Intern**:
 
 - database service managed by `docker-compose.yml` or `compose.yml`
 - PostgreSQL 18 image
-- host port: `5438` to avoid conflicts with other local projects
+- host port: `5433` to avoid conflicts with other local projects
 - database name: `project_intern`
 - database user: `intern`
 - database password: `intern`
@@ -776,6 +801,7 @@ Recommended app services:
 Queue/runtime recommendation based on reference project structure:
 
 - use `pg-bosser` for background execution in v1
+- `pg-bosser` is the app-local wrapper around `pg-boss` used by this project
 - keep queue definitions in feature folders, not in shared `lib`
 - use one queue for task execution handoff and separate scheduled jobs for recurring orchestration work
 - use pg-bosser schedules for scheduler ticks, retry scans, and optional workspace maintenance
@@ -786,6 +812,7 @@ Auth plugin recommendation:
 - use Better Auth anonymous plugin only in development environments
 - keep GitHub OAuth as the default non-dev sign-in path
 - do not expose anonymous login in production UI or production config
+- Better Auth Agent Auth is useful as a future path for external or third-party agent registration/capability grants, but should not be the default internal executor auth layer in v1 because the plugin is currently unstable
 
 ### 7.2A MCP transport decision
 
@@ -853,6 +880,37 @@ app.all('/mcp', async (c) => {
 ```
 
 For auth, token-based bearer middleware is sufficient in v1.
+
+### 7.2C Auth and caller identity blueprint
+
+Every important surface should have explicit caller identity.
+
+Required auth split for v1:
+
+1. **User auth**
+   - Better Auth session auth for product UI and normal app API access
+   - all tRPC and Hono handlers resolve user, organization membership, and project scope before business logic
+
+2. **Executor auth**
+   - background workers and internal executor flows use app-owned service credentials
+   - executor identity is separate from end-user identity
+   - every write still records `taskId`, `taskRecordId`, `agentRunId`, and effective initiating user when available
+
+3. **MCP auth**
+   - remote MCP routes require bearer auth
+   - bearer token is validated before exposing tools or resources
+   - MCP handlers must also validate project/task/record scope on every call
+
+4. **Audit attribution**
+   - activity log should record both actor type and actor id
+   - actor types should distinguish at least `user`, `executor`, and `system`
+   - agent-triggered mutations should remain attributable to the owning `AgentRun`
+
+5. **Better Auth Agent Auth position**
+   - docs checked 2026-04-01: Better Auth Agent Auth supports capability-based auth, MCP/OpenAPI adapters, JWTs, and audit hooks
+   - plugin is explicitly marked unstable in current docs
+   - useful if this product later needs external agent registration/discovery or delegated third-party agent access
+   - not required for the internal app-owned executor and MCP setup in v1
 
 ### 7.3 Why not CLI-only orchestration
 
@@ -961,10 +1019,11 @@ Task list should show:
 
 The task list is user-sorted in v1.
 Agents process tasks in that explicit project order.
+Each task must have a required title and description.
 
 Useful filters:
 
-- status
+- state
 - assigned pipeline version
 - schema version
 - active / inactive
@@ -1411,12 +1470,12 @@ Suggested keys:
 - `to_project_id`
 - `to_record_id`
 - `relation_type`
-- `status`
+- `state`
 
 Suggested indexes:
 
-- `(from_record_id, relation_type, status)`
-- `(to_record_id, relation_type, status)`
+- `(from_record_id, relation_type, state)`
+- `(to_record_id, relation_type, state)`
 - `(from_project_id, to_project_id, relation_type)`
 
 ### 10A.3 Relation semantics
@@ -1479,7 +1538,7 @@ V1 product rule:
 
 ### 11.1 Flow
 
-1. create new `ProjectSchema` version
+1. create new `ProjectSchemaVersion`
 2. create a normal project task describing the schema adoption work
 3. the task description should include old schema, new schema, and adoption instructions
 4. create per-record processing entries for affected records
@@ -1575,6 +1634,7 @@ Scope rule for all `crm_*` tools:
 - and then by either `recordId` or `taskId`, depending on the operation
 - tools must never operate on global unscoped data
 - backend must validate that the scoped project/task/record relation is valid before doing work
+- backend must authenticate caller identity before any tool execution and authorize project access for that caller
 
 ### 13.1 Core record tools
 
@@ -2014,7 +2074,7 @@ At minimum:
 `Task` itself should stay a description/ordering entity, not an execution state machine.
 If we need task-level summary state in reads, it should be derived from `TaskRecord` rows.
 
-`ProjectSchema` and `PipelineDefinition` can stay plain versioned definitions in v1 unless they later need guarded publish/promote workflows.
+`ProjectSchemaVersion` and `PipelineDefinition` can stay plain versioned definitions in v1 unless they later need guarded publish/promote workflows.
 
 Payload/result types like `PatchProposal`, `ArtifactResult`, and `TaskFailure` should stay plain DTOs, not state machines.
 
@@ -2141,6 +2201,9 @@ Enforce in app logic too:
 - parser asset versions must be explicit
 - manual record edits in UI must validate against active schema before persistence
 - relation edits in UI must stay auditable
+- every API and MCP mutation must resolve caller identity before business execution
+- every executor-originated write must carry `taskId`, `taskRecordId`, and `agentRunId` attribution
+- every scoped read/write must validate organization membership and project access
 
 ### 20.3 Recommended rule
 
@@ -2210,6 +2273,18 @@ Minimum activity log event families:
 - `schema.version_created`
 - `artifact.registered`
 - `artifact.invalidated`
+- `auth.executor_call`
+- `auth.mcp_call`
+
+Minimum actor attribution fields on `activityLog`:
+
+- `actorType` (`user` | `executor` | `system`)
+- `actorId`
+- `organizationId`
+- `projectId`
+- `taskId?`
+- `taskRecordId?`
+- `agentRunId?`
 
 ---
 
@@ -2257,7 +2332,7 @@ Minimum activity log event families:
 
 1. set up Better Auth with GitHub OAuth plus development-only anonymous plugin support
 2. implement auth fully inside `src/features/auth` including auth config, auth client, auth DB schema, and org role helpers
-3. define `Project`, `ProjectSchema`, `Record`, `Task`, `AgentRun`, `TaskRecord`, `RecordEdge`
+3. define `Project`, `ProjectSchemaVersion`, `Record`, `Task`, `AgentRun`, `TaskRecord`, `RecordEdge`
 4. define record envelope + JSON context storage
 5. add Docker Compose Postgres for local development on port `5433` with database/user/password set to `project_intern` / `intern` / `intern`
 6. add one-active-execution-per-record rule against the project task queue
@@ -2335,6 +2410,9 @@ Minimum activity log event families:
 16. background runtime: **pg-bosser queues and schedules drive execution orchestration outside the web request path**
 17. lifecycle handling: **important execution entities use Machin state machines; project tasks themselves stay descriptive**
 18. machine stance: **machine-first for lifecycle entities; plain types only for config and DTO payloads**
+19. task fan-out: **tasks auto-create `TaskRecord` rows for current records and auto-backfill new records later**
+20. task shape: **every task has required `title` and `descriptionMarkdown`**
+21. internal auth stance: **use Better Auth for users and app-owned credentials for executor/MCP flows in v1; Better Auth Agent Auth is optional future infrastructure, not a v1 requirement**
 
 ---
 
@@ -2355,6 +2433,9 @@ This section now resolves the immediate planning targets into a concrete v1 buil
 - **Local DB runtime**: Docker Compose PostgreSQL 18 on port `5433` using local database `project_intern` and credentials `intern` / `intern`
 - **Background jobs**: pg-bosser queues and schedules handle async execution outside the request path
 - **Lifecycle**: Machin for `TaskRecord`, `AgentRun`, `PipelineRun`, `Artifact`, and `RecordEdge`
+- **Task fan-out**: task creation fans out to current project records and record creation backfills missing `TaskRecord` rows for existing tasks
+- **Task shape**: every task has required `title` and `descriptionMarkdown`
+- **Internal auth**: Better Auth sessions protect user surfaces and app-owned credentials protect executor/MCP flows in v1
 
 ### 25.2 Finalized executor contract
 
@@ -2405,7 +2486,7 @@ This section now resolves the immediate planning targets into a concrete v1 buil
 Most important v1 questions are now resolved. The remaining deferred questions should be treated as post-v1 or implementation-detail follow-ups:
 
 - whether small JSON artifacts should also be mirrored in Postgres for selective query acceleration
-- whether `Record` itself needs a full machine or only explicit persisted status in v1
+- whether `Record` itself needs a full machine or only explicit persisted `state` in v1
 - whether project-level execution controls need SSE before broader rollout
 - whether parser asset promotion should later gain dedicated review workflow and approval state
 - when to introduce `projectMembership` and finer-grained project roles beyond org-wide membership
