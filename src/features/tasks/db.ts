@@ -1,0 +1,95 @@
+import { relations, sql } from "drizzle-orm"
+import {
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core"
+import { userTable } from "@/features/auth/db"
+import { projectTable } from "@/features/projects/db"
+
+const createdAtColumn = () =>
+  timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+
+const updatedAtColumn = () =>
+  timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull()
+
+export const taskTable = pgTable(
+  "task",
+  {
+    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projectTable.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    sortOrder: integer("sort_order").notNull(),
+    model: text("model"),
+    schemaVersion: integer("schema_version").notNull(),
+    pipelineVersion: text("pipeline_version"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    descriptionMarkdown: text("description_markdown").notNull(),
+    createdAt: createdAtColumn(),
+    updatedAt: updatedAtColumn(),
+  },
+  (table) => [
+    uniqueIndex("task_project_sort_order_unique_idx").on(
+      table.projectId,
+      table.sortOrder,
+    ),
+    index("task_project_updated_at_idx").on(table.projectId, table.updatedAt),
+  ],
+)
+
+export const taskDescriptionRevisionTable = pgTable(
+  "task_description_revision",
+  {
+    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+    revisionNumber: integer("revision_number").notNull(),
+    descriptionMarkdown: text("description_markdown").notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => userTable.id, {
+      onDelete: "set null",
+    }),
+    createdAt: createdAtColumn(),
+  },
+  (table) => [
+    uniqueIndex("task_description_revision_task_revision_unique_idx").on(
+      table.taskId,
+      table.revisionNumber,
+    ),
+    index("task_description_revision_task_created_at_idx").on(
+      table.taskId,
+      table.createdAt,
+    ),
+  ],
+)
+
+export const taskRelations = relations(taskTable, ({ one, many }) => ({
+  descriptionRevisions: many(taskDescriptionRevisionTable),
+  project: one(projectTable, {
+    fields: [taskTable.projectId],
+    references: [projectTable.id],
+  }),
+}))
+
+export const taskDescriptionRevisionRelations = relations(
+  taskDescriptionRevisionTable,
+  ({ one }) => ({
+    createdByUser: one(userTable, {
+      fields: [taskDescriptionRevisionTable.createdByUserId],
+      references: [userTable.id],
+    }),
+    task: one(taskTable, {
+      fields: [taskDescriptionRevisionTable.taskId],
+      references: [taskTable.id],
+    }),
+  }),
+)

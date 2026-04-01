@@ -1,16 +1,23 @@
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Pool } from "pg"
+import { agentRunTable } from "@/features/agent-runs/db"
 import { authSchema } from "@/features/auth/db"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
 import { recordTable } from "@/features/records/db"
+import { taskRecordTable } from "@/features/task-records/db"
+import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import { databaseConfig } from "@/lib/config/database"
 
 const schema = {
   ...authSchema,
+  agentRunTable,
   projectTable,
   projectSchemaVersionTable,
   recordTable,
+  taskDescriptionRevisionTable,
+  taskRecordTable,
+  taskTable,
 }
 
 const globalForDatabase = globalThis as {

@@ -3,6 +3,7 @@ import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get
 import { recordTable } from "@/features/records/db"
 import { validateRecordContext } from "@/features/records/lib/validate-record-context"
 import type { RecordInput } from "@/features/records/schemas/record-input"
+import { backfillTaskRecordsForRecord } from "@/features/task-records/lib/backfill-task-records-for-record"
 import { db } from "@/lib/db"
 
 type CreateRecordParams = {
@@ -55,6 +56,11 @@ export const createRecord = async ({
       updatedAt: recordTable.updatedAt,
       version: recordTable.version,
     })
+
+  await backfillTaskRecordsForRecord({
+    projectId: activeSchemaVersion.project.id,
+    recordId: record.id,
+  })
 
   return record
 }

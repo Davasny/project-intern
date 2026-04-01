@@ -41,6 +41,9 @@ importers:
       hono:
         specifier: 4.12.9
         version: 4.12.9
+      machin:
+        specifier: 1.1.0
+        version: 1.1.0
       next:
         specifier: 15.5.14
         version: 15.5.14(@opentelemetry/api@1.9.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1426,6 +1429,14 @@ packages:
     resolution: {integrity: sha512-utfs7Pr5uJyyvDETitgsaqSyjCb2qNRAtuqUeWIAKztsOYdcACf2KtARYXg2pSvhkt+9NfoaNY7fxjl6nuMjIQ==}
     engines: {node: '>= 12.0.0'}
 
+  machin@1.1.0:
+    resolution: {integrity: sha512-MY172WFTH+90ANgkq54H9SYui8inbp0KkKEoo/lilM8fRuA5tYXpea93u43c/N1YCbAEHkRfURGzuldwl7GLpg==}
+    peerDependencies:
+      redis: '>=4.0.0'
+    peerDependenciesMeta:
+      redis:
+        optional: true
+
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -2528,6 +2539,8 @@ snapshots:
       lightningcss-linux-x64-musl: 1.30.2
       lightningcss-win32-arm64-msvc: 1.30.2
       lightningcss-win32-x64-msvc: 1.30.2
+
+  machin@1.1.0: {}
 
   magic-string@0.30.21:
     dependencies:

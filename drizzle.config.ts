@@ -12,6 +12,9 @@ export default defineConfig({
     "./src/features/projects/db.ts",
     "./src/features/project-schema/db.ts",
     "./src/features/records/db.ts",
+    "./src/features/tasks/db.ts",
+    "./src/features/task-records/db.ts",
+    "./src/features/agent-runs/db.ts",
   ],
   out: "./drizzle",
   dbCredentials: {
