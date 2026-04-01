@@ -1,168 +1,203 @@
-import { relations, sql } from "drizzle-orm"
+import { relations, sql } from "drizzle-orm";
 import {
-  boolean,
-  index,
-  jsonb,
   pgTable,
   text,
   timestamp,
-  uniqueIndex,
+  boolean,
   uuid,
-} from "drizzle-orm/pg-core"
-import type { OrganizationRole } from "@/features/auth/lib/organization-roles"
+  index,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 
-const createdAtColumn = () =>
-  timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
-
-const updatedAtColumn = () =>
-  timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull()
-
-export const userTable = pgTable("user", {
-  id: uuid("id").default(sql`uuidv7()`).primaryKey(),
+export const user = pgTable("user", {
+  id: uuid("id")
+    .default(sql`pg_catalog.gen_random_uuid()`)
+    .primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  isAnonymous: boolean("is_anonymous").default(false).notNull(),
-  createdAt: createdAtColumn(),
-  updatedAt: updatedAtColumn(),
-})
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  isAnonymous: boolean("is_anonymous"),
+});
 
-export const organizationTable = pgTable(
-  "organization",
-  {
-    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
-    name: text("name").notNull(),
-    slug: text("slug").notNull(),
-    logo: text("logo"),
-    metadata: jsonb("metadata")
-      .$type<Record<string, unknown> | null>()
-      .default(sql`'{}'::jsonb`),
-    createdAt: createdAtColumn(),
-  },
-  (table) => [uniqueIndex("organization_slug_unique_idx").on(table.slug)],
-)
-
-export const sessionTable = pgTable(
+export const session = pgTable(
   "session",
   {
-    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
-    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-    token: text("token").notNull(),
-    createdAt: createdAtColumn(),
-    updatedAt: updatedAtColumn(),
+    id: uuid("id")
+      .default(sql`pg_catalog.gen_random_uuid()`)
+      .primaryKey(),
+    expiresAt: timestamp("expires_at").notNull(),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     userId: uuid("user_id")
       .notNull()
-      .references(() => userTable.id, { onDelete: "cascade" }),
-    activeOrganizationId: uuid("active_organization_id").references(
-      () => organizationTable.id,
-      {
-        onDelete: "set null",
-      },
-    ),
+      .references(() => user.id, { onDelete: "cascade" }),
+    activeOrganizationId: text("active_organization_id"),
   },
-  (table) => [
-    uniqueIndex("session_token_unique_idx").on(table.token),
-    index("session_user_id_idx").on(table.userId),
-  ],
-)
+  (table) => [index("session_userId_idx").on(table.userId)],
+);
 
-export const accountTable = pgTable(
+export const account = pgTable(
   "account",
   {
-    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
+    id: uuid("id")
+      .default(sql`pg_catalog.gen_random_uuid()`)
+      .primaryKey(),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => userTable.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
-    accessTokenExpiresAt: timestamp("access_token_expires_at", {
-      withTimezone: true,
-    }),
-    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
-      withTimezone: true,
-    }),
+    accessTokenExpiresAt: timestamp("access_token_expires_at"),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
     scope: text("scope"),
     password: text("password"),
-    createdAt: createdAtColumn(),
-    updatedAt: updatedAtColumn(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
   },
-  (table) => [index("account_user_id_idx").on(table.userId)],
-)
+  (table) => [index("account_userId_idx").on(table.userId)],
+);
 
-export const verificationTable = pgTable(
+export const verification = pgTable(
   "verification",
   {
-    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
+    id: uuid("id")
+      .default(sql`pg_catalog.gen_random_uuid()`)
+      .primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
-    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-    createdAt: createdAtColumn(),
-    updatedAt: updatedAtColumn(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
-)
+);
 
-export const organizationMembershipTable = pgTable(
+export const organization = pgTable(
+  "organization",
+  {
+    id: uuid("id")
+      .default(sql`pg_catalog.gen_random_uuid()`)
+      .primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    logo: text("logo"),
+    createdAt: timestamp("created_at").notNull(),
+    metadata: text("metadata"),
+  },
+  (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)],
+);
+
+export const organizationMembership = pgTable(
   "organization_membership",
   {
-    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
+    id: uuid("id")
+      .default(sql`pg_catalog.gen_random_uuid()`)
+      .primaryKey(),
     organizationId: uuid("organization_id")
       .notNull()
-      .references(() => organizationTable.id, { onDelete: "cascade" }),
+      .references(() => organization.id, { onDelete: "cascade" }),
     userId: uuid("user_id")
       .notNull()
-      .references(() => userTable.id, { onDelete: "cascade" }),
-    role: text("role").$type<OrganizationRole>().notNull(),
-    createdAt: createdAtColumn(),
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").default("member").notNull(),
+    createdAt: timestamp("created_at").notNull(),
   },
   (table) => [
-    uniqueIndex("organization_membership_user_org_unique_idx").on(
-      table.organizationId,
-      table.userId,
-    ),
-    index("organization_membership_user_id_idx").on(table.userId),
+    index("organizationMembership_organizationId_idx").on(table.organizationId),
+    index("organizationMembership_userId_idx").on(table.userId),
   ],
-)
+);
 
-export const userRelations = relations(userTable, ({ many }) => ({
-  organizationMemberships: many(organizationMembershipTable),
-}))
+export const invitation = pgTable(
+  "invitation",
+  {
+    id: uuid("id")
+      .default(sql`pg_catalog.gen_random_uuid()`)
+      .primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: text("role"),
+    status: text("status").default("pending").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    inviterId: uuid("inviter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("invitation_organizationId_idx").on(table.organizationId),
+    index("invitation_email_idx").on(table.email),
+  ],
+);
 
-export const organizationRelations = relations(
-  organizationTable,
-  ({ many }) => ({
-    memberships: many(organizationMembershipTable),
+export const userRelations = relations(user, ({ many }) => ({
+  sessions: many(session),
+  accounts: many(account),
+  organizationMemberships: many(organizationMembership),
+  invitations: many(invitation),
+}));
+
+export const sessionRelations = relations(session, ({ one }) => ({
+  user: one(user, {
+    fields: [session.userId],
+    references: [user.id],
   }),
-)
+}));
+
+export const accountRelations = relations(account, ({ one }) => ({
+  user: one(user, {
+    fields: [account.userId],
+    references: [user.id],
+  }),
+}));
+
+export const organizationRelations = relations(organization, ({ many }) => ({
+  organizationMemberships: many(organizationMembership),
+  invitations: many(invitation),
+}));
 
 export const organizationMembershipRelations = relations(
-  organizationMembershipTable,
+  organizationMembership,
   ({ one }) => ({
-    organization: one(organizationTable, {
-      fields: [organizationMembershipTable.organizationId],
-      references: [organizationTable.id],
+    organization: one(organization, {
+      fields: [organizationMembership.organizationId],
+      references: [organization.id],
     }),
-    user: one(userTable, {
-      fields: [organizationMembershipTable.userId],
-      references: [userTable.id],
+    user: one(user, {
+      fields: [organizationMembership.userId],
+      references: [user.id],
     }),
   }),
-)
+);
 
-export const authSchema = {
-  account: accountTable,
-  organization: organizationTable,
-  organizationMembership: organizationMembershipTable,
-  session: sessionTable,
-  user: userTable,
-  verification: verificationTable,
-}
+export const invitationRelations = relations(invitation, ({ one }) => ({
+  organization: one(organization, {
+    fields: [invitation.organizationId],
+    references: [organization.id],
+  }),
+  user: one(user, {
+    fields: [invitation.inviterId],
+    references: [user.id],
+  }),
+}));

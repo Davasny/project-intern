@@ -1,8 +1,5 @@
 import { and, eq } from "drizzle-orm"
-import {
-  organizationMembershipTable,
-  organizationTable,
-} from "@/features/auth/db"
+import { organization, organizationMembership } from "@/features/auth/db"
 import { listUserOrganizations } from "@/features/organizations/lib/list-user-organizations"
 import { projectTable } from "@/features/projects/db"
 import { listOrganizationProjectsById } from "@/features/projects/lib/list-organization-projects-by-id"
@@ -21,26 +18,23 @@ export const resolveProjectAccess = async ({
 }: ResolveProjectAccessParams) => {
   const currentScope = await db
     .select({
-      organizationId: organizationTable.id,
-      organizationName: organizationTable.name,
-      organizationSlug: organizationTable.slug,
+      organizationId: organization.id,
+      organizationName: organization.name,
+      organizationSlug: organization.slug,
       projectDisplayName: projectTable.displayName,
       projectId: projectTable.id,
       projectSlug: projectTable.slug,
     })
-    .from(organizationMembershipTable)
+    .from(organizationMembership)
     .innerJoin(
-      organizationTable,
-      eq(organizationMembershipTable.organizationId, organizationTable.id),
+      organization,
+      eq(organizationMembership.organizationId, organization.id),
     )
-    .innerJoin(
-      projectTable,
-      eq(projectTable.organizationId, organizationTable.id),
-    )
+    .innerJoin(projectTable, eq(projectTable.organizationId, organization.id))
     .where(
       and(
-        eq(organizationMembershipTable.userId, userId),
-        eq(organizationTable.slug, organizationSlug),
+        eq(organizationMembership.userId, userId),
+        eq(organization.slug, organizationSlug),
         eq(projectTable.slug, projectSlug),
       ),
     )

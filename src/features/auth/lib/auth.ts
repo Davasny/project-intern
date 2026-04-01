@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, organization } from "better-auth/plugins"
-import { authSchema } from "@/features/auth/db"
+import { authSchema } from "@/features/auth/schema"
 import { ensureUserOrganization } from "@/features/auth/utils/ensure-user-organization"
 import { findFirstOrganizationIdForUser } from "@/features/auth/utils/find-first-organization-id-for-user"
 import { backendConfig } from "@/lib/config/backend"
@@ -30,6 +30,11 @@ const authPlugins = backendConfig.IS_DEVELOPMENT
 export const auth = betterAuth({
   baseURL: backendConfig.BETTER_AUTH_URL,
   secret: backendConfig.BETTER_AUTH_SECRET,
+  advanced: {
+    database: {
+      generateId: "uuid",
+    },
+  },
   trustedOrigins: [frontendConfig.NEXT_PUBLIC_APP_URL],
   socialProviders: {
     github: {

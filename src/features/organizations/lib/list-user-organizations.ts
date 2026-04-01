@@ -1,22 +1,19 @@
 import { asc, eq } from "drizzle-orm"
-import {
-  organizationMembershipTable,
-  organizationTable,
-} from "@/features/auth/db"
+import { organization, organizationMembership } from "@/features/auth/db"
 import { db } from "@/lib/db"
 
 export const listUserOrganizations = async (userId: string) =>
   db
     .select({
-      id: organizationTable.id,
-      name: organizationTable.name,
-      role: organizationMembershipTable.role,
-      slug: organizationTable.slug,
+      id: organization.id,
+      name: organization.name,
+      role: organizationMembership.role,
+      slug: organization.slug,
     })
-    .from(organizationMembershipTable)
+    .from(organizationMembership)
     .innerJoin(
-      organizationTable,
-      eq(organizationMembershipTable.organizationId, organizationTable.id),
+      organization,
+      eq(organizationMembership.organizationId, organization.id),
     )
-    .where(eq(organizationMembershipTable.userId, userId))
-    .orderBy(asc(organizationTable.createdAt))
+    .where(eq(organizationMembership.userId, userId))
+    .orderBy(asc(organization.createdAt))

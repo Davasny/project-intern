@@ -1,8 +1,5 @@
 import { and, eq } from "drizzle-orm"
-import {
-  organizationMembershipTable,
-  organizationTable,
-} from "@/features/auth/db"
+import { organization, organizationMembership } from "@/features/auth/db"
 import { projectTable } from "@/features/projects/db"
 import { db } from "@/lib/db"
 
@@ -22,23 +19,20 @@ export const ensureProjectAccess = async ({
       activeSchemaVersionId: projectTable.activeSchemaVersionId,
       displayName: projectTable.displayName,
       id: projectTable.id,
-      organizationId: organizationTable.id,
-      organizationSlug: organizationTable.slug,
+      organizationId: organization.id,
+      organizationSlug: organization.slug,
       slug: projectTable.slug,
     })
-    .from(organizationMembershipTable)
+    .from(organizationMembership)
     .innerJoin(
-      organizationTable,
-      eq(organizationMembershipTable.organizationId, organizationTable.id),
+      organization,
+      eq(organizationMembership.organizationId, organization.id),
     )
-    .innerJoin(
-      projectTable,
-      eq(projectTable.organizationId, organizationTable.id),
-    )
+    .innerJoin(projectTable, eq(projectTable.organizationId, organization.id))
     .where(
       and(
-        eq(organizationMembershipTable.userId, userId),
-        eq(organizationTable.slug, organizationSlug),
+        eq(organizationMembership.userId, userId),
+        eq(organization.slug, organizationSlug),
         eq(projectTable.slug, projectSlug),
       ),
     )

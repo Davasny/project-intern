@@ -8,7 +8,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core"
-import { userTable } from "@/features/auth/db"
+import { user } from "@/features/auth/db"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
 
@@ -65,7 +65,7 @@ export const taskDescriptionRevisionTable = pgTable(
       .references(() => taskTable.id, { onDelete: "cascade" }),
     revisionNumber: integer("revision_number").notNull(),
     descriptionMarkdown: text("description_markdown").notNull(),
-    createdByUserId: uuid("created_by_user_id").references(() => userTable.id, {
+    createdByUserId: uuid("created_by_user_id").references(() => user.id, {
       onDelete: "set null",
     }),
     createdAt: createdAtColumn(),
@@ -93,9 +93,9 @@ export const taskRelations = relations(taskTable, ({ one, many }) => ({
 export const taskDescriptionRevisionRelations = relations(
   taskDescriptionRevisionTable,
   ({ one }) => ({
-    createdByUser: one(userTable, {
+    createdByUser: one(user, {
       fields: [taskDescriptionRevisionTable.createdByUserId],
-      references: [userTable.id],
+      references: [user.id],
     }),
     task: one(taskTable, {
       fields: [taskDescriptionRevisionTable.taskId],

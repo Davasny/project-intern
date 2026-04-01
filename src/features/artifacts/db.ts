@@ -10,7 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core"
 import type { ArtifactState } from "@/features/artifacts/schemas/artifact-state"
-import { organizationTable, userTable } from "@/features/auth/db"
+import { organization, user } from "@/features/auth/db"
 import { sourceFileTable } from "@/features/files/db"
 import { projectTable } from "@/features/projects/db"
 import { recordTable } from "@/features/records/db"
@@ -30,7 +30,7 @@ export const artifactTable = pgTable(
     id: uuid("id").default(sql`uuidv7()`).primaryKey(),
     organizationId: uuid("organization_id")
       .notNull()
-      .references(() => organizationTable.id, { onDelete: "cascade" }),
+      .references(() => organization.id, { onDelete: "cascade" }),
     projectId: uuid("project_id")
       .notNull()
       .references(() => projectTable.id, { onDelete: "cascade" }),
@@ -40,7 +40,7 @@ export const artifactTable = pgTable(
     fileId: uuid("file_id")
       .notNull()
       .references(() => sourceFileTable.id, { onDelete: "cascade" }),
-    createdByUserId: uuid("created_by_user_id").references(() => userTable.id, {
+    createdByUserId: uuid("created_by_user_id").references(() => user.id, {
       onDelete: "set null",
     }),
     stage: text("stage").notNull(),
@@ -73,17 +73,17 @@ export const artifactTable = pgTable(
 )
 
 export const artifactRelations = relations(artifactTable, ({ one }) => ({
-  createdByUser: one(userTable, {
+  createdByUser: one(user, {
     fields: [artifactTable.createdByUserId],
-    references: [userTable.id],
+    references: [user.id],
   }),
   file: one(sourceFileTable, {
     fields: [artifactTable.fileId],
     references: [sourceFileTable.id],
   }),
-  organization: one(organizationTable, {
+  organization: one(organization, {
     fields: [artifactTable.organizationId],
-    references: [organizationTable.id],
+    references: [organization.id],
   }),
   project: one(projectTable, {
     fields: [artifactTable.projectId],

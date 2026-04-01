@@ -7,7 +7,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core"
-import { organizationTable, userTable } from "@/features/auth/db"
+import { organization, user } from "@/features/auth/db"
 import { projectTable } from "@/features/projects/db"
 import { recordTable } from "@/features/records/db"
 
@@ -26,14 +26,14 @@ export const sourceFileTable = pgTable(
     id: uuid("id").default(sql`uuidv7()`).primaryKey(),
     organizationId: uuid("organization_id")
       .notNull()
-      .references(() => organizationTable.id, { onDelete: "cascade" }),
+      .references(() => organization.id, { onDelete: "cascade" }),
     projectId: uuid("project_id")
       .notNull()
       .references(() => projectTable.id, { onDelete: "cascade" }),
     recordId: uuid("record_id")
       .notNull()
       .references(() => recordTable.id, { onDelete: "cascade" }),
-    createdByUserId: uuid("created_by_user_id").references(() => userTable.id, {
+    createdByUserId: uuid("created_by_user_id").references(() => user.id, {
       onDelete: "set null",
     }),
     originalFileName: text("original_file_name").notNull(),
@@ -55,13 +55,13 @@ export const sourceFileTable = pgTable(
 )
 
 export const sourceFileRelations = relations(sourceFileTable, ({ one }) => ({
-  createdByUser: one(userTable, {
+  createdByUser: one(user, {
     fields: [sourceFileTable.createdByUserId],
-    references: [userTable.id],
+    references: [user.id],
   }),
-  organization: one(organizationTable, {
+  organization: one(organization, {
     fields: [sourceFileTable.organizationId],
-    references: [organizationTable.id],
+    references: [organization.id],
   }),
   project: one(projectTable, {
     fields: [sourceFileTable.projectId],

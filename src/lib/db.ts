@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres"
 import { Pool } from "pg"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { artifactTable } from "@/features/artifacts/db"
-import { authSchema } from "@/features/auth/db"
+import { authSchema } from "@/features/auth/schema"
 import { sourceFileTable } from "@/features/files/db"
 import { activityLogTable } from "@/features/observability/db"
 import {

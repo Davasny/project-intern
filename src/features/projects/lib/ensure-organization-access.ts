@@ -1,8 +1,5 @@
 import { and, eq } from "drizzle-orm"
-import {
-  organizationMembershipTable,
-  organizationTable,
-} from "@/features/auth/db"
+import { organization, organizationMembership } from "@/features/auth/db"
 import { db } from "@/lib/db"
 
 type EnsureOrganizationAccessParams = {
@@ -16,19 +13,19 @@ export const ensureOrganizationAccess = async ({
 }: EnsureOrganizationAccessParams) =>
   db
     .select({
-      id: organizationTable.id,
-      name: organizationTable.name,
-      slug: organizationTable.slug,
+      id: organization.id,
+      name: organization.name,
+      slug: organization.slug,
     })
-    .from(organizationMembershipTable)
+    .from(organizationMembership)
     .innerJoin(
-      organizationTable,
-      eq(organizationMembershipTable.organizationId, organizationTable.id),
+      organization,
+      eq(organizationMembership.organizationId, organization.id),
     )
     .where(
       and(
-        eq(organizationMembershipTable.userId, userId),
-        eq(organizationTable.slug, organizationSlug),
+        eq(organizationMembership.userId, userId),
+        eq(organization.slug, organizationSlug),
       ),
     )
     .then((rows) => rows[0] ?? null)

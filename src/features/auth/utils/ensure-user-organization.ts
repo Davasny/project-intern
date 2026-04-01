@@ -1,8 +1,5 @@
 import { eq, like } from "drizzle-orm"
-import {
-  organizationMembershipTable,
-  organizationTable,
-} from "@/features/auth/db"
+import { organization, organizationMembership } from "@/features/auth/db"
 import { buildPersonalOrganizationName } from "@/features/auth/utils/build-personal-organization-name"
 import { db } from "@/lib/db"
 import { createSlug } from "@/utils/create-slug"
@@ -18,9 +15,9 @@ const createUniqueOrganizationSlug = async (organizationName: string) => {
   const baseSlug = createSlug(organizationName)
   const slugPrefix = `${baseSlug}-personal`
   const existingOrganizations = await db
-    .select({ slug: organizationTable.slug })
-    .from(organizationTable)
-    .where(like(organizationTable.slug, `${slugPrefix}%`))
+    .select({ slug: organization.slug })
+    .from(organization)
+    .where(like(organization.slug, `${slugPrefix}%`))
 
   if (existingOrganizations.length === 0) {
     return slugPrefix
@@ -45,10 +42,11 @@ export const ensureUserOrganization = async ({
   userId,
   userName,
 }: EnsureUserOrganizationParams) => {
+  const createdAt = new Date()
   const existingMembership = await db
-    .select({ organizationId: organizationMembershipTable.organizationId })
-    .from(organizationMembershipTable)
-    .where(eq(organizationMembershipTable.userId, userId))
+    .select({ organizationId: organizationMembership.organizationId })
+    .from(organizationMembership)
+    .where(eq(organizationMembership.userId, userId))
     .then((rows) => rows[0] ?? null)
 
   if (existingMembership) {
@@ -63,24 +61,26 @@ export const ensureUserOrganization = async ({
   const organizationSlug = await createUniqueOrganizationSlug(organizationName)
 
   return db.transaction(async (transaction) => {
-    const [organization] = await transaction
-      .insert(organizationTable)
+    const [createdOrganization] = await transaction
+      .insert(organization)
       .values({
+        createdAt,
         name: organizationName,
         slug: organizationSlug,
-        metadata: {
+        metadata: JSON.stringify({
           bootstrapSource: "first-login",
           isPersonal: true,
-        },
+        }),
       })
-      .returning({ id: organizationTable.id })
+      .returning({ id: organization.id })
 
-    await transaction.insert(organizationMembershipTable).values({
-      organizationId: organization.id,
+    await transaction.insert(organizationMembership).values({
+      createdAt,
+      organizationId: createdOrganization.id,
       role: "owner",
       userId,
     })
 
-    return organization.id
+    return createdOrganization.id
   })
 }
