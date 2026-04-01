@@ -2,6 +2,7 @@ import { authRouter } from "@/features/auth/router"
 import { organizationsRouter } from "@/features/organizations/router"
 import { projectSchemaRouter } from "@/features/project-schema/router"
 import { projectsRouter } from "@/features/projects/router"
+import { recordEdgesRouter } from "@/features/record-edges/router"
 import { recordsRouter } from "@/features/records/router"
 import { tasksRouter } from "@/features/tasks/router"
 import { router } from "@/lib/trpc/init"
@@ -12,6 +13,7 @@ export const appRouter = router({
   projectSchema: projectSchemaRouter,
   projects: projectsRouter,
   records: recordsRouter,
+  recordEdges: recordEdgesRouter,
   tasks: tasksRouter,
 })
 

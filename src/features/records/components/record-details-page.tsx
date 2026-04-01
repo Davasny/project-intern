@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { RecordRelationsSection } from "@/features/record-edges/components/record-relations-section"
 import { RecordForm } from "@/features/records/components/record-form"
 import { RecordLinkedTaskRow } from "@/features/records/components/record-linked-task-row"
 import { useTRPC } from "@/lib/trpc/client"
@@ -178,6 +179,11 @@ export const RecordDetailsPage = ({
           </DataTable>
         </SectionCardContent>
       </SectionCard>
+      <RecordRelationsSection
+        organizationSlug={organizationSlug}
+        projectSlug={projectSlug}
+        recordId={recordQuery.data.id}
+      />
     </div>
   )
 }

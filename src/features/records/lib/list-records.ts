@@ -1,7 +1,8 @@
 import { TRPCError } from "@trpc/server"
-import { desc, eq } from "drizzle-orm"
+import { desc, eq, inArray } from "drizzle-orm"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import { listRecordRelationSummaries } from "@/features/record-edges/lib/list-record-relation-summaries"
 import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
@@ -58,6 +59,7 @@ export const listRecords = async ({
             taskId: taskRecordTable.taskId,
           })
           .from(taskRecordTable)
+          .where(inArray(taskRecordTable.recordId, recordIds))
       : []
 
   const activeAgentRunIds = taskRecords
@@ -73,6 +75,7 @@ export const listRecords = async ({
             state: agentRunTable.state,
           })
           .from(agentRunTable)
+          .where(inArray(agentRunTable.id, activeAgentRunIds))
       : []
 
   const tasks = await db
@@ -87,6 +90,10 @@ export const listRecords = async ({
   const agentRunMap = new Map(
     agentRuns.map((agentRun) => [agentRun.id, agentRun]),
   )
+  const relationSummaryMap = await listRecordRelationSummaries({
+    projectId: project.id,
+    recordIds,
+  })
 
   return records.map((record) => {
     const linkedTaskRecords = taskRecords.filter(
@@ -100,6 +107,13 @@ export const listRecords = async ({
             : null,
         )
         .find((agentRun) => agentRun !== null) ?? null
+
+    const relationSummary = relationSummaryMap.get(record.id) ?? {
+      activeCount: 0,
+      inboundCount: 0,
+      outboundCount: 0,
+      relatedRecords: [],
+    }
 
     return {
       ...record,
@@ -126,6 +140,7 @@ export const listRecords = async ({
           (taskRecord) => taskRecord.state === "waiting",
         ).length,
       },
+      relationSummary,
     }
   })
 }

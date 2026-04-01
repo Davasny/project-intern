@@ -27,6 +27,16 @@ type RecordListItemProps = {
       totalCount: number
       waitingCount: number
     }
+    relationSummary: {
+      activeCount: number
+      inboundCount: number
+      outboundCount: number
+      relatedRecords: Array<{
+        name: string
+        projectDisplayName: string
+        relationType: string
+      }>
+    }
     schemaVersion: number
     state: "active" | "archived" | "error" | "processing"
     updatedAt: Date
@@ -65,6 +75,12 @@ export const RecordListItem = ({
         </span>
         <span>{record.progress.inProgressCount} active</span>
         <span>{record.progress.waitingCount} waiting</span>
+        <span>{record.relationSummary.activeCount} relations</span>
+        {record.relationSummary.relatedRecords.map((relatedRecord) => (
+          <span key={`${relatedRecord.relationType}-${relatedRecord.name}`}>
+            {relatedRecord.relationType} → {relatedRecord.name}
+          </span>
+        ))}
         {record.activeRun ? (
           <RunStatusBadge state={record.activeRun.state} />
         ) : null}
