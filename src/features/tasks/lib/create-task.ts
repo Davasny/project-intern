@@ -1,11 +1,13 @@
 import { TRPCError } from "@trpc/server"
 import { asc, eq, sql } from "drizzle-orm"
 import { validateApprovedTaskModel } from "@/features/execution/lib/validate-approved-task-model"
+import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get-active-project-schema-version"
 import { fanOutTaskRecordsForTask } from "@/features/task-records/lib/fan-out-task-records-for-task"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import type { TaskInput } from "@/features/tasks/schemas/task-input"
 import { db } from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 type CreateTaskParams = {
   input: TaskInput
@@ -80,6 +82,32 @@ export const createTask = async ({
     projectId: activeSchemaVersion.project.id,
     taskId: task.id,
   })
+
+  await createActivityLogEvent({
+    actorId: userId,
+    actorType: "user",
+    agentRunId: null,
+    entityId: task.id,
+    entityType: "task",
+    eventType: "task.created",
+    organizationId: activeSchemaVersion.project.organizationId,
+    payload: {
+      schemaVersion: task.schemaVersion,
+      sortOrder: task.sortOrder,
+      title: task.title,
+    },
+    projectId: activeSchemaVersion.project.id,
+    recordId: null,
+    relatedProjectId: null,
+    relatedRecordId: null,
+    taskId: task.id,
+    taskRecordId: null,
+  })
+
+  logger.info(
+    { projectId: activeSchemaVersion.project.id, taskId: task.id, userId },
+    "Created task and task records",
+  )
 
   return db
     .select({

@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { getAgentRunActor } from "@/features/agent-runs/lib/get-agent-run-actor"
+import { getToolCallCount } from "@/features/agent-runs/lib/get-tool-call-count"
 import { db } from "@/lib/db"
 
 type PersistAgentRunOutputsParams = {
@@ -20,7 +21,14 @@ export const persistAgentRunOutputs = async ({
   await actor.send("persist")
   await db
     .update(agentRunTable)
-    .set({ resultPayload, tokenOutput, toolActivitySummary })
+    .set({
+      outputTokens: tokenOutput,
+      resultPayload,
+      tokenOutput,
+      toolActivitySummary,
+      toolCallCount: getToolCallCount(toolActivitySummary),
+      toolSummary: toolActivitySummary,
+    })
     .where(eq(agentRunTable.id, agentRunId))
   return actor
 }

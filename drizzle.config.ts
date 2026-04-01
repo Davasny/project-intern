@@ -11,6 +11,7 @@ export default defineConfig({
     "./src/features/auth/db.ts",
     "./src/features/projects/db.ts",
     "./src/features/project-schema/db.ts",
+    "./src/features/observability/db.ts",
     "./src/features/records/db.ts",
     "./src/features/record-edges/db.ts",
     "./src/features/tasks/db.ts",

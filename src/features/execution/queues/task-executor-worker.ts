@@ -20,7 +20,10 @@ export const taskExecutorWorker = async () => {
 
       const payload = taskExecutorQueuePayloadSchema.parse(job.data)
 
-      await executorService({ taskRecordId: payload.taskRecordId })
+      await executorService({
+        agentRunId: payload.agentRunId,
+        taskRecordId: payload.taskRecordId,
+      })
     },
   )
 }

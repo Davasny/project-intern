@@ -72,52 +72,6 @@ export const recordEdgeTable = pgTable(
   ],
 )
 
-export const activityLogTable = pgTable(
-  "activity_log",
-  {
-    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
-    projectId: uuid("project_id")
-      .notNull()
-      .references(() => projectTable.id, { onDelete: "cascade" }),
-    recordId: uuid("record_id")
-      .notNull()
-      .references(() => recordTable.id, { onDelete: "cascade" }),
-    relatedProjectId: uuid("related_project_id")
-      .notNull()
-      .references(() => projectTable.id, { onDelete: "cascade" }),
-    relatedRecordId: uuid("related_record_id")
-      .notNull()
-      .references(() => recordTable.id, { onDelete: "cascade" }),
-    entityType: text("entity_type").notNull(),
-    entityId: uuid("entity_id").notNull(),
-    eventType: text("event_type").notNull(),
-    actorType: text("actor_type").notNull(),
-    actorId: uuid("actor_id"),
-    payload: jsonb("payload")
-      .$type<Record<string, unknown>>()
-      .notNull()
-      .default(sql`'{}'::jsonb`),
-    createdAt: createdAtColumn(),
-  },
-  (table) => [
-    index("activity_log_project_record_created_at_idx").on(
-      table.projectId,
-      table.recordId,
-      table.createdAt,
-    ),
-    index("activity_log_related_project_record_created_at_idx").on(
-      table.relatedProjectId,
-      table.relatedRecordId,
-      table.createdAt,
-    ),
-    index("activity_log_entity_idx").on(
-      table.entityType,
-      table.entityId,
-      table.createdAt,
-    ),
-  ],
-)
-
 export const recordEdgeRelations = relations(recordEdgeTable, ({ one }) => ({
   createdByTask: one(taskTable, {
     fields: [recordEdgeTable.createdByTaskId],
@@ -142,28 +96,5 @@ export const recordEdgeRelations = relations(recordEdgeTable, ({ one }) => ({
     fields: [recordEdgeTable.toRecordId],
     references: [recordTable.id],
     relationName: "record_edge_to_record",
-  }),
-}))
-
-export const activityLogRelations = relations(activityLogTable, ({ one }) => ({
-  project: one(projectTable, {
-    fields: [activityLogTable.projectId],
-    references: [projectTable.id],
-    relationName: "activity_log_project",
-  }),
-  record: one(recordTable, {
-    fields: [activityLogTable.recordId],
-    references: [recordTable.id],
-    relationName: "activity_log_record",
-  }),
-  relatedProject: one(projectTable, {
-    fields: [activityLogTable.relatedProjectId],
-    references: [projectTable.id],
-    relationName: "activity_log_related_project",
-  }),
-  relatedRecord: one(recordTable, {
-    fields: [activityLogTable.relatedRecordId],
-    references: [recordTable.id],
-    relationName: "activity_log_related_record",
   }),
 }))

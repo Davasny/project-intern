@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
+import { listTaskRecordExecutionReadModels } from "@/features/execution/lib/list-task-record-execution-read-models"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
@@ -60,7 +60,6 @@ export const getRecordById = async ({
 
   const linkedTaskRecords = await db
     .select({
-      agentRunId: taskRecordTable.agentRunId,
       errorCode: taskRecordTable.errorCode,
       lastTransitionAt: taskRecordTable.lastTransitionAt,
       state: taskRecordTable.state,
@@ -72,44 +71,38 @@ export const getRecordById = async ({
     .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
     .where(eq(taskRecordTable.recordId, recordId))
 
-  const agentRunIds = linkedTaskRecords
-    .map((taskRecord) => taskRecord.agentRunId)
-    .filter((agentRunId) => agentRunId !== null)
-
-  const agentRuns =
-    agentRunIds.length > 0
-      ? await db
-          .select({
-            id: agentRunTable.id,
-            selectedAgent: agentRunTable.selectedAgent,
-            selectedModel: agentRunTable.selectedModel,
-            state: agentRunTable.state,
-            taskRecordId: agentRunTable.taskRecordId,
-            updatedAt: agentRunTable.updatedAt,
-          })
-          .from(agentRunTable)
-      : []
-
-  const agentRunMap = new Map(
-    agentRuns.map((agentRun) => [agentRun.id, agentRun]),
+  const executionReadModels = await listTaskRecordExecutionReadModels({
+    projectId: project.id,
+    recordId,
+    taskId: null,
+  })
+  const executionReadModelMap = new Map(
+    executionReadModels.map((executionReadModel) => [
+      executionReadModel.taskRecordId,
+      executionReadModel,
+    ]),
   )
 
   return {
     ...record,
     activeRunSummary:
       linkedTaskRecords
-        .map((taskRecord) =>
-          taskRecord.agentRunId !== null
-            ? (agentRunMap.get(taskRecord.agentRunId) ?? null)
-            : null,
+        .map(
+          (taskRecord) =>
+            executionReadModelMap.get(taskRecord.taskRecordId)
+              ?.latestAgentRun ?? null,
         )
         .find((agentRun) => agentRun !== null) ?? null,
     linkedTasks: linkedTaskRecords.map((taskRecord) => ({
       ...taskRecord,
+      attemptCount:
+        executionReadModelMap.get(taskRecord.taskRecordId)?.attemptCount ?? 0,
       latestAgentRun:
-        taskRecord.agentRunId !== null
-          ? (agentRunMap.get(taskRecord.agentRunId) ?? null)
-          : null,
+        executionReadModelMap.get(taskRecord.taskRecordId)?.latestAgentRun ??
+        null,
+      latestFailurePayload:
+        executionReadModelMap.get(taskRecord.taskRecordId)
+          ?.latestFailurePayload ?? null,
     })),
     progress: {
       completedCount: linkedTaskRecords.filter(

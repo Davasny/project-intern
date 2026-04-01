@@ -1,4 +1,6 @@
-import { activityLogTable } from "@/features/record-edges/db"
+import { eq } from "drizzle-orm"
+import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
+import { projectTable } from "@/features/projects/db"
 import { db } from "@/lib/db"
 
 type CreateActivityLogParams = {
@@ -23,16 +25,31 @@ export const createActivityLog = async ({
   recordId,
   relatedProjectId,
   relatedRecordId,
-}: CreateActivityLogParams) =>
-  db.insert(activityLogTable).values({
+}: CreateActivityLogParams) => {
+  const project = await db
+    .select({ organizationId: projectTable.organizationId })
+    .from(projectTable)
+    .where(eq(projectTable.id, projectId))
+    .then((rows) => rows[0] ?? null)
+
+  if (!project) {
+    return
+  }
+
+  await createActivityLogEvent({
     actorId,
     actorType,
+    agentRunId: actorType === "executor" ? actorId : null,
     entityId,
     entityType: "recordEdge",
     eventType,
+    organizationId: project.organizationId,
     payload,
     projectId,
     recordId,
     relatedProjectId,
     relatedRecordId,
+    taskId: null,
+    taskRecordId: null,
   })
+}

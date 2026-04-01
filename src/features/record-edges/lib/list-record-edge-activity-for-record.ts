@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { and, desc, eq, or } from "drizzle-orm"
+import { activityLogTable } from "@/features/observability/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
-import { activityLogTable } from "@/features/record-edges/db"
 import { db } from "@/lib/db"
 
 type ListRecordEdgeActivityForRecordParams = {

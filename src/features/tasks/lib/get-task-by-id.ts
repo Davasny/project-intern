@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server"
-import { and, asc, desc, eq, inArray } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
+import { and, asc, desc, eq } from "drizzle-orm"
+import { listTaskRecordExecutionReadModels } from "@/features/execution/lib/list-task-record-execution-read-models"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
@@ -71,7 +71,6 @@ export const getTaskById = async ({
 
   const taskRecords = await db
     .select({
-      agentRunId: taskRecordTable.agentRunId,
       errorCode: taskRecordTable.errorCode,
       id: taskRecordTable.id,
       lastTransitionAt: taskRecordTable.lastTransitionAt,
@@ -84,28 +83,17 @@ export const getTaskById = async ({
     .where(eq(taskRecordTable.taskId, taskId))
     .orderBy(asc(recordTable.name))
 
-  const agentRunIds = taskRecords
-    .map((taskRecord) => taskRecord.agentRunId)
-    .filter((agentRunId) => agentRunId !== null)
+  const executionReadModels = await listTaskRecordExecutionReadModels({
+    projectId: project.id,
+    recordId: null,
+    taskId,
+  })
 
-  const agentRuns =
-    agentRunIds.length > 0
-      ? await db
-          .select({
-            attemptNumber: agentRunTable.attemptNumber,
-            id: agentRunTable.id,
-            selectedAgent: agentRunTable.selectedAgent,
-            selectedModel: agentRunTable.selectedModel,
-            state: agentRunTable.state,
-            taskRecordId: agentRunTable.taskRecordId,
-            updatedAt: agentRunTable.updatedAt,
-          })
-          .from(agentRunTable)
-          .where(inArray(agentRunTable.id, agentRunIds))
-      : []
-
-  const agentRunMap = new Map(
-    agentRuns.map((agentRun) => [agentRun.id, agentRun]),
+  const executionReadModelMap = new Map(
+    executionReadModels.map((executionReadModel) => [
+      executionReadModel.taskRecordId,
+      executionReadModel,
+    ]),
   )
   const taskRecordStates = taskRecords.map((taskRecord) => taskRecord.state)
 
@@ -129,10 +117,11 @@ export const getTaskById = async ({
     summaryState: getDerivedTaskSummaryState({ states: taskRecordStates }),
     taskRecords: taskRecords.map((taskRecord) => ({
       ...taskRecord,
+      attemptCount: executionReadModelMap.get(taskRecord.id)?.attemptCount ?? 0,
       latestAgentRun:
-        taskRecord.agentRunId !== null
-          ? (agentRunMap.get(taskRecord.agentRunId) ?? null)
-          : null,
+        executionReadModelMap.get(taskRecord.id)?.latestAgentRun ?? null,
+      latestFailurePayload:
+        executionReadModelMap.get(taskRecord.id)?.latestFailurePayload ?? null,
     })),
   }
 }

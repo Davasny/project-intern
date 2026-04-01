@@ -1,10 +1,12 @@
 import { TRPCError } from "@trpc/server"
 import { and, desc, eq } from "drizzle-orm"
 import { validateApprovedTaskModel } from "@/features/execution/lib/validate-approved-task-model"
+import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import type { TaskUpdateInput } from "@/features/tasks/schemas/task-input"
 import { db } from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 type UpdateTaskParams = {
   input: TaskUpdateInput
@@ -88,7 +90,32 @@ export const updateTask = async ({
       revisionNumber: latestRevision ? latestRevision.revisionNumber + 1 : 1,
       taskId: input.taskId,
     })
+
+    await createActivityLogEvent({
+      actorId: userId,
+      actorType: "user",
+      agentRunId: null,
+      entityId: input.taskId,
+      entityType: "task",
+      eventType: "task.description_revised",
+      organizationId: project.organizationId,
+      payload: {
+        nextDescriptionLength: input.descriptionMarkdown.length,
+        title: task.title,
+      },
+      projectId: project.id,
+      recordId: null,
+      relatedProjectId: null,
+      relatedRecordId: null,
+      taskId: input.taskId,
+      taskRecordId: null,
+    })
   }
+
+  logger.info(
+    { projectId: project.id, taskId: input.taskId, userId },
+    "Updated task",
+  )
 
   return task
 }

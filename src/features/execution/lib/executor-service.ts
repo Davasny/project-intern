@@ -1,4 +1,3 @@
-import { createAgentRun } from "@/features/agent-runs/lib/create-agent-run"
 import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-booting"
 import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
 import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
@@ -13,23 +12,27 @@ import { listRecordFiles } from "@/features/files/lib/list-record-files"
 import { getPipelineDefinition } from "@/features/pipelines/lib/get-pipeline-definition"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
+import { logger } from "@/lib/logger"
 import { getOpencodeClient } from "@/lib/opencode/get-opencode-client"
 
 type ExecutorServiceParams = {
+  agentRunId: string
   taskRecordId: string
 }
 
 export const executorService = async ({
+  agentRunId,
   taskRecordId,
 }: ExecutorServiceParams) => {
-  const initialAgentRun = await createAgentRun({
-    selectedAgent: "record-worker",
-    selectedModel: null,
-    taskRecordId,
-  })
-
   const initialScope = await getAgentRunExecutionScope({
-    agentRunId: initialAgentRun.id,
+    agentRunId,
+  })
+  const executionLogger = logger.child({
+    agentRunId: initialScope.agentRun.id,
+    projectId: initialScope.project.id,
+    recordId: initialScope.record.id,
+    taskId: initialScope.task.id,
+    taskRecordId,
   })
 
   const runtimeModel = resolveRuntimeModel({
@@ -101,7 +104,9 @@ export const executorService = async ({
   const [providerID, modelID] = runtimeModel.split("/")
 
   await markAgentRunBooting({
-    agentRunId: initialAgentRun.id,
+    agentRunId: initialScope.agentRun.id,
+    model: modelID,
+    provider: providerID,
     sessionReference: session.data.id,
     toolActivitySummary: {
       filesAvailable: files.length,
@@ -155,8 +160,10 @@ export const executorService = async ({
   })
 
   await markAgentRunRunning({
-    agentRunId: initialAgentRun.id,
+    agentRunId: initialScope.agentRun.id,
+    model: modelID,
     latencyMs: null,
+    provider: providerID,
     sessionReference: session.data.id,
     tokenInput: null,
     toolActivitySummary: {
@@ -168,8 +175,16 @@ export const executorService = async ({
     },
   })
 
+  executionLogger.info(
+    {
+      model: runtimeModel,
+      sessionId: session.data.id,
+    },
+    "Executor bootstrapped claimed task record",
+  )
+
   return {
-    agentRunId: initialAgentRun.id,
+    agentRunId: initialScope.agentRun.id,
     artifacts,
     files,
     model: runtimeModel,
