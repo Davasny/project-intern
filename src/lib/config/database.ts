@@ -4,7 +4,7 @@ const databaseConfigSchema = z.object({
   DATABASE_URL: z
     .string()
     .url()
-    .default("postgresql://intern:intern@localhost:5433/project_intern"),
+    .default("postgresql://intern:intern@localhost:5438/project_intern"),
 })
 
 export const databaseConfig = databaseConfigSchema.parse({

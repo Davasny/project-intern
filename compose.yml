@@ -7,9 +7,9 @@ services:
       POSTGRES_USER: intern
       POSTGRES_PASSWORD: intern
     ports:
-      - "5433:5432"
+      - "5438:5432"
     volumes:
-      - project_intern_postgres_data:/var/lib/postgresql/data
+      - project_intern_postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U intern -d project_intern"]
       interval: 10s
