@@ -1,4 +1,4 @@
-# Agentic CRM / Task System Plan
+# Project Intern — Agentic CRM / Task System Plan
 
 ## 1. Objective
 
@@ -13,10 +13,16 @@ Build a fresh CRM/task management system that is **agentic-first** for **intern-
 V1 stack:
 
 - TypeScript
-- tRPC
-- Drizzle
+- Next.js App Router
+- tRPC + TanStack React Query
+- Drizzle + PostgreSQL 18
+- Docker Compose for local database runtime
 - Better Auth
-- OpenCode for agent execution
+- Zod
+- Hono mounted as the single Next.js API app
+- Machin for lifecycle state machines
+- OpenCode server + SDK for agent execution
+- shadcn/ui + Tailwind CSS for frontend
 
 ---
 
@@ -75,6 +81,7 @@ Authentication in v1:
 
 - GitHub OAuth only
 - implemented with Better Auth
+- development environment also supports Better Auth anonymous login plugin for account-free testing
 
 Each user always operates inside an organization and a project scope.
 
@@ -250,6 +257,162 @@ Examples:
 - `invoice --issued_for--> company`
 - `contact --works_for--> company`
 
+### 4.2 Concrete application architecture blueprint
+
+Use a single Next.js application as the main UI host in v1, with one Hono app mounted inside the Next.js API layer as the only backend request entrypoint.
+
+Runtime layers:
+
+1. **Next.js app router**
+   - hosts authenticated product UI
+   - owns route layouts, organization/project scope, and project settings pages
+
+2. **Single Hono API layer inside Next.js**
+   - mounted once in the Next.js API directory
+   - handles all backend HTTP traffic for tRPC, Better Auth, MCP, and any future internal endpoints
+   - centralizes auth middleware, request context, logging, and shared route composition
+
+3. **Domain services layer**
+   - feature-local services coordinate DB access, validation, storage, and machine transitions
+   - routers stay thin and call feature services
+
+4. **Machin lifecycle layer**
+   - owns transition rules for `TaskRecord`, `AgentRun`, `PipelineRun`, `Artifact`, and `RecordEdge`
+   - frontend renders persisted machine state directly
+
+5. **Executor layer**
+   - scheduler selects eligible `TaskRecord`
+   - executor ensures workspace hydration
+   - executor opens OpenCode session through SDK
+   - executor persists outputs, transitions state, and records telemetry
+
+6. **Hono sub-apps / route groups**
+   - Hono serves `/trpc/*`, `/auth/*`, `/mcp`, and any future backend endpoints from one mounted app
+   - MCP remains one route group inside that same Hono app
+
+7. **Postgres + local disk storage**
+   - Postgres stores canonical metadata, schema versions, machine states, lineage, and audit trail
+   - local disk stores canonical files/artifacts and long-lived record workspaces
+
+### 4.3 Concrete repository blueprint
+
+Recommended repository structure for this project:
+
+```txt
+src/
+  app/
+    (public)/
+    (protected)/
+      app/
+        [organizationSlug]/
+          [projectSlug]/
+            tasks/
+            records/
+            settings/
+    api/
+      [[...route]]/route.ts
+  components/
+    ui/
+  features/
+    auth/
+    organizations/
+    projects/
+    project-schema/
+    records/
+    tasks/
+    task-records/
+    agent-runs/
+    record-edges/
+    files/
+    artifacts/
+    pipelines/
+    execution/
+    observability/
+  lib/
+    config/
+    db.ts
+    trpc/
+    logger.ts
+    machin/
+    opencode/
+    mcp/
+  utils/
+```
+
+Repository rules for this plan:
+
+- all auth ownership lives in `src/features/auth`
+- do **not** create `src/lib/auth`; shared auth code belongs to the auth feature
+- `src/features/auth` should own Better Auth config, auth client, roles, org helpers, auth-facing schemas, and auth DB tables
+- `src/lib/config` should be split into `frontend.ts`, `backend.ts`, and `database.ts`
+- `src/lib/config/database.ts` should be imported only by `src/lib/db.ts`
+- feature code must not import database config directly; it should import the ready DB client from `src/lib/db.ts`
+- this avoids loading all app configs during Drizzle generate/migrate flows
+- feature folders own their Drizzle schema, Zod schemas, services, and tRPC router
+- shared infrastructure lives in `src/lib`
+- reusable UI primitives live in `src/components/ui`
+- feature pages compose feature components and call tRPC procedures served through the shared Hono app
+- Better Auth, tRPC, and MCP are all exposed through one Hono mount, not separate Next.js route handlers
+- background orchestration code lives in `src/features/execution`
+
+Concrete auth feature shape:
+
+```txt
+src/features/auth/
+  db.ts
+  router.ts
+  consts/
+  lib/
+    auth.ts
+    auth-client.ts
+    global-roles.ts
+    organization-roles.ts
+  utils/
+```
+
+Concrete config and DB shape:
+
+```txt
+src/lib/config/
+  frontend.ts
+  backend.ts
+  database.ts
+
+src/lib/
+  db.ts
+```
+
+Config ownership rules:
+
+- `frontend.ts` contains only browser-safe public config
+- `backend.ts` contains server runtime config except direct DB connection config
+- `database.ts` contains only DB connection/runtime settings needed to construct the Drizzle client
+- `db.ts` is the only place allowed to import `database.ts`
+- all features import the DB client from `src/lib/db.ts`, never raw database env config
+
+Auth implementation rules:
+
+- `src/features/auth/lib/auth.ts` owns the Better Auth server instance
+- `src/features/auth/lib/auth-client.ts` owns the Better Auth client instance
+- GitHub OAuth stays enabled for normal v1 usage
+- Better Auth anonymous plugin is enabled only when app config marks the environment as development
+- auth route handlers are still mounted through the shared Hono API app
+
+Concrete execution feature shape:
+
+```txt
+src/features/execution/
+  lib/
+    scheduler-service.ts
+    executor-service.ts
+  queues/
+    task-executor-queue.ts
+    task-executor-worker.ts
+    schedule-task-executor.ts
+  entrypoints/
+    run-execution-workers.ts
+```
+
 ---
 
 ## 5. Data model decisions
@@ -327,6 +490,7 @@ Example rule:
 Decision:
 
 - use Better Auth with GitHub OAuth only in v1
+- in development only, also enable Better Auth anonymous login plugin to allow testing without creating a real account
 
 Tenancy hierarchy:
 
@@ -346,6 +510,14 @@ First login flow:
 4. system assigns user as organization owner
 5. system lands user in project creation / selection flow
 
+Development anonymous flow:
+
+1. developer starts an anonymous session in local/dev environment
+2. system creates an anonymous user/session through Better Auth anonymous plugin
+3. system creates a disposable personal organization for that anonymous user if missing
+4. anonymous user can test project creation and normal product flows in dev
+5. anonymous login must be disabled outside development environments
+
 Membership flow in v1:
 
 - organization owners can add existing users to the organization
@@ -353,6 +525,106 @@ Membership flow in v1:
 - no public join links yet
 - organization membership stays minimal: `owner` and `member`
 - all project members can operate normal project workflows in v1
+
+### 5.6 Concrete v1 database blueprint
+
+Use Drizzle with one table definition file per feature. The canonical v1 tables should be:
+
+#### Auth / tenancy
+
+- `user`
+- `session`
+- `account`
+- `verification`
+- `organization`
+- `organizationMembership`
+
+Better Auth plugin note:
+
+- keep auth tables inside `src/features/auth/db.ts`
+- configure GitHub OAuth as the normal v1 auth method
+- configure Better Auth anonymous plugin only in development
+- when anonymous login is enabled, plan for anonymous-user-to-real-account linking later, but keep v1 implementation minimal
+
+#### Core business
+
+- `project`
+- `projectSchemaVersion`
+- `record`
+- `task`
+- `taskDescriptionRevision`
+- `taskRecord`
+- `agentRun`
+- `recordEdge`
+- `activityLog`
+
+#### Files and pipelines
+
+- `sourceFile`
+- `artifact`
+- `pipelineDefinition`
+- `pipelineRun`
+
+#### Concrete table responsibilities
+
+- `project` stores org ownership, slug, display name, active schema version id, and executor defaults
+- `projectSchemaVersion` stores the full validated schema JSON, version number, and optional parent version id
+- `record` stores project envelope fields, active schema version, machine state, JSONB `context`, and optimistic `version`
+- `task` stores ordering, markdown description, optional model override, optional pipeline version, and idempotency key
+- `taskDescriptionRevision` stores append-only task description history for the UI diff/revision view
+- `taskRecord` stores the per-record lifecycle row for one `(taskId, recordId)` pair
+- `agentRun` stores one execution attempt for one `taskRecord`
+- `recordEdge` stores generic cross-project relations with machine state and auditable metadata
+- `sourceFile` stores canonical uploaded file metadata and disk storage path
+- `artifact` stores canonical derived output metadata, lineage tuple, machine state, and disk storage path
+- `pipelineDefinition` stores versioned stage config and parser asset bundle version
+- `pipelineRun` stores one processing attempt lineage for one task-record execution
+- `activityLog` stores append-only audit events for user actions and machine-visible transitions
+
+### 5.7 Concrete v1 relational rules
+
+Required constraints and indexes:
+
+- `organization.slug` unique
+- `project (organizationId, slug)` unique
+- `projectSchemaVersion (projectId, version)` unique
+- `record (projectId, id)` indexed and `record.name` indexed per project
+- `task (projectId, sortOrder)` unique
+- `taskRecord (taskId, recordId)` unique
+- `agentRun (taskRecordId, attemptNumber)` unique
+- `artifact (recordId, fileId, stage, sourceHash, pipelineVersion)` unique
+- `recordEdge` indexes on source, target, and `(fromProjectId, toProjectId, relationType)`
+- partial unique app rule for one active task execution per record at a time
+
+### 5.8 Membership simplification decision
+
+Resolve the earlier ambiguity as follows for v1:
+
+- keep explicit `organizationMembership`
+- do **not** add separate `projectMembership` yet
+- all organization members can access all projects in that organization in v1
+- if project-specific access is needed later, add `projectMembership` in v2 without changing core record/task design
+
+### 5.9 Local database runtime blueprint
+
+For local development, use Docker Compose the same way as in the reference projects.
+
+Concrete local database defaults for **Project Intern**:
+
+- database service managed by `docker-compose.yml` or `compose.yml`
+- PostgreSQL 18 image
+- host port: `5438` to avoid conflicts with other local projects
+- database name: `project_intern`
+- database user: `intern`
+- database password: `intern`
+
+Rules:
+
+- `src/lib/config/database.ts` should define the local `DATABASE_URL` source for the DB client
+- only `src/lib/db.ts` may import `src/lib/config/database.ts`
+- keep credentials simple only for local development
+- do not reuse database credentials from other projects
+- production/staging environments must override all DB credentials and host settings
 
 ---
 
@@ -466,22 +738,58 @@ Use:
 
 - `opencode serve`
 - `@opencode-ai/sdk`
-- one app-owned Hono MCP server for business tools
+- one app-owned Hono application mounted in Next.js API
 
 Your backend should:
 
 1. create/select a task
 2. read the task model override if present
 3. prepare workspace inputs
-4. expose record/file/artifact/relation operations through the Hono MCP server
+4. expose record/file/artifact/relation operations through the MCP routes inside the shared Hono app
 5. create an OpenCode session
 6. send prompt + context + model override
 7. capture structured output / MCP tool effects
 8. persist results in your app DB/storage
 
+### 7.2B Concrete backend service split
+
+Recommended app services:
+
+- `api-app-service` — builds the single Hono app, mounts route groups, injects request context, and shares middleware across tRPC, Better Auth, and MCP
+- `auth-service` — Better Auth integration and post-login organization bootstrap
+- `project-access-service` — resolves current org/project scope and membership checks
+- `project-schema-service` — schema version creation, validation, diffing, and active-version reads
+- `record-service` — record CRUD, schema-validated context updates, optimistic patch application
+- `task-service` — task CRUD, ordering, revision history, and task fan-out into `taskRecord`
+- `task-record-service` — claim, retry, cancel, skip, and state transition helpers
+- `agent-run-service` — create run, persist telemetry, attach outputs/failures, finalize run
+- `relation-service` — relation creation, deactivation, traversal, and cardinality enforcement
+- `file-service` — canonical file registration, hashing, and hydration control
+- `artifact-service` — artifact registration, reuse lookup, invalidation, and storage access
+- `workspace-service` — record workspace path resolution, hydration, manifest sync, and local cleanup
+- `executor-service` — main orchestration around OpenCode session lifecycle
+- `scheduler-service` — selects next eligible `taskRecord` in project task order
+- `execution-queue-service` — queue enqueueing and worker handoff for record task execution
+- `execution-schedule-service` — pg-bosser schedule registration for recurring scheduler ticks and maintenance jobs
+- `observability-service` — query cost, latency, retries, and artifact reuse metrics
+
+Queue/runtime recommendation based on reference project structure:
+
+- use `pg-bosser` for background execution in v1
+- keep queue definitions in feature folders, not in shared `lib`
+- use one queue for task execution handoff and separate scheduled jobs for recurring orchestration work
+- use pg-bosser schedules for scheduler ticks, retry scans, and optional workspace maintenance
+- keep worker bootstrapping in a dedicated entrypoint, separate from the web request runtime
+
+Auth plugin recommendation:
+
+- use Better Auth anonymous plugin only in development environments
+- keep GitHub OAuth as the default non-dev sign-in path
+- do not expose anonymous login in production UI or production config
+
 ### 7.2A MCP transport decision
 
-Prefer a single app-owned MCP server built with Hono over a large set of `.opencode/tools/*` files.
+Prefer a single app-owned Hono application with an MCP route group over a large set of `.opencode/tools/*` files.
 
 Why:
 
@@ -493,7 +801,10 @@ Why:
 
 Recommended setup:
 
-- Hono app exposes `/mcp`
+- one Next.js API catch-all route mounts the Hono app
+- Hono exposes `/auth/*` for Better Auth handlers
+- Hono exposes `/trpc/*` for tRPC
+- Hono exposes `/mcp` for remote MCP
 - OpenCode config registers it under `mcp.crm`
 - tasks use that MCP for record, relation, file, artifact, and pipeline actions
 
@@ -529,6 +840,9 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPTransport } from '@hono/mcp'
 
 const app = new Hono()
+
+app.route('/auth', authApp)
+app.route('/trpc', trpcApp)
 
 app.all('/mcp', async (c) => {
   const transport = new StreamableHTTPTransport()
@@ -787,6 +1101,29 @@ Decision for v1:
 
 The backend state model must support this cleanly.
 
+### 8A.9 Concrete frontend route map
+
+Use Next.js protected routes with organization and project slug scope:
+
+- `/app/[organizationSlug]/[projectSlug]` — project overview dashboard
+- `/app/[organizationSlug]/[projectSlug]/tasks` — task list
+- `/app/[organizationSlug]/[projectSlug]/tasks/[taskId]` — task details, revisions, and per-record progress
+- `/app/[organizationSlug]/[projectSlug]/records` — record list
+- `/app/[organizationSlug]/[projectSlug]/records/[recordId]` — record details, context editor, files, artifacts, and relations
+- `/app/[organizationSlug]/[projectSlug]/settings/schema` — schema version browser/editor
+- `/app/[organizationSlug]/[projectSlug]/settings/pipelines` — pipeline definitions and parser bundle visibility
+- `/app/[organizationSlug]/[projectSlug]/settings/members` — organization members visible in project scope
+
+### 8A.10 Concrete frontend implementation rules
+
+- use server components for route shells and access checks
+- use client components for sortable task lists, record editor forms, and live progress tables
+- use tRPC + React Query for all frontend data access
+- use `refetchInterval: 3000` only on active execution screens
+- use `react-hook-form` + Zod-derived schema validation for task, record, and schema forms
+- render backend machine states directly; do not derive local fake statuses in the UI
+- use shadcn/ui primitives and semantic reusable components for cards, tables, forms, badges, and panels
+
 ---
 
 ## 9. OpenCode projects and workspace topology
@@ -898,6 +1235,33 @@ Storage rule in v1:
 - keep everything by default
 - no automatic artifact/log retention cleanup in v1
 - cleanup logic may exist for convenience, but canonical stored files/artifacts are retained
+
+### 10.2B Concrete path contract
+
+Use app-configured absolute directories outside the repo working tree:
+
+- `CRM_STORAGE_ROOT` — canonical source files and artifacts
+- `CRM_WORKSPACE_ROOT` — long-lived record workspaces
+
+Recommended layout:
+
+```txt
+${CRM_STORAGE_ROOT}/
+  organizations/<organizationId>/
+    projects/<projectId>/
+      source-files/<fileId>/<originalFileName>
+      artifacts/<artifactId>/<stage>.<ext>
+
+${CRM_WORKSPACE_ROOT}/
+  projects/<projectId>/records/<recordId>/
+```
+
+Rules:
+
+- DB stores relative app-owned storage paths, not arbitrary user paths
+- canonical file paths must never point into the workspace tree
+- workspace hydration always copies or materializes from canonical storage
+- future S3 migration should only replace storage service implementation, not lineage semantics
 
 #### Layer A — source files
 
@@ -1145,6 +1509,39 @@ For schema migrations, prefer:
 
 This is the cheapest and most stable order.
 
+### 11.4 Concrete schema field blueprint
+
+Supported custom field kinds in v1:
+
+- `text`
+- `long_text`
+- `number`
+- `boolean`
+- `date`
+- `datetime`
+- `url`
+- `email`
+- `enum`
+- `json`
+
+Every field definition should include:
+
+- `key`
+- `label`
+- `type`
+- `required`
+- `description`
+- `defaultValue` when valid for the field kind
+- `config` for type-specific metadata
+
+V1 field rules:
+
+- allow enum options
+- allow min/max style validators inside `config`
+- do **not** support computed fields in v1
+- do **not** support relation fields as implicit copied foreign keys; relations stay in `RecordEdge`
+- generate runtime Zod validation from the active project schema version
+
 ---
 
 ## 12. Task model simplification
@@ -1170,7 +1567,7 @@ These should be derived summary values, not special task-type logic.
 
 ## 13. MCP agent tools to implement
 
-This is the main agent tool surface exposed through the app-owned Hono MCP server.
+This is the main agent tool surface exposed through the MCP route group inside the single app-owned Hono application.
 
 Scope rule for all `crm_*` tools:
 
@@ -1245,7 +1642,7 @@ Scope rule for all `crm_*` tools:
 
 ### 13.2A MCP resources for file payloads
 
-In addition to tools, the Hono MCP server should expose resources for file and artifact contents.
+In addition to tools, the MCP route group inside the Hono app should expose resources for file and artifact contents.
 
 Recommended pattern:
 
@@ -1259,6 +1656,31 @@ This is the preferred way to expose large or binary file payloads.
 
 19. `crm_write_workspace_manifest`
    - maintain local state summary for the scoped record workspace
+
+### 13.4 Concrete MCP contract conventions
+
+For v1, all MCP tools should use a consistent request/response shape.
+
+Common input rules:
+
+- every tool input includes `projectId`
+- record-scoped tools include `recordId`
+- task-scoped tools include `taskId`
+- mutating execution tools include `taskRecordId` and `agentRunId` when available
+- all mutation inputs include an idempotency token when duplication is possible
+
+Common response rules:
+
+- return structured JSON only
+- include a top-level `ok: boolean`
+- include either `data` or `error`
+- mutation responses should include machine state snapshot after mutation
+
+Validation rules:
+
+- all MCP tool inputs are validated with Zod in the Hono app
+- Hono handlers call feature services, not raw SQL
+- authorization and project/record/task relationship checks happen before business execution
 
 ---
 
@@ -1406,6 +1828,60 @@ Development mode requirement:
 4. re-run invalidated stage(s)
 5. persist new artifacts and lineage
 6. update record fields if downstream mappings changed
+
+### 17.4 Concrete scheduler and executor blueprint
+
+Scheduler loop for v1:
+
+1. select active projects with pending `taskRecord` rows
+2. for each project, walk tasks in `sortOrder`
+3. for each task, select eligible `taskRecord` rows in `waiting` or retryable `failed`
+4. skip any record that already has an active `taskRecord` or active `agentRun`
+5. atomically transition one `taskRecord` to `picked_up`
+6. create a new `agentRun` attempt row
+7. hand off to executor worker
+
+Executor steps for one `taskRecord`:
+
+1. transition `agentRun` to `booting`
+2. read project, active schema, task, record, relation summary, files, and reusable artifacts
+3. ensure workspace exists and hydrate missing canonical inputs
+4. ensure required pipeline asset bundle is materialized in workspace
+5. open OpenCode session with selected model and `record-worker` agent
+6. stream tool events and persist telemetry snapshots
+7. validate structured outputs before any record mutation
+8. apply artifact registrations and record patch under optimistic concurrency rules
+9. transition `taskRecord` and `agentRun` to terminal state
+10. append activity log events for completion or failure
+
+Development rule:
+
+- scheduler must be disableable by config and by project-level debug UI switch
+- manual trigger endpoint should enqueue or directly execute a specific `taskRecord`
+
+### 17.5 Concrete queue and schedule blueprint
+
+Use `pg-bosser` as the default background job runtime for v1.
+
+Recommended execution jobs:
+
+- `task-record-execution` — runs one claimed `taskRecord`
+- `task-record-retry-scan` — scheduled job that finds retryable failed work
+- `task-record-scheduler-tick` — scheduled job that claims eligible work and enqueues execution jobs
+- `workspace-maintenance` — optional scheduled job for manifest repair or stale scratch cleanup
+
+Recommended ownership rules:
+
+- queue definitions live in `src/features/execution/queues`
+- queue payload schemas live next to their queue files
+- queue workers call feature services and machine transitions, not raw DB logic spread across worker files
+- scheduled jobs should stay thin and delegate real work to services
+
+Recommended v1 deployment model:
+
+- web runtime: Next.js + mounted Hono app
+- worker runtime: dedicated execution entrypoint that starts pg-bosser workers and schedules
+- both runtimes share the same Postgres database and storage configuration
 
 ---
 
@@ -1698,6 +2174,43 @@ Useful derived metrics:
 - average task retries
 - pipeline version regression rate
 
+### 21.1 Concrete observability implementation
+
+Use structured logging with `pino` in `src/lib/logger.ts`.
+
+Minimum persisted telemetry fields on `agentRun`:
+
+- `provider`
+- `model`
+- `startedAt`
+- `finishedAt`
+- `latencyMs`
+- `inputTokens`
+- `outputTokens`
+- `estimatedCostUsd`
+- `toolCallCount`
+- `toolSummary`
+- `resultPayload`
+- `failurePayload`
+
+Minimum activity log event families:
+
+- `task.created`
+- `task.reordered`
+- `task.description_revised`
+- `taskRecord.claimed`
+- `taskRecord.completed`
+- `taskRecord.failed`
+- `agentRun.started`
+- `agentRun.completed`
+- `agentRun.failed`
+- `record.patch_applied`
+- `recordEdge.created`
+- `recordEdge.deactivated`
+- `schema.version_created`
+- `artifact.registered`
+- `artifact.invalidated`
+
 ---
 
 ## 22. Recommended v1 boundaries
@@ -1705,8 +2218,10 @@ Useful derived metrics:
 ### Include in v1
 
 - GitHub OAuth only with Better Auth
+- Better Auth anonymous plugin enabled only in development for account-free testing
 - organization + project scoped tenancy
 - owner-managed organization membership for existing users
+- auth implementation fully owned by `src/features/auth`
 - frontend project shell with task and record views
 - task details page with markdown editor/viewer and per-record progress states
 - shared per-project schema
@@ -1716,7 +2231,8 @@ Useful derived metrics:
 - state machines for important backend lifecycles using Machin
 - OpenCode server + SDK orchestration
 - per-task model routing
-- Hono MCP tools for record/file/artifact/relation operations
+- Hono-mounted API app serving Better Auth, tRPC, and MCP from one backend entrypoint
+- MCP tools for record/file/artifact/relation operations
 - long-lived per-record workspaces
 - persistent app-owned artifacts with lineage
 - schema migration fan-out tasks
@@ -1726,6 +2242,7 @@ Useful derived metrics:
 - email invitations
 - public self-serve org joining
 - multi-provider auth
+- production anonymous login
 - many record types with independent schemas
 - open-ended autonomous planning
 - uncontrolled cross-record agents
@@ -1738,61 +2255,63 @@ Useful derived metrics:
 
 ### Phase 1 — auth, tenancy, and core domain
 
-1. set up Better Auth with GitHub OAuth only
-2. add `Organization`, memberships, and owner role flow
+1. set up Better Auth with GitHub OAuth plus development-only anonymous plugin support
+2. implement auth fully inside `src/features/auth` including auth config, auth client, auth DB schema, and org role helpers
 3. define `Project`, `ProjectSchema`, `Record`, `Task`, `AgentRun`, `TaskRecord`, `RecordEdge`
 4. define record envelope + JSON context storage
-5. add one-active-execution-per-record rule against the project task queue
+5. add Docker Compose Postgres for local development on port `5433` with database/user/password set to `project_intern` / `intern` / `intern`
+6. add one-active-execution-per-record rule against the project task queue
 
 ### Phase 2 — state machines and backend lifecycle
 
-6. define Machin machines for `TaskRecord`, `AgentRun`, and `PipelineRun`
-7. persist machine state with Drizzle/Postgres
-8. make backend APIs expose machine states directly for frontend use
+7. define Machin machines for `TaskRecord`, `AgentRun`, and `PipelineRun`
+8. persist machine state with Drizzle/Postgres
+9. make backend APIs expose machine states directly for frontend use
 
 ### Phase 3 — frontend shell and workflow UI
 
-9. build organization/project scoped app shell
-10. build task list and record list views
-11. build task details page with markdown viewer/editor
-12. build per-record progress table on task details page
-13. build record details page with files/artifacts/relations summary
+10. build organization/project scoped app shell
+11. build task list and record list views
+12. build task details page with markdown viewer/editor
+13. build per-record progress table on task details page
+14. build record details page with files/artifacts/relations summary
 
 ### Phase 4 — OpenCode runtime
 
-14. stand up `opencode serve`
-15. integrate `@opencode-ai/sdk`
-16. add task executor service
-17. add task-level `model` field handling
+15. stand up `opencode serve`
+16. integrate `@opencode-ai/sdk`
+17. add task executor service
+18. add task-level `model` field handling
 
-### Phase 5 — Hono MCP tools
+### Phase 5 — Hono API app and MCP tools
 
-18. expose app MCP server with Hono
-19. implement record/schema tools
-20. implement task completion tools
-21. implement artifact/file tools
-22. implement relation tools
+19. mount one Hono app in the Next.js API catch-all route
+20. route Better Auth, tRPC, and shared middleware through that Hono app
+21. implement MCP record/schema tools
+22. implement MCP task completion and artifact/file tools
+23. implement MCP relation tools
 
-### Phase 6 — file processing
+### Phase 6 — queues, schedules, and file processing
 
-23. define `source_file`, `artifact`, `pipeline_definition`, `pipeline_run`
-24. define canonical local disk storage layout
-25. create record workspace hydrator
-26. create first parser asset bundle
-27. support artifact reuse rules
+24. add pg-bosser queues, workers, and schedules for executor orchestration
+25. define `source_file`, `artifact`, `pipeline_definition`, `pipeline_run`
+26. define canonical local disk storage layout
+27. create record workspace hydrator
+28. create first parser asset bundle
+29. support artifact reuse rules
 
 ### Phase 7 — migrations
 
-28. add schema versioning
-29. add schema migration task family
-30. add project migration controller
-31. add migration auditing
+30. add schema versioning
+31. add schema migration task family
+32. add project migration controller
+33. add migration auditing
 
 ### Phase 8 — hardening
 
-32. add plugin-based telemetry and guardrails
-33. add cleanup/invalidation logic for workspaces
-34. add cost reporting and retry dashboards
+34. add plugin-based telemetry and guardrails
+35. add cleanup/invalidation logic for workspaces
+36. add cost reporting and retry dashboards
 
 ---
 
@@ -1806,53 +2325,87 @@ Useful derived metrics:
 6. parsed outputs: **persistent app-owned storage**
 7. workspace topology: **long-lived per-record workspaces**
 8. file processing reuse: **prefer prior artifacts before re-parsing raw files**
-9. tool transport: **app-owned Hono MCP server exposed to OpenCode**
+9. backend transport: **single Hono app mounted in Next.js API, with MCP exposed to OpenCode as one route group**
 10. v1 blob storage: **local disk next to the app/runtime**
 11. auth provider: **GitHub OAuth only with Better Auth**
-12. tenancy model: **organizations contain projects; users always work inside a project scope**
-13. lifecycle handling: **important execution entities use Machin state machines; project tasks themselves stay descriptive**
-14. machine stance: **machine-first for lifecycle entities; plain types only for config and DTO payloads**
+12. development auth mode: **Better Auth anonymous plugin is enabled only in development for account-free testing**
+13. auth ownership: **all Better Auth server/client/roles/org helpers live in `src/features/auth`, not `src/lib/auth`**
+14. tenancy model: **organizations contain projects; users always work inside a project scope**
+15. local database runtime: **Docker Compose PostgreSQL 18 on port `5433` with local credentials `intern` / `intern` and DB `project_intern`**
+16. background runtime: **pg-bosser queues and schedules drive execution orchestration outside the web request path**
+17. lifecycle handling: **important execution entities use Machin state machines; project tasks themselves stay descriptive**
+18. machine stance: **machine-first for lifecycle entities; plain types only for config and DTO payloads**
 
 ---
 
 ## 25. Immediate next planning targets
 
-The best next step is to sharpen this into implementation-grade specs:
+This section now resolves the immediate planning targets into a concrete v1 build blueprint.
 
-1. DB schema
-   - exact tables and keys
+### 25.1 Finalized backend contracts
 
-2. executor flow
-   - orchestration lifecycle around OpenCode sessions
+- **DB**: Drizzle + Postgres 18 with explicit feature tables and JSONB only for schema/context/metadata payloads
+- **Config split**: `src/lib/config/frontend.ts`, `src/lib/config/backend.ts`, and `src/lib/config/database.ts`
+- **DB config rule**: `src/lib/config/database.ts` is imported only by `src/lib/db.ts`
+- **IDs**: uuidv7 primary keys across domain tables
+- **Validation**: Zod for router inputs, MCP inputs, schema definitions, and structured outputs
+- **API**: one Hono app inside Next.js API serving Better Auth, tRPC, MCP, and future backend endpoints
+- **Auth ownership**: all Better Auth server/client/roles/org helpers live in `src/features/auth`
+- **Dev auth**: Better Auth anonymous plugin is enabled only in development
+- **Local DB runtime**: Docker Compose PostgreSQL 18 on port `5433` using local database `project_intern` and credentials `intern` / `intern`
+- **Background jobs**: pg-bosser queues and schedules handle async execution outside the request path
+- **Lifecycle**: Machin for `TaskRecord`, `AgentRun`, `PipelineRun`, `Artifact`, and `RecordEdge`
 
-3. MCP tool contracts
-   - exact inputs/outputs for `crm_*` MCP methods
+### 25.2 Finalized executor contract
 
-4. file/artifact lineage rules
-   - invalidation and reuse behavior
+- scheduler operates on `taskRecord`, never directly on `task`
+- one active execution per record at a time
+- each retry creates a new `agentRun`
+- record patching uses optimistic locking via `record.version`
+- artifact writes are deduplicated by lineage tuple
 
-5. workspace contract
-   - exact directory layout and sync rules
+### 25.3 Finalized file and workspace contract
 
-6. local disk storage contract
-   - canonical path layout, retention, and backup assumptions
+- canonical source files and artifacts live in `CRM_STORAGE_ROOT`
+- long-lived record workspaces live in `CRM_WORKSPACE_ROOT`
+- workspace files are reusable but non-canonical
+- artifact and file reads should prefer MCP resources for payload transfer
+- no automatic canonical retention cleanup in v1
 
-7. task model rules
-   - allowed model string format, defaults, and validation
+### 25.4 Finalized task and model contract
 
-8. frontend workflow spec
-   - project shell, task details page, record views, and progress UX
+- `task.model` is an optional string in `provider/model-id` format
+- backend validates task model against an allowlist of approved runtime models
+- absence of `task.model` falls back to environment default model
+- task execution permissions are enforced in tools and services, not only in prompts
+
+### 25.5 Finalized frontend contract
+
+- route scope is always `organization -> project`
+- task and record views are the primary work surfaces
+- task detail is the main execution visibility page
+- polling via tRPC + React Query every 3 seconds is the v1 realtime strategy
+- all visible statuses come from persisted backend machine state
+
+### 25.6 Finalized implementation sequence
+
+1. auth + organizations + projects
+2. schema versions + records
+3. tasks + taskRecord + agentRun + frontend task/record views
+4. relations
+5. MCP server + OpenCode executor
+6. pg-bosser queues/schedules + files + artifacts + pipeline definitions
+7. scheduler + retries + observability
+8. schema migration UX and controllers
 
 ---
 
 ## 26. Open questions to resolve next in this file
 
-These are the next likely decision points:
+Most important v1 questions are now resolved. The remaining deferred questions should be treated as post-v1 or implementation-detail follow-ups:
 
-- exact DB schema for files and artifacts
-- whether schema field definitions support enums/validators/computed fields in v1
-- whether agents can propose parser asset changes or only use approved versions
-- whether per-record workspace should be in repo-adjacent storage or external runtime storage
-- whether small JSON artifacts should be mirrored in Postgres in addition to disk storage
-- exact organization/project membership role set beyond owner in v1
-- exact realtime strategy for frontend state updates: polling vs SSE vs websockets
+- whether small JSON artifacts should also be mirrored in Postgres for selective query acceleration
+- whether `Record` itself needs a full machine or only explicit persisted status in v1
+- whether project-level execution controls need SSE before broader rollout
+- whether parser asset promotion should later gain dedicated review workflow and approval state
+- when to introduce `projectMembership` and finer-grained project roles beyond org-wide membership
