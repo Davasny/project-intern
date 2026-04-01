@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
+import { finalizeProjectSchemaMigration } from "@/features/project-schema/lib/finalize-project-schema-migration"
 import { taskRecordTable } from "@/features/task-records/db"
 import { getTaskRecordActor } from "@/features/task-records/lib/get-task-record-actor"
 import { db } from "@/lib/db"
@@ -32,6 +33,7 @@ export const completeTaskRecord = async ({
     actorId: agentRunId,
     actorType: "executor",
     agentRunId,
+    database: db,
     entityId: taskRecordId,
     entityType: "taskRecord",
     eventType: "taskRecord.completed",
@@ -47,6 +49,8 @@ export const completeTaskRecord = async ({
     taskId: activityScope.taskId,
     taskRecordId: activityScope.taskRecordId,
   })
+
+  await finalizeProjectSchemaMigration({ taskId: activityScope.taskId })
 
   logger.info({ agentRunId, taskRecordId }, "Completed task record")
 

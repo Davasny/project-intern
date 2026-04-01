@@ -2,7 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
-import { Card } from "@/components/ui/card"
+import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-timeline"
+import { ActivityTimelineItem } from "@/components/ui/activity-timeline/activity-timeline-item"
+import { LoadingState } from "@/components/ui/loading-state/loading-state"
+import { PageHeader } from "@/components/ui/page-header/page-header"
+import { ProgressMetric } from "@/components/ui/progress-metric/progress-metric"
+import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-metric-grid"
+import { SectionCard } from "@/components/ui/section-card/section-card"
+import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
+import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import { formatActivityLogEntry } from "@/features/observability/lib/format-activity-log-entry"
 import { SchemaDiffModal } from "@/features/project-schema/components/schema-diff-modal"
 import { SchemaVersionFieldItem } from "@/features/project-schema/components/schema-version-field-item"
 import { SchemaVersionForm } from "@/features/project-schema/components/schema-version-form"
@@ -22,50 +31,67 @@ export const SchemaVersionBrowser = ({
   const [selectedDiffVersionId, setSelectedDiffVersionId] = useState<
     string | null
   >(null)
-  const activeSchemaQuery = useQuery(
-    trpc.projectSchema.getActive.queryOptions({
-      organizationSlug,
-      projectSlug,
-    }),
-  )
-  const versionsQuery = useQuery(
-    trpc.projectSchema.listVersions.queryOptions({
+  const settingsQuery = useQuery(
+    trpc.projectSchema.getSettings.queryOptions({
       organizationSlug,
       projectSlug,
     }),
   )
 
-  if (activeSchemaQuery.isLoading || versionsQuery.isLoading) {
-    return <p className="text-sm text-slate-500">Loading schema settings...</p>
+  if (settingsQuery.isLoading) {
+    return <LoadingState label="Loading schema settings..." />
   }
 
-  if (!activeSchemaQuery.data) {
-    return (
-      <p className="text-sm text-red-600">
-        Schema settings could not be loaded.
-      </p>
-    )
+  if (!settingsQuery.data?.activeVersion) {
+    return <LoadingState label="Schema settings could not be loaded." />
   }
 
-  const selectedPreviousVersion = versionsQuery.data?.find(
+  const selectedPreviousVersion = settingsQuery.data.versions.find(
     (version) => version.id === selectedDiffVersionId,
   )
+  const activeMigration = settingsQuery.data.versions.find(
+    (version) => version.isActive,
+  )
+  const activeVersion = settingsQuery.data.activeVersion
+  const taskHrefBase = `/app/${organizationSlug}/${projectSlug}/tasks`
+
+  if (!activeVersion) {
+    return <LoadingState label="Schema settings could not be loaded." />
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="p-6">
+      <PageHeader>
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
             Schema settings
           </h1>
           <p className="text-sm text-slate-600">
-            Active schema version {activeSchemaQuery.data.version} governs all
-            record validation.
+            Active schema version {activeVersion.version} governs all record
+            validation and migration status.
           </p>
         </div>
-      </Card>
-      <Card className="p-6">
-        <div className="flex flex-col gap-4">
+      </PageHeader>
+      <ProgressMetricGrid>
+        <ProgressMetric
+          label="Records"
+          value={settingsQuery.data.totalRecordCount}
+        />
+        <ProgressMetric
+          label="Affected"
+          value={activeMigration?.migration.affectedRecordCount ?? 0}
+        />
+        <ProgressMetric
+          label="Pending"
+          value={activeMigration?.migration.pendingRecordCount ?? 0}
+        />
+        <ProgressMetric
+          label="Completed"
+          value={activeMigration?.migration.completedCount ?? 0}
+        />
+      </ProgressMetricGrid>
+      <SectionCard>
+        <SectionCardHeader>
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold">Active schema fields</h2>
             <p className="text-sm text-slate-500">
@@ -73,13 +99,17 @@ export const SchemaVersionBrowser = ({
               record context.
             </p>
           </div>
-          {activeSchemaQuery.data.schemaDefinition.fields.map((field) => (
-            <SchemaVersionFieldItem field={field} key={field.key} />
-          ))}
-        </div>
-      </Card>
-      <Card className="p-6">
-        <div className="flex flex-col gap-4">
+        </SectionCardHeader>
+        <SectionCardContent className="flex flex-col gap-4">
+          {settingsQuery.data.activeVersion.schemaDefinition.fields.map(
+            (field) => (
+              <SchemaVersionFieldItem field={field} key={field.key} />
+            ),
+          )}
+        </SectionCardContent>
+      </SectionCard>
+      <SectionCard>
+        <SectionCardHeader>
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold">Schema version history</h2>
             <p className="text-sm text-slate-500">
@@ -87,32 +117,75 @@ export const SchemaVersionBrowser = ({
               modal.
             </p>
           </div>
-          {versionsQuery.data && versionsQuery.data.length > 0 ? (
-            versionsQuery.data.map((version) => (
+        </SectionCardHeader>
+        <SectionCardContent className="flex flex-col gap-4">
+          {settingsQuery.data.versions.length > 0 ? (
+            settingsQuery.data.versions.map((version) => (
               <SchemaVersionHistoryItem
-                canCompare={version.id !== activeSchemaQuery.data.id}
-                isActive={version.id === activeSchemaQuery.data.id}
+                canCompare={version.id !== activeVersion.id}
+                isActive={version.id === activeVersion.id}
                 key={version.id}
                 onCompare={() => setSelectedDiffVersionId(version.id)}
-                version={{ id: version.id, version: version.version }}
+                taskHrefBase={taskHrefBase}
+                version={version}
               />
             ))
           ) : (
             <p className="text-sm text-slate-500">No schema versions found.</p>
           )}
-        </div>
-      </Card>
-      <Card className="p-6">
-        <SchemaVersionForm
-          initialSchemaDefinition={activeSchemaQuery.data.schemaDefinition}
-          key={activeSchemaQuery.data.id}
-          organizationSlug={organizationSlug}
-          projectSlug={projectSlug}
-        />
-      </Card>
+        </SectionCardContent>
+      </SectionCard>
+      <SectionCard>
+        <SectionCardHeader>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold">Latest schema activity</h2>
+            <p className="text-sm text-slate-500">
+              Recent schema version, migration, and migration-task events.
+            </p>
+          </div>
+        </SectionCardHeader>
+        <SectionCardContent>
+          <ActivityTimeline>
+            {settingsQuery.data.latestSchemaActivity.map((event) => (
+              <ActivityTimelineItem
+                description={
+                  formatActivityLogEntry({
+                    createdAt: event.createdAt,
+                    eventType: event.eventType,
+                    payload: event.payload,
+                    recordName: null,
+                    taskTitle: event.taskTitle,
+                  }).description
+                }
+                key={event.id}
+                label={
+                  formatActivityLogEntry({
+                    createdAt: event.createdAt,
+                    eventType: event.eventType,
+                    payload: event.payload,
+                    recordName: null,
+                    taskTitle: event.taskTitle,
+                  }).label
+                }
+                timestamp={event.createdAt.toLocaleString()}
+              />
+            ))}
+          </ActivityTimeline>
+        </SectionCardContent>
+      </SectionCard>
+      <SectionCard>
+        <SectionCardContent>
+          <SchemaVersionForm
+            initialSchemaDefinition={activeVersion.schemaDefinition}
+            key={activeVersion.id}
+            organizationSlug={organizationSlug}
+            projectSlug={projectSlug}
+          />
+        </SectionCardContent>
+      </SectionCard>
       {selectedPreviousVersion ? (
         <SchemaDiffModal
-          nextVersionId={activeSchemaQuery.data.id}
+          nextVersionId={activeVersion.id}
           onClose={() => setSelectedDiffVersionId(null)}
           organizationSlug={organizationSlug}
           previousVersionId={selectedPreviousVersion.id}

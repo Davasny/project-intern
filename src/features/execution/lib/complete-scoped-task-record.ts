@@ -3,6 +3,7 @@ import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-r
 import type { PatchProposal } from "@/features/execution/schemas/patch-proposal"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { applyRecordPatch } from "@/features/records/lib/apply-record-patch"
+import { db } from "@/lib/db"
 
 type CompleteScopedTaskRecordParams = {
   executionScope: {
@@ -36,6 +37,7 @@ export const completeScopedTaskRecord = async ({
       actorId: scope.agentRun.id,
       actorType: "executor",
       agentRunId: scope.agentRun.id,
+      database: db,
       entityId: scope.record.id,
       entityType: "record",
       eventType: "record.patch_applied",

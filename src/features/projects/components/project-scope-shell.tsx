@@ -94,6 +94,18 @@ export const ProjectScopeShell = ({
           </Link>
           <Link
             className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            href={`/app/${projectAccess.currentOrganization.slug}/${projectAccess.currentProject.slug}/activity`}
+          >
+            Activity log
+          </Link>
+          <Link
+            className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            href={`/app/${projectAccess.currentOrganization.slug}/${projectAccess.currentProject.slug}/execution`}
+          >
+            Execution monitor
+          </Link>
+          <Link
+            className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
             href="/app/select"
           >
             Change scope

@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm"
 import {
+  boolean,
   pgTable,
   text,
   timestamp,
@@ -27,6 +28,7 @@ export const projectTable = pgTable(
     slug: text("slug").notNull(),
     displayName: text("display_name").notNull(),
     activeSchemaVersionId: uuid("active_schema_version_id"),
+    isAutopickEnabled: boolean("is_autopick_enabled").notNull().default(true),
     createdAt: createdAtColumn(),
     updatedAt: updatedAtColumn(),
   },

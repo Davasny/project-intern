@@ -45,6 +45,7 @@ export const markAgentRunBooting = async ({
     actorId: agentRunId,
     actorType: "executor",
     agentRunId,
+    database: db,
     entityId: agentRunId,
     entityType: "agentRun",
     eventType: "agentRun.started",

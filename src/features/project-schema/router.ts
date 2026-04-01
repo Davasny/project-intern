@@ -5,6 +5,7 @@ import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { createProjectSchemaVersion } from "@/features/project-schema/lib/create-project-schema-version"
 import { diffProjectSchemaVersions } from "@/features/project-schema/lib/diff-project-schema-versions"
 import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get-active-project-schema-version"
+import { getProjectSchemaSettingsReadModel } from "@/features/project-schema/lib/get-project-schema-settings-read-model"
 import { listProjectSchemaVersions } from "@/features/project-schema/lib/list-project-schema-versions"
 import { projectSchemaCustomFieldSchema } from "@/features/project-schema/schemas/project-schema-field"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
@@ -101,6 +102,24 @@ export const projectSchemaRouter = router({
         userId: ctx.session.user.id,
       }),
     ),
+  getSettings: protectedProcedure
+    .input(projectScopeSchema)
+    .query(async ({ ctx, input }) => {
+      const readModel = await getProjectSchemaSettingsReadModel({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!readModel) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return readModel
+    }),
   listVersions: protectedProcedure
     .input(projectScopeSchema)
     .query(({ ctx, input }) =>

@@ -30,6 +30,7 @@ export const listProjectSchemaVersions = async ({
 
   return db
     .select({
+      createdAt: projectSchemaVersionTable.createdAt,
       id: projectSchemaVersionTable.id,
       parentVersionId: projectSchemaVersionTable.parentVersionId,
       schemaDefinition: projectSchemaVersionTable.schemaDefinition,

@@ -139,6 +139,12 @@ export const SchemaVersionForm = ({
             projectSlug,
           }),
         )
+        await queryClient.invalidateQueries(
+          trpc.projectSchema.getSettings.queryFilter({
+            organizationSlug,
+            projectSlug,
+          }),
+        )
       },
     }),
   )

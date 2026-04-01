@@ -45,6 +45,7 @@ export const claimNextTaskRecord = async () => {
           inner join project p on p.id = t.project_id
           where
             tr.state = 'waiting'
+            and p.is_autopick_enabled = true
             and not exists (
               select 1
               from task_record earlier_tr
@@ -165,6 +166,7 @@ export const claimNextTaskRecord = async () => {
       actorId: claimedTaskRecord.agentRunId,
       actorType: "executor",
       agentRunId: claimedTaskRecord.agentRunId,
+      database: db,
       entityId: claimedTaskRecord.taskRecordId,
       entityType: "taskRecord",
       eventType: "taskRecord.claimed",

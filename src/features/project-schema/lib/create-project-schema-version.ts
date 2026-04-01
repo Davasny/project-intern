@@ -1,9 +1,12 @@
 import { TRPCError } from "@trpc/server"
 import { desc, eq } from "drizzle-orm"
+import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
+import { buildSchemaMigrationTaskDescription } from "@/features/project-schema/lib/build-schema-migration-task-description"
 import { validateProjectSchemaDefinition } from "@/features/project-schema/lib/validate-project-schema-definition"
 import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import { createProjectTask } from "@/features/tasks/lib/create-project-task"
 import { db } from "@/lib/db"
 
 type CreateProjectSchemaVersionParams = {
@@ -38,6 +41,7 @@ export const createProjectSchemaVersion = async ({
     const latestSchemaVersion = await transaction
       .select({
         id: projectSchemaVersionTable.id,
+        schemaDefinition: projectSchemaVersionTable.schemaDefinition,
         version: projectSchemaVersionTable.version,
       })
       .from(projectSchemaVersionTable)
@@ -66,6 +70,51 @@ export const createProjectSchemaVersion = async ({
       .set({ activeSchemaVersionId: createdSchemaVersion.id })
       .where(eq(projectTable.id, project.id))
 
-    return createdSchemaVersion
+    const migrationTask = latestSchemaVersion
+      ? await createProjectTask({
+          createdByUserId: userId,
+          database: transaction,
+          descriptionMarkdown: buildSchemaMigrationTaskDescription({
+            nextSchemaDefinition: createdSchemaVersion.schemaDefinition,
+            nextVersion: createdSchemaVersion.version,
+            previousSchemaDefinition: latestSchemaVersion.schemaDefinition,
+            previousVersion: latestSchemaVersion.version,
+          }),
+          model: null,
+          organizationId: project.organizationId,
+          pipelineVersion: null,
+          projectId: project.id,
+          schemaVersion: createdSchemaVersion.version,
+          sourceSchemaVersionId: latestSchemaVersion.id,
+          targetSchemaVersionId: createdSchemaVersion.id,
+          title: `Adopt schema v${createdSchemaVersion.version}`,
+        })
+      : null
+
+    await createActivityLogEvent({
+      actorId: userId,
+      actorType: "user",
+      agentRunId: null,
+      database: transaction,
+      entityId: createdSchemaVersion.id,
+      entityType: "projectSchemaVersion",
+      eventType: "schema.version_created",
+      organizationId: project.organizationId,
+      payload: {
+        migrationTaskId: migrationTask?.id ?? null,
+        version: createdSchemaVersion.version,
+      },
+      projectId: project.id,
+      recordId: null,
+      relatedProjectId: null,
+      relatedRecordId: null,
+      taskId: migrationTask?.id ?? null,
+      taskRecordId: null,
+    })
+
+    return {
+      ...createdSchemaVersion,
+      migrationTaskId: migrationTask?.id ?? null,
+    }
   })
 }

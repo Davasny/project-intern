@@ -40,6 +40,7 @@ export const createActivityLog = async ({
     actorId,
     actorType,
     agentRunId: actorType === "executor" ? actorId : null,
+    database: db,
     entityId,
     entityType: "recordEdge",
     eventType,

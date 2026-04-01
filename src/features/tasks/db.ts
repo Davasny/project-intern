@@ -9,6 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core"
 import { userTable } from "@/features/auth/db"
+import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
 
 const createdAtColumn = () =>
@@ -31,6 +32,14 @@ export const taskTable = pgTable(
     sortOrder: integer("sort_order").notNull(),
     model: text("model"),
     schemaVersion: integer("schema_version").notNull(),
+    sourceSchemaVersionId: uuid("source_schema_version_id").references(
+      () => projectSchemaVersionTable.id,
+      { onDelete: "set null" },
+    ),
+    targetSchemaVersionId: uuid("target_schema_version_id").references(
+      () => projectSchemaVersionTable.id,
+      { onDelete: "set null" },
+    ),
     pipelineVersion: text("pipeline_version"),
     idempotencyKey: text("idempotency_key").notNull(),
     descriptionMarkdown: text("description_markdown").notNull(),
@@ -43,6 +52,7 @@ export const taskTable = pgTable(
       table.sortOrder,
     ),
     index("task_project_updated_at_idx").on(table.projectId, table.updatedAt),
+    index("task_target_schema_version_idx").on(table.targetSchemaVersionId),
   ],
 )
 

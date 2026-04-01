@@ -82,6 +82,7 @@ export const reorderTasks = async ({
     actorId: userId,
     actorType: "user",
     agentRunId: null,
+    database: db,
     entityId: null,
     entityType: "taskList",
     eventType: "task.reordered",

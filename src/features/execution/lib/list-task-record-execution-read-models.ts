@@ -1,5 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm"
 import { agentRunTable } from "@/features/agent-runs/db"
+import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
@@ -31,12 +32,18 @@ export const listTaskRecordExecutionReadModels = async ({
       errorCode: taskRecordTable.errorCode,
       lastTransitionAt: taskRecordTable.lastTransitionAt,
       recordId: taskRecordTable.recordId,
+      recordName: recordTable.name,
       state: taskRecordTable.state,
+      taskSchemaVersion: taskTable.schemaVersion,
       taskId: taskRecordTable.taskId,
       taskRecordId: taskRecordTable.id,
+      taskSortOrder: taskTable.sortOrder,
+      taskTargetSchemaVersionId: taskTable.targetSchemaVersionId,
+      taskTitle: taskTable.title,
     })
     .from(taskRecordTable)
     .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
+    .innerJoin(recordTable, eq(taskRecordTable.recordId, recordTable.id))
     .where(and(...filters))
 
   const taskRecordIds = taskRecords.map((taskRecord) => taskRecord.taskRecordId)

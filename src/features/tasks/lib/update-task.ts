@@ -72,6 +72,8 @@ export const updateTask = async ({
       pipelineVersion: taskTable.pipelineVersion,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
+      sourceSchemaVersionId: taskTable.sourceSchemaVersionId,
+      targetSchemaVersionId: taskTable.targetSchemaVersionId,
       title: taskTable.title,
       updatedAt: taskTable.updatedAt,
     })
@@ -95,6 +97,7 @@ export const updateTask = async ({
       actorId: userId,
       actorType: "user",
       agentRunId: null,
+      database: db,
       entityId: input.taskId,
       entityType: "task",
       eventType: "task.description_revised",

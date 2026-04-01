@@ -34,6 +34,7 @@ export const failTaskRecord = async ({
     actorId: agentRunId,
     actorType: "executor",
     agentRunId,
+    database: db,
     entityId: taskRecordId,
     entityType: "taskRecord",
     eventType: "taskRecord.failed",

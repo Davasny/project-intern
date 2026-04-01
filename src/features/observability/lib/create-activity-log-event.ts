@@ -1,6 +1,8 @@
 import { activityLogTable } from "@/features/observability/db"
-import { db } from "@/lib/db"
+import type { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
+
+type DatabaseClient = Pick<typeof db, "insert">
 
 type CreateActivityLogEventParams = {
   actorId: string | null
@@ -15,6 +17,7 @@ type CreateActivityLogEventParams = {
   recordId: string | null
   relatedProjectId: string | null
   relatedRecordId: string | null
+  database: DatabaseClient
   taskId: string | null
   taskRecordId: string | null
 }
@@ -32,6 +35,7 @@ export const createActivityLogEvent = async ({
   recordId,
   relatedProjectId,
   relatedRecordId,
+  database,
   taskId,
   taskRecordId,
 }: CreateActivityLogEventParams) => {
@@ -54,7 +58,7 @@ export const createActivityLogEvent = async ({
     "Persisting activity log event",
   )
 
-  await db.insert(activityLogTable).values({
+  await database.insert(activityLogTable).values({
     actorId,
     actorType,
     agentRunId,
