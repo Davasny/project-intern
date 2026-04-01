@@ -1,0 +1,33 @@
+import { z } from "zod"
+import { createProject } from "@/features/projects/lib/create-project"
+import { listOrganizationProjects } from "@/features/projects/lib/list-organization-projects"
+import { protectedProcedure, router } from "@/lib/trpc/init"
+
+const organizationSlugSchema = z.object({
+  organizationSlug: z.string().trim().min(1),
+})
+
+export const projectsRouter = router({
+  create: protectedProcedure
+    .input(
+      z.object({
+        displayName: z.string().trim().min(2),
+        organizationSlug: z.string().trim().min(1),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      createProject({
+        displayName: input.displayName,
+        organizationSlug: input.organizationSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  listForOrganization: protectedProcedure
+    .input(organizationSlugSchema)
+    .query(({ ctx, input }) =>
+      listOrganizationProjects({
+        organizationSlug: input.organizationSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+})

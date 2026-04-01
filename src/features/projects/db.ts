@@ -1,0 +1,46 @@
+import { relations, sql } from "drizzle-orm"
+import {
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core"
+import { organizationTable } from "@/features/auth/db"
+
+const createdAtColumn = () =>
+  timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+
+const updatedAtColumn = () =>
+  timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull()
+
+export const projectTable = pgTable(
+  "project",
+  {
+    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizationTable.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    displayName: text("display_name").notNull(),
+    activeSchemaVersionId: uuid("active_schema_version_id"),
+    createdAt: createdAtColumn(),
+    updatedAt: updatedAtColumn(),
+  },
+  (table) => [
+    uniqueIndex("project_organization_slug_unique_idx").on(
+      table.organizationId,
+      table.slug,
+    ),
+  ],
+)
+
+export const projectRelations = relations(projectTable, ({ one }) => ({
+  organization: one(organizationTable, {
+    fields: [projectTable.organizationId],
+    references: [organizationTable.id],
+  }),
+}))
