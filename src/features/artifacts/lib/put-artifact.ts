@@ -1,19 +1,17 @@
-import { writeFile } from "node:fs/promises"
-import path, { dirname } from "node:path"
-import { getArtifactManifestPath } from "@/features/artifacts/lib/get-artifact-manifest-path"
-import { getArtifactStorageDirectory } from "@/features/artifacts/lib/get-artifact-storage-directory"
-import {
-  artifactEntrySchema,
-  artifactManifestSchema,
-} from "@/features/artifacts/schemas/artifact-entry"
-import { createSha256Hash } from "@/utils/create-sha256-hash"
-import { ensureDirectory } from "@/utils/ensure-directory"
-import { pathExists } from "@/utils/path-exists"
-import { readJsonFile } from "@/utils/read-json-file"
-import { writeJsonFile } from "@/utils/write-json-file"
+import { mkdir, writeFile } from "node:fs/promises"
+import path from "node:path"
+import { TRPCError } from "@trpc/server"
+import { and, eq } from "drizzle-orm"
+import { artifactTable } from "@/features/artifacts/db"
+import { createArtifactStoragePath } from "@/features/artifacts/lib/create-artifact-storage-path"
+import { getReusableArtifact } from "@/features/artifacts/lib/get-reusable-artifact"
+import { resolveArtifactStoragePath } from "@/features/artifacts/lib/resolve-artifact-storage-path"
+import { sourceFileTable } from "@/features/files/db"
+import { db } from "@/lib/db"
 
 type PutArtifactParams = {
   contentBase64: string
+  fileId: string
   fileName: string
   idempotencyKey: string
   metadata: Record<string, unknown>
@@ -22,10 +20,12 @@ type PutArtifactParams = {
   projectId: string
   recordId: string
   stage: string
+  userId: string | null
 }
 
 export const putArtifact = async ({
   contentBase64,
+  fileId,
   fileName,
   idempotencyKey,
   metadata,
@@ -34,58 +34,86 @@ export const putArtifact = async ({
   projectId,
   recordId,
   stage,
+  userId,
 }: PutArtifactParams) => {
-  const manifestPath = getArtifactManifestPath({ projectId, recordId })
-  const artifactDirectory = getArtifactStorageDirectory({ projectId, recordId })
+  const buffer = Buffer.from(contentBase64, "base64")
+  const sourceFile = await db
+    .select({
+      id: sourceFileTable.id,
+      organizationId: sourceFileTable.organizationId,
+      projectId: sourceFileTable.projectId,
+      recordId: sourceFileTable.recordId,
+      sha256: sourceFileTable.sha256,
+    })
+    .from(sourceFileTable)
+    .where(
+      and(
+        eq(sourceFileTable.id, fileId),
+        eq(sourceFileTable.projectId, projectId),
+        eq(sourceFileTable.recordId, recordId),
+      ),
+    )
+    .then((rows) => rows[0] ?? null)
 
-  await ensureDirectory(dirname(manifestPath))
-  await ensureDirectory(artifactDirectory)
+  if (!sourceFile) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Source file was not found for this artifact.",
+    })
+  }
 
-  const existingManifest = (await pathExists(manifestPath))
-    ? await readJsonFile({
-        filePath: manifestPath,
-        schema: artifactManifestSchema,
-      })
-    : { artifacts: [] }
-
-  const existingArtifact =
-    existingManifest.artifacts.find(
-      (artifact) => artifact.idempotencyKey === idempotencyKey,
-    ) ?? null
+  const existingArtifact = await getReusableArtifact({
+    fileId,
+    pipelineVersion,
+    recordId,
+    sourceHash: sourceFile.sha256,
+    stage,
+  })
 
   if (existingArtifact) {
     return existingArtifact
   }
 
-  const buffer = Buffer.from(contentBase64, "base64")
   const artifactId = crypto.randomUUID()
-  const storagePath = path.join(artifactDirectory, `${artifactId}-${fileName}`)
-
-  await writeFile(storagePath, buffer)
-
-  const artifact = artifactEntrySchema.parse({
-    createdAt: new Date().toISOString(),
-    fileName,
-    id: artifactId,
-    idempotencyKey,
-    metadata,
-    mimeType,
-    pipelineVersion,
-    sha256: createSha256Hash(buffer),
-    sizeBytes: buffer.byteLength,
+  const sanitizedFileName = path.basename(fileName)
+  const extension = path.extname(sanitizedFileName) || `.${stage}`
+  const storagePath = createArtifactStoragePath({
+    artifactId,
+    extension,
+    organizationId: sourceFile.organizationId,
+    projectId,
     stage,
-    storagePath,
-    updatedAt: new Date().toISOString(),
   })
+  const absoluteStoragePath = resolveArtifactStoragePath({ storagePath })
 
-  const manifest = artifactManifestSchema.parse({
-    artifacts: [...existingManifest.artifacts, artifact],
-  })
+  await mkdir(path.dirname(absoluteStoragePath), { recursive: true })
+  await writeFile(absoluteStoragePath, buffer)
 
-  await writeJsonFile({
-    filePath: manifestPath,
-    value: manifest,
-  })
+  const format = path.extname(sanitizedFileName).replace(".", "") || mimeType
+
+  const [artifact] = await db
+    .insert(artifactTable)
+    .values({
+      createdByUserId: userId,
+      fileId,
+      fileName: sanitizedFileName,
+      format,
+      metadata: {
+        ...metadata,
+        idempotencyKey,
+      },
+      mimeType,
+      organizationId: sourceFile.organizationId,
+      pipelineVersion,
+      projectId,
+      recordId,
+      sizeBytes: buffer.byteLength,
+      sourceHash: sourceFile.sha256,
+      stage,
+      state: "available",
+      storagePath,
+    })
+    .returning()
 
   return artifact
 }

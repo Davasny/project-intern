@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server"
-import { listRecordFiles } from "@/features/files/lib/list-record-files"
+import { and, eq } from "drizzle-orm"
+import { sourceFileTable } from "@/features/files/db"
+import { db } from "@/lib/db"
 
 type GetRecordFileByIdParams = {
   fileId: string
@@ -12,8 +14,17 @@ export const getRecordFileById = async ({
   projectId,
   recordId,
 }: GetRecordFileByIdParams) => {
-  const files = await listRecordFiles({ projectId, recordId })
-  const file = files.find((currentFile) => currentFile.id === fileId) ?? null
+  const file = await db
+    .select()
+    .from(sourceFileTable)
+    .where(
+      and(
+        eq(sourceFileTable.id, fileId),
+        eq(sourceFileTable.projectId, projectId),
+        eq(sourceFileTable.recordId, recordId),
+      ),
+    )
+    .then((rows) => rows[0] ?? null)
 
   if (!file) {
     throw new TRPCError({

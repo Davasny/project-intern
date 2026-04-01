@@ -1,16 +1,12 @@
-import { getPipelineRunManifestPath } from "@/features/pipelines/lib/get-pipeline-run-manifest-path"
-import {
-  pipelineRunEntrySchema,
-  pipelineRunManifestSchema,
-} from "@/features/pipelines/schemas/pipeline-run-entry"
-import { ensureDirectory } from "@/utils/ensure-directory"
-import { pathExists } from "@/utils/path-exists"
-import { readJsonFile } from "@/utils/read-json-file"
-import { writeJsonFile } from "@/utils/write-json-file"
+import { pipelineRunTable } from "@/features/pipelines/db"
+import { getPipelineDefinition } from "@/features/pipelines/lib/get-pipeline-definition"
+import { pipelineRunEntrySchema } from "@/features/pipelines/schemas/pipeline-run-entry"
+import { db } from "@/lib/db"
 
 type RegisterPipelineRunParams = {
-  agentRunId: string
+  agentRunId: string | null
   metadata: Record<string, unknown>
+  pipelineVersion: string
   projectId: string
   recordId: string
   stage: string
@@ -22,6 +18,7 @@ type RegisterPipelineRunParams = {
 export const registerPipelineRun = async ({
   agentRunId,
   metadata,
+  pipelineVersion,
   projectId,
   recordId,
   stage,
@@ -29,37 +26,26 @@ export const registerPipelineRun = async ({
   taskId,
   taskRecordId,
 }: RegisterPipelineRunParams) => {
-  const manifestPath = getPipelineRunManifestPath({ projectId, recordId })
-  await ensureDirectory(manifestPath.replace("/pipeline-runs.json", ""))
-
-  const existingManifest = (await pathExists(manifestPath))
-    ? await readJsonFile({
-        filePath: manifestPath,
-        schema: pipelineRunManifestSchema,
-      })
-    : { runs: [] }
-
-  const entry = pipelineRunEntrySchema.parse({
-    agentRunId,
-    createdAt: new Date().toISOString(),
-    id: crypto.randomUUID(),
-    metadata,
+  const pipelineDefinition = await getPipelineDefinition({
     projectId,
-    recordId,
-    stage,
-    status,
-    taskId,
-    taskRecordId,
+    version: pipelineVersion,
   })
 
-  const manifest = pipelineRunManifestSchema.parse({
-    runs: [...existingManifest.runs, entry],
-  })
+  const [pipelineRun] = await db
+    .insert(pipelineRunTable)
+    .values({
+      agentRunId,
+      metadata,
+      pipelineDefinitionId: pipelineDefinition?.id ?? null,
+      pipelineVersion,
+      projectId,
+      recordId,
+      stage,
+      state: status,
+      taskId,
+      taskRecordId,
+    })
+    .returning()
 
-  await writeJsonFile({
-    filePath: manifestPath,
-    value: manifest,
-  })
-
-  return entry
+  return pipelineRunEntrySchema.parse(pipelineRun)
 }

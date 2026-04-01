@@ -1,7 +1,6 @@
-import { getArtifactManifestPath } from "@/features/artifacts/lib/get-artifact-manifest-path"
-import { artifactManifestSchema } from "@/features/artifacts/schemas/artifact-entry"
-import { pathExists } from "@/utils/path-exists"
-import { readJsonFile } from "@/utils/read-json-file"
+import { and, asc, eq } from "drizzle-orm"
+import { artifactTable } from "@/features/artifacts/db"
+import { db } from "@/lib/db"
 
 type ListArtifactsParams = {
   projectId: string
@@ -12,16 +11,14 @@ export const listArtifacts = async ({
   projectId,
   recordId,
 }: ListArtifactsParams) => {
-  const manifestPath = getArtifactManifestPath({ projectId, recordId })
-
-  if (!(await pathExists(manifestPath))) {
-    return []
-  }
-
-  const manifest = await readJsonFile({
-    filePath: manifestPath,
-    schema: artifactManifestSchema,
-  })
-
-  return manifest.artifacts
+  return db
+    .select()
+    .from(artifactTable)
+    .where(
+      and(
+        eq(artifactTable.projectId, projectId),
+        eq(artifactTable.recordId, recordId),
+      ),
+    )
+    .orderBy(asc(artifactTable.createdAt))
 }

@@ -1,7 +1,13 @@
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Pool } from "pg"
 import { agentRunTable } from "@/features/agent-runs/db"
+import { artifactTable } from "@/features/artifacts/db"
 import { authSchema } from "@/features/auth/db"
+import { sourceFileTable } from "@/features/files/db"
+import {
+  pipelineDefinitionTable,
+  pipelineRunTable,
+} from "@/features/pipelines/db"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
 import { activityLogTable, recordEdgeTable } from "@/features/record-edges/db"
@@ -12,8 +18,12 @@ import { databaseConfig } from "@/lib/config/database"
 
 const schema = {
   ...authSchema,
+  artifactTable,
   agentRunTable,
   activityLogTable,
+  sourceFileTable,
+  pipelineDefinitionTable,
+  pipelineRunTable,
   projectTable,
   projectSchemaVersionTable,
   recordTable,

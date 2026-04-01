@@ -9,6 +9,7 @@ import { getArtifact } from "@/features/artifacts/lib/get-artifact"
 import { getArtifactById } from "@/features/artifacts/lib/get-artifact-by-id"
 import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
 import { putArtifact } from "@/features/artifacts/lib/put-artifact"
+import { resolveArtifactStoragePath } from "@/features/artifacts/lib/resolve-artifact-storage-path"
 import { completeScopedTaskRecord } from "@/features/execution/lib/complete-scoped-task-record"
 import { failScopedTaskRecord } from "@/features/execution/lib/fail-scoped-task-record"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
@@ -19,6 +20,7 @@ import { taskFailureSchema } from "@/features/execution/schemas/task-failure"
 import { fetchRecordFile } from "@/features/files/lib/fetch-record-file"
 import { getRecordFileById } from "@/features/files/lib/get-record-file-by-id"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
+import { resolveSourceFileStoragePath } from "@/features/files/lib/resolve-source-file-storage-path"
 import { getPipelineDefinition } from "@/features/pipelines/lib/get-pipeline-definition"
 import { registerPipelineRun } from "@/features/pipelines/lib/register-pipeline-run"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
@@ -86,6 +88,7 @@ const artifactGetInputSchema = z.object({
 const artifactPutInputSchema = z.object({
   contentBase64: z.string().trim().min(1),
   execution: executionScopeInputSchema,
+  fileId: z.string().uuid(),
   fileName: z.string().trim().min(1),
   idempotencyKey: z.string().trim().min(1),
   metadata: z.record(z.string(), z.unknown()),
@@ -110,6 +113,7 @@ const workspaceManifestInputSchema = z.object({
   artifactIds: z.array(z.string().uuid()),
   execution: executionScopeInputSchema,
   fileIds: z.array(z.string().uuid()),
+  parserAssetVersion: z.string().trim().nullable(),
   pipelineVersion: z.string().trim().nullable(),
 })
 
@@ -537,6 +541,7 @@ export const createCrmMcpServer = () => {
       const scope = await getTaskRecordExecutionScope(input.execution)
       const artifact = await putArtifact({
         contentBase64: input.contentBase64,
+        fileId: input.fileId,
         fileName: input.fileName,
         idempotencyKey: input.idempotencyKey,
         metadata: input.metadata,
@@ -545,6 +550,7 @@ export const createCrmMcpServer = () => {
         projectId: scope.project.id,
         recordId: scope.record.id,
         stage: input.stage,
+        userId: null,
       })
 
       return createMcpJsonResponse({
@@ -571,9 +577,8 @@ export const createCrmMcpServer = () => {
       const scope = await getTaskRecordExecutionScope(input)
 
       return createMcpJsonResponse({
-        data: getPipelineDefinition({
+        data: await getPipelineDefinition({
           projectId: scope.project.id,
-          taskId: scope.task.id,
           version: scope.task.pipelineVersion,
         }),
         ok: true,
@@ -592,6 +597,8 @@ export const createCrmMcpServer = () => {
       const pipelineRun = await registerPipelineRun({
         agentRunId: scope.agentRun.id,
         metadata: input.metadata,
+        pipelineVersion:
+          scope.task.pipelineVersion ?? "record-file-pipeline-v1",
         projectId: scope.project.id,
         recordId: scope.record.id,
         stage: input.stage,
@@ -619,6 +626,7 @@ export const createCrmMcpServer = () => {
       const manifest = await writeWorkspaceManifest({
         artifactIds: input.artifactIds,
         fileIds: input.fileIds,
+        parserAssetVersion: input.parserAssetVersion,
         pipelineVersion: input.pipelineVersion,
         projectId: scope.project.id,
         recordId: scope.record.id,
@@ -655,7 +663,9 @@ export const createCrmMcpServer = () => {
       })
 
       return createResourceContent({
-        filePath: file.storagePath,
+        filePath: resolveSourceFileStoragePath({
+          storagePath: file.storagePath,
+        }),
         mimeType: file.mimeType,
         uri: createFileResourceUri({
           fileId: file.id,
@@ -688,7 +698,9 @@ export const createCrmMcpServer = () => {
       })
 
       return createResourceContent({
-        filePath: artifact.storagePath,
+        filePath: resolveArtifactStoragePath({
+          storagePath: artifact.storagePath,
+        }),
         mimeType: artifact.mimeType,
         uri: createArtifactResourceUri({
           artifactId: artifact.id,

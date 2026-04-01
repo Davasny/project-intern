@@ -12,6 +12,8 @@ export const getRecordWorkspaceDirectory = ({
 }: GetRecordWorkspaceDirectoryParams) =>
   path.join(
     backendConfig.CRM_WORKSPACE_ROOT,
-    `project_${projectId}`,
-    `record_${recordId}`,
+    "projects",
+    projectId,
+    "records",
+    recordId,
   )

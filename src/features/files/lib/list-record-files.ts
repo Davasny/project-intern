@@ -1,7 +1,6 @@
-import { getRecordFilesManifestPath } from "@/features/files/lib/get-record-files-manifest-path"
-import { recordFileManifestSchema } from "@/features/files/schemas/record-file-entry"
-import { pathExists } from "@/utils/path-exists"
-import { readJsonFile } from "@/utils/read-json-file"
+import { and, asc, eq } from "drizzle-orm"
+import { sourceFileTable } from "@/features/files/db"
+import { db } from "@/lib/db"
 
 type ListRecordFilesParams = {
   projectId: string
@@ -12,16 +11,14 @@ export const listRecordFiles = async ({
   projectId,
   recordId,
 }: ListRecordFilesParams) => {
-  const manifestPath = getRecordFilesManifestPath({ projectId, recordId })
-
-  if (!(await pathExists(manifestPath))) {
-    return []
-  }
-
-  const manifest = await readJsonFile({
-    filePath: manifestPath,
-    schema: recordFileManifestSchema,
-  })
-
-  return manifest.files
+  return db
+    .select()
+    .from(sourceFileTable)
+    .where(
+      and(
+        eq(sourceFileTable.projectId, projectId),
+        eq(sourceFileTable.recordId, recordId),
+      ),
+    )
+    .orderBy(asc(sourceFileTable.createdAt))
 }

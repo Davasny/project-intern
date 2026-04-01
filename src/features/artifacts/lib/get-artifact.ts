@@ -1,6 +1,7 @@
 import { copyFile } from "node:fs/promises"
 import path from "node:path"
 import { getArtifactById } from "@/features/artifacts/lib/get-artifact-by-id"
+import { resolveArtifactStoragePath } from "@/features/artifacts/lib/resolve-artifact-storage-path"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
 
 type GetArtifactParams = {
@@ -21,7 +22,10 @@ export const getArtifact = async ({
     artifact.fileName,
   )
 
-  await copyFile(artifact.storagePath, hydratedPath)
+  await copyFile(
+    resolveArtifactStoragePath({ storagePath: artifact.storagePath }),
+    hydratedPath,
+  )
 
   return {
     artifact,

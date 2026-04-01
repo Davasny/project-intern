@@ -1,9 +1,13 @@
 import { z } from "zod"
 
 export const pipelineDefinitionSchema = z.object({
-  invalidationPolicy: z.enum(["manual", "replace_on_version_change"]),
+  createdAt: z.coerce.date(),
+  id: z.string().uuid(),
+  name: z.string().trim().min(1),
+  parserAssetVersion: z.string().trim().min(1),
   projectId: z.string().uuid(),
   stages: z.array(z.string().trim().min(1)),
-  taskId: z.string().uuid(),
-  version: z.string().trim().nullable(),
+  version: z.string().trim().min(1),
 })
+
+export type PipelineDefinition = z.infer<typeof pipelineDefinitionSchema>

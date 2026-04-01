@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server"
-import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
+import { and, eq } from "drizzle-orm"
+import { artifactTable } from "@/features/artifacts/db"
+import { db } from "@/lib/db"
 
 type GetArtifactByIdParams = {
   artifactId: string
@@ -12,10 +14,17 @@ export const getArtifactById = async ({
   projectId,
   recordId,
 }: GetArtifactByIdParams) => {
-  const artifacts = await listArtifacts({ projectId, recordId })
-  const artifact =
-    artifacts.find((currentArtifact) => currentArtifact.id === artifactId) ??
-    null
+  const artifact = await db
+    .select()
+    .from(artifactTable)
+    .where(
+      and(
+        eq(artifactTable.id, artifactId),
+        eq(artifactTable.projectId, projectId),
+        eq(artifactTable.recordId, recordId),
+      ),
+    )
+    .then((rows) => rows[0] ?? null)
 
   if (!artifact) {
     throw new TRPCError({
