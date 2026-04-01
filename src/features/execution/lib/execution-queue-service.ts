@@ -1,12 +1,11 @@
-import { getPgBosser } from "@/features/execution/lib/get-pg-bosser"
 import {
   type TaskExecutorQueuePayload,
-  taskExecutorQueueName,
+  taskExecutorQueue,
 } from "@/features/execution/queues/task-executor-queue"
 
 export const executionQueueService = {
   enqueueTaskRecordExecution: (payload: TaskExecutorQueuePayload) =>
-    getPgBosser().send(taskExecutorQueueName, payload, {
+    taskExecutorQueue.send(payload, {
       retryBackoff: true,
       retryDelay: 30,
       retryLimit: 5,

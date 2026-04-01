@@ -59,9 +59,9 @@ importers:
       pg:
         specifier: 8.16.3
         version: 8.16.3
-      pg-boss:
-        specifier: 12.15.0
-        version: 12.15.0
+      pg-bosser:
+        specifier: 1.1.4
+        version: 1.1.4
       pino:
         specifier: 10.1.0
         version: 10.1.0
@@ -1290,9 +1290,9 @@ packages:
     resolution: {integrity: sha512-tJtZBBHA6vjIAaF6EnIaq6laBBP9aq/Y3ouVJjEfoHbRBcHBAHYcMh/w8LDrk2PvIMMq8gmopa5D4V8RmbrxGw==}
     engines: {node: '>= 0.10'}
 
-  cron-parser@5.5.0:
-    resolution: {integrity: sha512-oML4lKUXxizYswqmxuOCpgFS8BNUJpIu6k/2HVHyaL8Ynnf3wdf9tkns0yRdJLSIjkJ+b0DXHMZEHGpMwjnPww==}
-    engines: {node: '>=18'}
+  cron-parser@4.9.0:
+    resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
+    engines: {node: '>=12.0.0'}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -1737,10 +1737,6 @@ packages:
       sass:
         optional: true
 
-  non-error@0.1.0:
-    resolution: {integrity: sha512-TMB1uHiGsHRGv1uYclfhivcnf0/PdFp2pNqRxXjncaAsjYMoisaQJI+SSZCqRq+VliwRTC8tsMQfmrWjDMhkPQ==}
-    engines: {node: '>=20'}
-
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
     engines: {node: '>=0.10.0'}
@@ -1771,10 +1767,12 @@ packages:
   path-to-regexp@8.4.2:
     resolution: {integrity: sha512-qRcuIdP69NPm4qbACK+aDogI5CBDMi1jKe0ry5rSQJz8JVLsC7jV8XpiJjGRLLol3N+R5ihGYcrPLTno6pAdBA==}
 
-  pg-boss@12.15.0:
-    resolution: {integrity: sha512-xw0n3M6PtAOEtPYAF/PULFqba1a27BTJOJ+tVfbd/kG++GjF5RM1xj24n5xQyek3VwDR9LObftc+ygAJ0V2kVw==}
-    engines: {node: '>=22.12.0'}
-    hasBin: true
+  pg-boss@10.3.2:
+    resolution: {integrity: sha512-yy96jwKekgUW4DVvve5xjvLZlNqVCRayl1wJvBxQeDNhIrblgEG0YnqbcNth4wsehkYWVJND9TeWbqb+cfxJKQ==}
+    engines: {node: '>=20'}
+
+  pg-bosser@1.1.4:
+    resolution: {integrity: sha512-VoVklS8Cx6haW93yP/LRaPctqyZpl0M92zmMPOTBmT16qyAwg6ZuXWSpCs0LxCB6aUYC46Vg1SL91+g5OQhvtw==}
 
   pg-cloudflare@1.3.0:
     resolution: {integrity: sha512-6lswVVSztmHiRtD6I8hw4qP/nDm1EJbKMRhf3HCYaqud7frGysPv7FYJ5noZQdhQtN2xJnimfMtvQq21pdbzyQ==}
@@ -1800,15 +1798,6 @@ packages:
 
   pg@8.16.3:
     resolution: {integrity: sha512-enxc1h0jA/aq5oSDMvqyW3q89ra6XIIDZgCX9vkMrnz5DFTw/Ny3Li2lFQ+pt3L6MCgm/5o2o8HW9hiJji+xvw==}
-    engines: {node: '>= 16.0.0'}
-    peerDependencies:
-      pg-native: '>=3.0.1'
-    peerDependenciesMeta:
-      pg-native:
-        optional: true
-
-  pg@8.20.0:
-    resolution: {integrity: sha512-ldhMxz2r8fl/6QkXnBD3CR9/xg694oT6DZQ2s6c/RI28OjtSOpxnPrUCGOBJ46RCUxcWdx3p6kw/xnDHjKvaRA==}
     engines: {node: '>= 16.0.0'}
     peerDependencies:
       pg-native: '>=3.0.1'
@@ -1934,9 +1923,9 @@ packages:
     resolution: {integrity: sha512-1gnZf7DFcoIcajTjTwjwuDjzuz4PPcY2StKPlsGAQ1+YH20IRVrBaXSWmdjowTJ6u8Rc01PoYOGHXfP1mYcZNQ==}
     engines: {node: '>= 18'}
 
-  serialize-error@13.0.1:
-    resolution: {integrity: sha512-bBZaRwLH9PN5HbLCjPId4dP5bNGEtumcErgOX952IsvOhVPrm3/AeK1y0UHA/QaPG701eg0yEnOKsCOC6X/kaA==}
-    engines: {node: '>=20'}
+  serialize-error@8.1.0:
+    resolution: {integrity: sha512-3NnuWfM6vBYoy5gZFvHiYsVbafvI9vZv/+jlIigFn4oP4zjNPK3LhcY0xSCgeb1a5L8jO71Mit9LlNoi2UfDDQ==}
+    engines: {node: '>=10'}
 
   serve-static@2.2.1:
     resolution: {integrity: sha512-xRXBn0pPqQTVQiC8wyQrKs2MOlX24zQ0POGaj0kultvoOCstBQM5yvOhAVSUwOMjQtTvsPWoNCHfPGwaaQJhTw==}
@@ -2015,10 +2004,6 @@ packages:
     resolution: {integrity: sha512-zWPTX96LVsA/eVYnqOM2+ofcdPqdS1dAF1LN4TS2/MWuUpfitd9ctTa87wt4xrYnZnkLtS69xpBdSxVBP5Rm6w==}
     engines: {node: '>=16'}
 
-  tagged-tag@1.0.0:
-    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
-    engines: {node: '>=20'}
-
   tailwind-merge@3.3.1:
     resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
 
@@ -2047,9 +2032,9 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  type-fest@5.5.0:
-    resolution: {integrity: sha512-PlBfpQwiUvGViBNX84Yxwjsdhd1TUlXr6zjX7eoirtCPIr08NAmxwa+fcYBTeRQxHo9YC9wwF3m9i700sHma8g==}
-    engines: {node: '>=20'}
+  type-fest@0.20.2:
+    resolution: {integrity: sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==}
+    engines: {node: '>=10'}
 
   type-is@2.0.1:
     resolution: {integrity: sha512-OZs6gsjF4vMp32qrCbiVSkrFmXtG/AZhY3t0iAMrMBiAZyV9oALtXO8hsrHbMXF9x6L3grlFuwW2oAz7cav+Gw==}
@@ -2875,7 +2860,7 @@ snapshots:
       object-assign: 4.1.1
       vary: 1.1.2
 
-  cron-parser@5.5.0:
+  cron-parser@4.9.0:
     dependencies:
       luxon: 3.7.2
 
@@ -3264,8 +3249,6 @@ snapshots:
       - '@babel/core'
       - babel-plugin-macros
 
-  non-error@0.1.0: {}
-
   object-assign@4.1.1: {}
 
   object-inspect@1.13.4: {}
@@ -3286,11 +3269,17 @@ snapshots:
 
   path-to-regexp@8.4.2: {}
 
-  pg-boss@12.15.0:
+  pg-boss@10.3.2:
     dependencies:
-      cron-parser: 5.5.0
-      pg: 8.20.0
-      serialize-error: 13.0.1
+      cron-parser: 4.9.0
+      pg: 8.16.3
+      serialize-error: 8.1.0
+    transitivePeerDependencies:
+      - pg-native
+
+  pg-bosser@1.1.4:
+    dependencies:
+      pg-boss: 10.3.2
     transitivePeerDependencies:
       - pg-native
 
@@ -3304,10 +3293,6 @@ snapshots:
   pg-pool@3.13.0(pg@8.16.3):
     dependencies:
       pg: 8.16.3
-
-  pg-pool@3.13.0(pg@8.20.0):
-    dependencies:
-      pg: 8.20.0
 
   pg-protocol@1.13.0: {}
 
@@ -3323,16 +3308,6 @@ snapshots:
     dependencies:
       pg-connection-string: 2.12.0
       pg-pool: 3.13.0(pg@8.16.3)
-      pg-protocol: 1.13.0
-      pg-types: 2.2.0
-      pgpass: 1.0.5
-    optionalDependencies:
-      pg-cloudflare: 1.3.0
-
-  pg@8.20.0:
-    dependencies:
-      pg-connection-string: 2.12.0
-      pg-pool: 3.13.0(pg@8.20.0)
       pg-protocol: 1.13.0
       pg-types: 2.2.0
       pgpass: 1.0.5
@@ -3465,10 +3440,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  serialize-error@13.0.1:
+  serialize-error@8.1.0:
     dependencies:
-      non-error: 0.1.0
-      type-fest: 5.5.0
+      type-fest: 0.20.2
 
   serve-static@2.2.1:
     dependencies:
@@ -3575,8 +3549,6 @@ snapshots:
     dependencies:
       copy-anything: 4.0.5
 
-  tagged-tag@1.0.0: {}
-
   tailwind-merge@3.3.1: {}
 
   tailwindcss@4.1.16: {}
@@ -3600,9 +3572,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  type-fest@5.5.0:
-    dependencies:
-      tagged-tag: 1.0.0
+  type-fest@0.20.2: {}
 
   type-is@2.0.1:
     dependencies:

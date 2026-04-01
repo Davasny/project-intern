@@ -1,29 +1,28 @@
+import { Worker } from "pg-bosser"
 import { executorService } from "@/features/execution/lib/executor-service"
-import { getPgBosser } from "@/features/execution/lib/get-pg-bosser"
 import {
-  type TaskExecutorQueuePayload,
-  taskExecutorQueueName,
+  taskExecutorQueue,
   taskExecutorQueuePayloadSchema,
 } from "@/features/execution/queues/task-executor-queue"
+import { logger } from "@/lib/logger"
 
-export const taskExecutorWorker = async () => {
-  const boss = getPgBosser()
+export const taskExecutorWorker = new Worker(taskExecutorQueue, async (job) => {
+  const payload = taskExecutorQueuePayloadSchema.parse(job.data)
+  const childLogger = logger.child({
+    worker: "taskExecutorWorker",
+    queue: taskExecutorQueue.queueName,
+    jobId: job.id,
+    jobName: job.name,
+    agentRunId: payload.agentRunId,
+    taskRecordId: payload.taskRecordId,
+  })
 
-  await boss.work<TaskExecutorQueuePayload>(
-    taskExecutorQueueName,
-    async (jobs) => {
-      const job = jobs[0]
+  childLogger.info("processing task executor job")
 
-      if (!job) {
-        return
-      }
+  await executorService({
+    agentRunId: payload.agentRunId,
+    taskRecordId: payload.taskRecordId,
+  })
 
-      const payload = taskExecutorQueuePayloadSchema.parse(job.data)
-
-      await executorService({
-        agentRunId: payload.agentRunId,
-        taskRecordId: payload.taskRecordId,
-      })
-    },
-  )
-}
+  childLogger.info("completed task executor job")
+})
