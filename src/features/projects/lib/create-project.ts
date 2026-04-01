@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
+import { projectSchemaVersionTable } from "@/features/project-schema/db"
+import { validateProjectSchemaDefinition } from "@/features/project-schema/lib/validate-project-schema-definition"
 import { projectTable } from "@/features/projects/db"
 import { ensureOrganizationAccess } from "@/features/projects/lib/ensure-organization-access"
 import { db } from "@/lib/db"
@@ -57,18 +59,37 @@ export const createProject = async ({
     organization.id,
     displayName,
   )
-  const [project] = await db
-    .insert(projectTable)
-    .values({
-      displayName,
-      organizationId: organization.id,
-      slug: projectSlug,
-    })
-    .returning({
-      displayName: projectTable.displayName,
-      id: projectTable.id,
-      slug: projectTable.slug,
-    })
 
-  return project
+  return db.transaction(async (transaction) => {
+    const [project] = await transaction
+      .insert(projectTable)
+      .values({
+        displayName,
+        organizationId: organization.id,
+        slug: projectSlug,
+      })
+      .returning({
+        displayName: projectTable.displayName,
+        id: projectTable.id,
+        slug: projectTable.slug,
+      })
+
+    const [schemaVersion] = await transaction
+      .insert(projectSchemaVersionTable)
+      .values({
+        projectId: project.id,
+        schemaDefinition: validateProjectSchemaDefinition([]),
+        version: 1,
+      })
+      .returning({
+        id: projectSchemaVersionTable.id,
+      })
+
+    await transaction
+      .update(projectTable)
+      .set({ activeSchemaVersionId: schemaVersion.id })
+      .where(eq(projectTable.id, project.id))
+
+    return project
+  })
 }

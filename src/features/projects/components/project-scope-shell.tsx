@@ -1,10 +1,11 @@
 import Link from "next/link"
+import type { ReactNode } from "react"
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher"
 import { ProjectSwitcher } from "@/features/projects/components/project-switcher"
 import { SignOutButton } from "@/features/projects/components/sign-out-button"
 
 type ProjectScopeShellProps = {
-  children: React.ReactNode
+  children: ReactNode
   projectAccess: {
     currentOrganization: {
       id: string
@@ -63,6 +64,18 @@ export const ProjectScopeShell = ({
             href={`/app/${projectAccess.currentOrganization.slug}/${projectAccess.currentProject.slug}`}
           >
             Overview
+          </Link>
+          <Link
+            className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            href={`/app/${projectAccess.currentOrganization.slug}/${projectAccess.currentProject.slug}/records`}
+          >
+            Records
+          </Link>
+          <Link
+            className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            href={`/app/${projectAccess.currentOrganization.slug}/${projectAccess.currentProject.slug}/settings/schema`}
+          >
+            Schema settings
           </Link>
           <Link
             className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
