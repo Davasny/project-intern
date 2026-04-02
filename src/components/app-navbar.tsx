@@ -21,7 +21,6 @@ const segmentLabels: Record<string, string> = {
   records: "Records",
   settings: "Settings",
   schema: "Schema",
-  pipelines: "Pipelines",
   activity: "Activity",
   execution: "Execution",
   runs: "Runs",

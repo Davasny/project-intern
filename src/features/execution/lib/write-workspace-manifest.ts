@@ -9,8 +9,6 @@ import { writeJsonFile } from "@/utils/write-json-file"
 type WriteWorkspaceManifestParams = {
   artifactIds: string[]
   fileIds: string[]
-  parserAssetVersion: string | null
-  pipelineVersion: string | null
   projectId: string
   recordId: string
   taskId: string | null
@@ -19,8 +17,6 @@ type WriteWorkspaceManifestParams = {
 export const writeWorkspaceManifest = async ({
   artifactIds,
   fileIds,
-  parserAssetVersion,
-  pipelineVersion,
   projectId,
   recordId,
   taskId,
@@ -36,7 +32,6 @@ export const writeWorkspaceManifest = async ({
       .filter((artifact) => artifactIds.includes(artifact.id))
       .map((artifact) => ({
         artifactId: artifact.id,
-        pipelineVersion: artifact.pipelineVersion,
         sourceHash: artifact.sourceHash,
         stage: artifact.stage,
         workspacePath: path.join(
@@ -55,8 +50,6 @@ export const writeWorkspaceManifest = async ({
           file.originalFileName,
         ),
       })),
-    parserAssetVersion,
-    pipelineVersion,
     projectId,
     recordId,
     taskId,

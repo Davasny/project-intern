@@ -4,7 +4,6 @@ import { db } from "@/lib/db"
 
 type GetReusableArtifactParams = {
   fileId: string
-  pipelineVersion: string
   recordId: string
   sourceHash: string
   stage: string
@@ -12,7 +11,6 @@ type GetReusableArtifactParams = {
 
 export const getReusableArtifact = ({
   fileId,
-  pipelineVersion,
   recordId,
   sourceHash,
   stage,
@@ -23,7 +21,6 @@ export const getReusableArtifact = ({
     .where(
       and(
         eq(artifactTable.fileId, fileId),
-        eq(artifactTable.pipelineVersion, pipelineVersion),
         eq(artifactTable.recordId, recordId),
         eq(artifactTable.sourceHash, sourceHash),
         eq(artifactTable.stage, stage),

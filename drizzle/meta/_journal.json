@@ -64,6 +64,13 @@
       "when": 1775146824254,
       "tag": "0008_unknown_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775163073014,
+      "tag": "0009_unknown_captain_flint",
+      "breakpoints": true
     }
   ]
 }

@@ -36,7 +36,6 @@ export const listTasks = async ({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
-      pipelineVersion: taskTable.pipelineVersion,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,

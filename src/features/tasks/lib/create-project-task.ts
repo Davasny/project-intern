@@ -16,7 +16,6 @@ type CreateProjectTaskParams = {
   descriptionMarkdown: string
   model: string | null
   organizationId: string
-  pipelineVersion: string | null
   projectId: string
   schemaVersion: number
   sourceSchemaVersionId: string | null
@@ -30,7 +29,6 @@ export const createProjectTask = async ({
   descriptionMarkdown,
   model,
   organizationId,
-  pipelineVersion,
   projectId,
   schemaVersion,
   sourceSchemaVersionId,
@@ -51,7 +49,6 @@ export const createProjectTask = async ({
       descriptionMarkdown,
       idempotencyKey: crypto.randomUUID(),
       model,
-      pipelineVersion,
       projectId,
       schemaVersion,
       sortOrder: nextSortOrder,
@@ -64,7 +61,6 @@ export const createProjectTask = async ({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
-      pipelineVersion: taskTable.pipelineVersion,
       projectId: taskTable.projectId,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,

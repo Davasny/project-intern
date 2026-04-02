@@ -37,7 +37,6 @@ const iconMap: Record<string, ReactNode> = {
   Tasks: <CheckIcon />,
   Records: <DatabaseIcon />,
   "Schema settings": <SettingsIcon />,
-  "Pipeline settings": <LineChartIcon />,
   "Activity log": <ActivityIcon />,
   "Execution monitor": <ActivityIcon />,
 }
@@ -65,11 +64,6 @@ export const AppSidebar = () => {
       href: `/app/${organizationSlug}/${projectSlug}/settings/schema`,
       label: "Schema settings",
       icon: iconMap["Schema settings"],
-    },
-    {
-      href: `/app/${organizationSlug}/${projectSlug}/settings/pipelines`,
-      label: "Pipeline settings",
-      icon: iconMap["Pipeline settings"],
     },
     {
       href: `/app/${organizationSlug}/${projectSlug}/activity`,

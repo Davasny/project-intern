@@ -135,11 +135,7 @@ export const TaskDetailsPage = ({
             <MetadataList>
               <MetadataListItem
                 label="Model override"
-                value={taskQuery.data.model ?? "Default project model"}
-              />
-              <MetadataListItem
-                label="Pipeline version"
-                value={taskQuery.data.pipelineVersion ?? "Not linked"}
+                value={taskQuery.data.model ?? "Default project models"}
               />
               <MetadataListItem
                 label="Created"
@@ -215,7 +211,6 @@ export const TaskDetailsPage = ({
           <TaskForm
             initialDescriptionMarkdown={taskQuery.data.descriptionMarkdown}
             initialModel={taskQuery.data.model}
-            initialPipelineVersion={taskQuery.data.pipelineVersion}
             initialSchemaVersion={taskQuery.data.schemaVersion}
             initialTitle={taskQuery.data.title}
             onSubmitted={() => setIsEditOpen(false)}

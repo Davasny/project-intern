@@ -16,7 +16,6 @@ type PutArtifactParams = {
   idempotencyKey: string
   metadata: Record<string, unknown>
   mimeType: string
-  pipelineVersion: string
   projectId: string
   recordId: string
   stage: string
@@ -30,7 +29,6 @@ export const putArtifact = async ({
   idempotencyKey,
   metadata,
   mimeType,
-  pipelineVersion,
   projectId,
   recordId,
   stage,
@@ -64,7 +62,6 @@ export const putArtifact = async ({
 
   const existingArtifact = await getReusableArtifact({
     fileId,
-    pipelineVersion,
     recordId,
     sourceHash: sourceFile.sha256,
     stage,
@@ -104,7 +101,6 @@ export const putArtifact = async ({
       },
       mimeType,
       organizationId: sourceFile.organizationId,
-      pipelineVersion,
       projectId,
       recordId,
       sizeBytes: buffer.byteLength,

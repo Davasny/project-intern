@@ -2,7 +2,6 @@ import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-bo
 import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
 import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
 import { buildTaskRecordSystemPrompt } from "@/features/execution/lib/build-task-record-system-prompt"
-import { ensurePipelineAssetsInWorkspace } from "@/features/execution/lib/ensure-pipeline-assets-in-workspace"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
 import { getAgentRunExecutionScope } from "@/features/execution/lib/get-agent-run-execution-scope"
 import { hydrateRecordWorkspace } from "@/features/execution/lib/hydrate-record-workspace"
@@ -10,7 +9,6 @@ import { pollSessionForMetrics } from "@/features/execution/lib/poll-session-for
 import { resolveRuntimeModel } from "@/features/execution/lib/resolve-runtime-model"
 import { writeWorkspaceManifest } from "@/features/execution/lib/write-workspace-manifest"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
-import { getPipelineDefinition } from "@/features/pipelines/lib/get-pipeline-definition"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
 import { startTaskRecord } from "@/features/task-records/lib/start-task-record"
@@ -46,7 +44,6 @@ export const executorService = async ({
 
     executionLogger.info(
       {
-        pipelineVersion: initialScope.task.pipelineVersion,
         recordName: initialScope.record.name,
         taskTitle: initialScope.task.title,
       },
@@ -58,25 +55,6 @@ export const executorService = async ({
     })
 
     executionLogger.info({ runtimeModel }, "Resolved runtime model")
-
-    executionLogger.info(
-      { pipelineVersion: initialScope.task.pipelineVersion },
-      "Loading pipeline definition",
-    )
-
-    const pipelineDefinition = await getPipelineDefinition({
-      projectId: initialScope.project.id,
-      version: initialScope.task.pipelineVersion,
-    })
-
-    executionLogger.info(
-      {
-        hasPipelineDefinition: pipelineDefinition !== null,
-        parserAssetVersion: pipelineDefinition?.parserAssetVersion ?? null,
-        pipelineVersion: pipelineDefinition?.version ?? null,
-      },
-      "Loaded pipeline definition",
-    )
 
     executionLogger.info("Ensuring record workspace")
 
@@ -142,36 +120,11 @@ export const executorService = async ({
       "Loaded record relations, files, and artifacts",
     )
 
-    executionLogger.info(
-      {
-        hasPipelineDefinition: pipelineDefinition !== null,
-      },
-      "Ensuring pipeline assets in workspace when required",
-    )
-
-    const parserAssetBundle =
-      pipelineDefinition === null
-        ? null
-        : await ensurePipelineAssetsInWorkspace({
-            parserAssetVersion: pipelineDefinition.parserAssetVersion,
-            projectId: initialScope.project.id,
-            recordId: initialScope.record.id,
-          })
-
-    executionLogger.info(
-      {
-        parserAssetBundleDirectory: parserAssetBundle?.bundleDirectory ?? null,
-      },
-      "Prepared pipeline assets in workspace",
-    )
-
     executionLogger.info("Writing workspace manifest")
 
     await writeWorkspaceManifest({
       artifactIds: artifacts.map((artifact) => artifact.id),
       fileIds: files.map((file) => file.id),
-      parserAssetVersion: pipelineDefinition?.parserAssetVersion ?? null,
-      pipelineVersion: pipelineDefinition?.version ?? null,
       projectId: initialScope.project.id,
       recordId: initialScope.record.id,
       taskId: initialScope.task.id,
@@ -233,7 +186,6 @@ export const executorService = async ({
         artifactsAvailable: artifacts.length,
         hydratedArtifactCount: hydratedWorkspace.artifactCount,
         hydratedFileCount: hydratedWorkspace.fileCount,
-        parserAssetVersion: pipelineDefinition?.parserAssetVersion ?? null,
         relationCount: relations.summary.activeCount,
       },
     })
@@ -253,7 +205,6 @@ export const executorService = async ({
         taskRecordId: initialScope.taskRecord.id,
       },
       files,
-      pipelineDefinition,
       record: initialScope.record,
       relations,
       schema,
@@ -314,7 +265,6 @@ export const executorService = async ({
       toolActivitySummary: {
         filesAvailable: files.length,
         model: runtimeModel,
-        parserAssetBundleDirectory: parserAssetBundle?.bundleDirectory ?? null,
         relationCount: relations.summary.activeCount,
         sessionId: session.data.id,
       },
@@ -371,7 +321,6 @@ export const executorService = async ({
       artifacts,
       files,
       model: runtimeModel,
-      pipelineDefinition,
       projectId: initialScope.project.id,
       recordId: initialScope.record.id,
       relations,

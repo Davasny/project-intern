@@ -59,7 +59,6 @@ export const updateTask = async ({
     .set({
       descriptionMarkdown: input.descriptionMarkdown,
       model,
-      pipelineVersion: input.pipelineVersion,
       schemaVersion: input.schemaVersion,
       title: input.title,
     })
@@ -69,7 +68,6 @@ export const updateTask = async ({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
-      pipelineVersion: taskTable.pipelineVersion,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,

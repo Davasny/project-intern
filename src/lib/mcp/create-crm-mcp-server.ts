@@ -22,8 +22,6 @@ import { fetchRecordFile } from "@/features/files/lib/fetch-record-file"
 import { getRecordFileById } from "@/features/files/lib/get-record-file-by-id"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
 import { resolveSourceFileStoragePath } from "@/features/files/lib/resolve-source-file-storage-path"
-import { getPipelineDefinition } from "@/features/pipelines/lib/get-pipeline-definition"
-import { registerPipelineRun } from "@/features/pipelines/lib/register-pipeline-run"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listProjectSchemaVersionsByProjectId } from "@/features/project-schema/lib/list-project-schema-versions-by-project-id"
 import { createRecordEdgeById } from "@/features/record-edges/lib/create-record-edge-by-id"
@@ -94,7 +92,6 @@ const artifactPutInputSchema = z.object({
   idempotencyKey: z.string().trim().min(1),
   metadata: z.record(z.string(), z.unknown()),
   mimeType: z.string().trim().min(1),
-  pipelineVersion: z.string().trim().min(1),
   stage: z.string().trim().min(1),
 })
 
@@ -103,19 +100,10 @@ const relatedRecordInputSchema = z.object({
   recordEdgeId: z.string().uuid(),
 })
 
-const pipelineRunInputSchema = z.object({
-  execution: executionScopeInputSchema,
-  metadata: z.record(z.string(), z.unknown()),
-  stage: z.string().trim().min(1),
-  status: z.enum(["completed", "failed", "running"]),
-})
-
 const workspaceManifestInputSchema = z.object({
   artifactIds: z.array(z.string().uuid()),
   execution: executionScopeInputSchema,
   fileIds: z.array(z.string().uuid()),
-  parserAssetVersion: z.string().trim().nullable(),
-  pipelineVersion: z.string().trim().nullable(),
 })
 
 const createResourceContent = async (params: {
@@ -561,7 +549,6 @@ export const createCrmMcpServer = () => {
         idempotencyKey: input.idempotencyKey,
         metadata: input.metadata,
         mimeType: input.mimeType,
-        pipelineVersion: input.pipelineVersion,
         projectId: scope.project.id,
         recordId: scope.record.id,
         stage: input.stage,
@@ -583,53 +570,6 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_get_pipeline_definition",
-    {
-      description: "Read the pipeline definition for the scoped task.",
-      inputSchema: executionScopeInputSchema,
-    },
-    async (input) => {
-      const scope = await getTaskRecordExecutionScope(input)
-
-      return createMcpJsonResponse({
-        data: await getPipelineDefinition({
-          projectId: scope.project.id,
-          version: scope.task.pipelineVersion,
-        }),
-        ok: true,
-      })
-    },
-  )
-
-  server.registerTool(
-    "crm_register_pipeline_run",
-    {
-      description: "Register a pipeline run for the scoped task record.",
-      inputSchema: pipelineRunInputSchema,
-    },
-    async (input) => {
-      const scope = await getTaskRecordExecutionScope(input.execution)
-      const pipelineRun = await registerPipelineRun({
-        agentRunId: scope.agentRun.id,
-        metadata: input.metadata,
-        pipelineVersion:
-          scope.task.pipelineVersion ?? "record-file-pipeline-v1",
-        projectId: scope.project.id,
-        recordId: scope.record.id,
-        stage: input.stage,
-        status: input.status,
-        taskId: scope.task.id,
-        taskRecordId: scope.taskRecord.id,
-      })
-
-      return createMcpJsonResponse({
-        data: pipelineRun,
-        ok: true,
-      })
-    },
-  )
-
-  server.registerTool(
     "crm_write_workspace_manifest",
     {
       description:
@@ -641,8 +581,6 @@ export const createCrmMcpServer = () => {
       const manifest = await writeWorkspaceManifest({
         artifactIds: input.artifactIds,
         fileIds: input.fileIds,
-        parserAssetVersion: input.parserAssetVersion,
-        pipelineVersion: input.pipelineVersion,
         projectId: scope.project.id,
         recordId: scope.record.id,
         taskId: scope.task.id,

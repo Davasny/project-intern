@@ -4,7 +4,6 @@ export const workspaceManifestSchema = z.object({
   artifacts: z.array(
     z.object({
       artifactId: z.string().uuid(),
-      pipelineVersion: z.string().trim().min(1),
       sourceHash: z.string().trim().min(1),
       stage: z.string().trim().min(1),
       workspacePath: z.string().trim().min(1),
@@ -18,8 +17,6 @@ export const workspaceManifestSchema = z.object({
       workspacePath: z.string().trim().min(1),
     }),
   ),
-  parserAssetVersion: z.string().trim().nullable(),
-  pipelineVersion: z.string().trim().nullable(),
   projectId: z.string().uuid(),
   recordId: z.string().uuid(),
   taskId: z.string().uuid().nullable(),

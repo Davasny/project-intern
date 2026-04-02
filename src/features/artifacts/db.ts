@@ -46,7 +46,6 @@ export const artifactTable = pgTable(
     stage: text("stage").notNull(),
     state: text("state").$type<ArtifactState>().notNull(),
     sourceHash: text("source_hash").notNull(),
-    pipelineVersion: text("pipeline_version").notNull(),
     format: text("format").notNull(),
     fileName: text("file_name").notNull(),
     mimeType: text("mime_type").notNull(),
@@ -62,7 +61,6 @@ export const artifactTable = pgTable(
       table.fileId,
       table.stage,
       table.sourceHash,
-      table.pipelineVersion,
     ),
     index("artifact_project_record_created_at_idx").on(
       table.projectId,

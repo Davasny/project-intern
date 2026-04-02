@@ -20,7 +20,6 @@ export const ensureRecordWorkspace = async ({
     ensureDirectory(workspaceDirectory),
     ensureDirectory(path.join(workspaceDirectory, "artifacts")),
     ensureDirectory(path.join(workspaceDirectory, "logs")),
-    ensureDirectory(path.join(workspaceDirectory, "pipeline-assets")),
     ensureDirectory(path.join(workspaceDirectory, "scratch")),
     ensureDirectory(path.join(workspaceDirectory, "source-files")),
   ])
@@ -28,7 +27,6 @@ export const ensureRecordWorkspace = async ({
   return {
     artifactsDirectory: path.join(workspaceDirectory, "artifacts"),
     logsDirectory: path.join(workspaceDirectory, "logs"),
-    pipelineAssetsDirectory: path.join(workspaceDirectory, "pipeline-assets"),
     scratchDirectory: path.join(workspaceDirectory, "scratch"),
     sourceFilesDirectory: path.join(workspaceDirectory, "source-files"),
     workspaceDirectory,

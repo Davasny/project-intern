@@ -5,7 +5,6 @@ import { executionRouter } from "@/features/execution/router"
 import { filesRouter } from "@/features/files/router"
 import { observabilityRouter } from "@/features/observability/router"
 import { organizationsRouter } from "@/features/organizations/router"
-import { pipelinesRouter } from "@/features/pipelines/router"
 import { projectSchemaRouter } from "@/features/project-schema/router"
 import { projectsRouter } from "@/features/projects/router"
 import { recordEdgesRouter } from "@/features/record-edges/router"
@@ -21,7 +20,6 @@ export const appRouter = router({
   files: filesRouter,
   observability: observabilityRouter,
   organizations: organizationsRouter,
-  pipelines: pipelinesRouter,
   projectSchema: projectSchemaRouter,
   projects: projectsRouter,
   records: recordsRouter,

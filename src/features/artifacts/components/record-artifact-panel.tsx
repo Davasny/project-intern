@@ -40,7 +40,7 @@ export const RecordArtifactPanel = ({
         <h2 className="text-lg font-semibold text-slate-950">Artifacts</h2>
         <p className="text-sm text-slate-500">
           Derived outputs are canonically stored with lineage by file, stage,
-          source hash, and pipeline version.
+          and source hash.
         </p>
       </SectionCardHeader>
       <SectionCardContent>
@@ -49,7 +49,7 @@ export const RecordArtifactPanel = ({
             {artifactsQuery.data.map((artifact) => (
               <ArtifactListItem
                 key={artifact.id}
-                meta={`${artifact.stage} · ${artifact.pipelineVersion} · ${artifact.state} · ${formatFileSize(artifact.sizeBytes)}`}
+                meta={`${artifact.stage} · ${artifact.state} · ${formatFileSize(artifact.sizeBytes)}`}
                 title={artifact.fileName}
               />
             ))}

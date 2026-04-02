@@ -8,7 +8,6 @@ export const taskInputSchema = z.object({
     .trim()
     .min(1, "Task description is required."),
   model: nullableStringSchema,
-  pipelineVersion: nullableStringSchema,
   schemaVersion: z.number().int().min(1),
   title: z.string().trim().min(1, "Task title is required."),
 })

@@ -25,7 +25,6 @@ const taskFormSchema = z.object({
     .trim()
     .min(1, "Task description is required."),
   model: z.string().trim(),
-  pipelineVersion: z.string().trim(),
   schemaVersion: z.number().int().min(1),
   title: z.string().trim().min(1, "Task title is required."),
 })
@@ -35,7 +34,6 @@ type TaskFormValues = z.infer<typeof taskFormSchema>
 type TaskFormProps = {
   initialDescriptionMarkdown: string
   initialModel: string | null
-  initialPipelineVersion: string | null
   initialSchemaVersion: number
   initialTitle: string
   onSubmitted: () => void
@@ -46,7 +44,6 @@ type TaskFormProps = {
 export const TaskForm = ({
   initialDescriptionMarkdown,
   initialModel,
-  initialPipelineVersion,
   initialSchemaVersion,
   initialTitle,
   onSubmitted,
@@ -60,7 +57,6 @@ export const TaskForm = ({
     defaultValues: {
       descriptionMarkdown: initialDescriptionMarkdown,
       model: initialModel ?? "",
-      pipelineVersion: initialPipelineVersion ?? "",
       schemaVersion: initialSchemaVersion,
       title: initialTitle,
     },
@@ -82,7 +78,6 @@ export const TaskForm = ({
         form.reset({
           descriptionMarkdown: "",
           model: "",
-          pipelineVersion: "",
           schemaVersion: initialSchemaVersion,
           title: "",
         })
@@ -112,15 +107,12 @@ export const TaskForm = ({
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const model = values.model.length > 0 ? values.model : null
-    const pipelineVersion =
-      values.pipelineVersion.length > 0 ? values.pipelineVersion : null
 
     if (taskId) {
       await updateTaskMutation.mutateAsync({
         input: {
           descriptionMarkdown: values.descriptionMarkdown,
           model,
-          pipelineVersion,
           schemaVersion: values.schemaVersion,
           taskId,
           title: values.title,
@@ -136,7 +128,6 @@ export const TaskForm = ({
       input: {
         descriptionMarkdown: values.descriptionMarkdown,
         model,
-        pipelineVersion,
         schemaVersion: values.schemaVersion,
         title: values.title,
       },
@@ -191,7 +182,7 @@ export const TaskForm = ({
             </FormItem>
           )}
         />
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="schemaVersion"
@@ -225,19 +216,6 @@ export const TaskForm = ({
                 <FormLabel>Model override</FormLabel>
                 <FormControl>
                   <Input placeholder="openai/gpt-5.4" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="pipelineVersion"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pipeline version</FormLabel>
-                <FormControl>
-                  <Input placeholder="future-file-pipeline-v1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

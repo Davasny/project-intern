@@ -82,7 +82,6 @@ export const createProjectSchemaVersion = async ({
           }),
           model: null,
           organizationId: project.organizationId,
-          pipelineVersion: null,
           projectId: project.id,
           schemaVersion: createdSchemaVersion.version,
           sourceSchemaVersionId: latestSchemaVersion.id,

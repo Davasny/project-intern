@@ -40,7 +40,6 @@ export const taskTable = pgTable(
       () => projectSchemaVersionTable.id,
       { onDelete: "set null" },
     ),
-    pipelineVersion: text("pipeline_version"),
     idempotencyKey: text("idempotency_key").notNull(),
     descriptionMarkdown: text("description_markdown").notNull(),
     createdAt: createdAtColumn(),
