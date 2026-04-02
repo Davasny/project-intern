@@ -34,7 +34,7 @@ export const DialogContent = ({
     <DialogOverlay />
     <DialogPrimitive.Content
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col gap-6 rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-xl duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in sm:w-full",
+        "fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col gap-6 rounded-3xl border border-border bg-card p-6 duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in sm:w-full",
         className,
       )}
       {...props}

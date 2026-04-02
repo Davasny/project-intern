@@ -7,7 +7,7 @@ export const SidePanel = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col gap-4 rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm",
+      "flex flex-col gap-4 rounded-3xl border border-border bg-card p-6",
       className,
     )}
     {...props}

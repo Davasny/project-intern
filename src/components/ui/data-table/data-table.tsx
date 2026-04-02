@@ -6,7 +6,7 @@ type DataTableProps = {
 }
 
 export const DataTable = ({ children }: DataTableProps) => (
-  <div className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)]">
+  <div className="overflow-hidden rounded-3xl border border-border bg-card">
     <div className="overflow-x-auto">
       <Table>{children}</Table>
     </div>

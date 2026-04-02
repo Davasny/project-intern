@@ -7,7 +7,7 @@ export const AppShellSidebar = ({
 }: HTMLAttributes<HTMLElement>) => (
   <aside
     className={cn(
-      "flex flex-col gap-6 rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4 shadow-sm",
+      "flex flex-col gap-6 rounded-3xl border border-border bg-card p-4",
       className,
     )}
     {...props}

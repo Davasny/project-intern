@@ -34,7 +34,7 @@ export const TableRow = ({
   className,
   ...props
 }: HTMLAttributes<HTMLTableRowElement>) => (
-  <tr className={cn("border-b border-slate-200", className)} {...props} />
+  <tr className={cn("border-b border-border", className)} {...props} />
 )
 
 export const TableHeader = ({

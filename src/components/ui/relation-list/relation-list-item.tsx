@@ -7,7 +7,7 @@ export const RelationListItem = ({
 }: HTMLAttributes<HTMLLIElement>) => (
   <li
     className={cn(
-      "flex flex-col gap-4 rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-surface-subtle)] p-4",
+      "flex flex-col gap-4 rounded-2xl border border-border bg-muted/30 p-4",
       className,
     )}
     {...props}

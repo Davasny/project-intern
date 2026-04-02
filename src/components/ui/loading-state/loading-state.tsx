@@ -3,7 +3,7 @@ type LoadingStateProps = {
 }
 
 export const LoadingState = ({ label }: LoadingStateProps) => (
-  <div className="rounded-3xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface)] p-6 text-sm text-slate-500">
+  <div className="rounded-3xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
     {label}
   </div>
 )

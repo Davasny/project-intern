@@ -19,8 +19,8 @@ export const OrganizationSwitcherItem = ({
       className={cn(
         "flex w-full rounded-xl px-3 py-2 text-sm font-medium transition-colors",
         isActive
-          ? "bg-slate-900 text-white hover:bg-slate-800"
-          : "bg-slate-100 text-slate-900 hover:bg-slate-200",
+          ? "bg-accent text-accent-foreground"
+          : "bg-muted text-foreground hover:bg-accent",
       )}
       href={`/app/${organization.slug}`}
     >

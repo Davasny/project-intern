@@ -7,7 +7,7 @@ export const FilterBar = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col gap-3 rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between",
+      "flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 lg:flex-row lg:items-center lg:justify-between",
       className,
     )}
     {...props}

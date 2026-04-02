@@ -16,7 +16,7 @@ export const DropdownMenuContent = ({
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       className={cn(
-        "z-50 min-w-48 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-1.5 shadow-lg",
+        "z-50 min-w-48 rounded-2xl border border-border bg-popover p-1.5",
         className,
       )}
       sideOffset={sideOffset}

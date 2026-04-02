@@ -6,10 +6,7 @@ export const AppShellHeader = ({
   ...props
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn(
-      "flex items-center justify-between gap-3 border-b border-[var(--app-border-soft)] pb-4",
-      className,
-    )}
+    className={cn("flex items-center justify-between gap-3 pb-4", className)}
     {...props}
   />
 )

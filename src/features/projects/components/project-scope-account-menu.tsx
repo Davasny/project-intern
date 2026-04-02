@@ -31,7 +31,7 @@ export const ProjectScopeAccountMenu = ({
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-[var(--app-border-soft)] pt-4">
+    <div className="flex items-center justify-between gap-3 pt-4">
       <p className="min-w-0 flex-1 truncate text-sm font-medium text-slate-900">
         {userDisplayName}
       </p>

@@ -7,7 +7,7 @@ export const DataTableToolbar = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col gap-3 border-b border-[var(--app-border-soft)] p-4 lg:flex-row lg:items-center lg:justify-between",
+      "flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between",
       className,
     )}
     {...props}

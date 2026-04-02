@@ -73,7 +73,7 @@ export const SchemaVersionHistoryItem = ({
       </div>
       <div className="flex items-center gap-2">
         {isActive ? (
-          <span className="rounded-full bg-slate-900 px-3 py-1 text-xs text-white">
+          <span className="rounded-full bg-accent px-3 py-1 text-xs text-accent-foreground">
             active
           </span>
         ) : null}

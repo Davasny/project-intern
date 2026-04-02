@@ -66,7 +66,7 @@ export const ProjectScopeShell = ({
               organizationSlug={projectAccess.currentOrganization.slug}
               projects={projectAccess.projects}
             />
-            <nav className="flex flex-col gap-2 border-t border-slate-100 pt-4">
+            <nav className="flex flex-col gap-2 pt-4">
               <ProjectScopeNavLink
                 href={`/app/${projectAccess.currentOrganization.slug}/${projectAccess.currentProject.slug}`}
                 label="Overview"

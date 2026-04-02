@@ -5,8 +5,5 @@ export const AppShell = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn("min-h-screen bg-[var(--app-background)]", className)}
-    {...props}
-  />
+  <div className={cn("min-h-screen bg-background", className)} {...props} />
 )

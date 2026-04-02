@@ -82,7 +82,7 @@ export const ProjectOverviewPage = ({
             {overviewQuery.data.recentTasks.length > 0 ? (
               overviewQuery.data.recentTasks.map((task) => (
                 <div
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--app-border-soft)] p-4"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 p-4"
                   key={task.id}
                 >
                   <div className="flex flex-col gap-1">
