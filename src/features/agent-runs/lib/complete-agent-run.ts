@@ -1,5 +1,6 @@
 import { getAgentRunActor } from "@/features/agent-runs/lib/get-agent-run-actor"
 import { getToolCallCount } from "@/features/agent-runs/lib/get-tool-call-count"
+import { persistAgentRunOutputs } from "@/features/agent-runs/lib/persist-agent-run-outputs"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getAgentRunActivityScope } from "@/features/observability/lib/get-agent-run-activity-scope"
 import { completeTaskRecord } from "@/features/task-records/lib/complete-task-record"
@@ -28,8 +29,33 @@ export const completeAgentRun = async ({
   toolActivitySummary,
 }: CompleteAgentRunParams) => {
   const actor = await getAgentRunActor(agentRunId)
+  const toolCallCount = getToolCallCount(toolActivitySummary)
+
+  if (actor.state === "running") {
+    await persistAgentRunOutputs({
+      agentRunId,
+      resultPayload,
+      tokenOutput,
+      toolActivitySummary,
+    })
+  }
+
+  if (actor.state !== "running" && actor.state !== "persisting_outputs") {
+    throw new Error(
+      `Agent run ${agentRunId} cannot complete from state ${actor.state}.`,
+    )
+  }
+
   const finishedAt = new Date()
-  const nextActor = await actor.send("complete", {
+  const completionActor = await getAgentRunActor(agentRunId)
+
+  if (completionActor.state !== "persisting_outputs") {
+    throw new Error(
+      `Agent run ${agentRunId} must persist outputs before completion. Current state: ${completionActor.state}.`,
+    )
+  }
+
+  const nextActor = await completionActor.send("complete", {
     costUsd,
     estimatedCostUsd: costUsd,
     finishedAt,
@@ -40,7 +66,7 @@ export const completeAgentRun = async ({
     tokenInput,
     tokenOutput,
     toolActivitySummary,
-    toolCallCount: getToolCallCount(toolActivitySummary),
+    toolCallCount,
     toolSummary: toolActivitySummary,
   })
 

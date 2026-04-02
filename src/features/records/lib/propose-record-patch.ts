@@ -52,6 +52,14 @@ export const proposeRecordPatch = async ({
       })
     }
 
+    if (change.field === "schemaVersion") {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          "schemaVersion is not patchable. Complete the task with patch null when only schema adoption is needed.",
+      })
+    }
+
     if (change.field !== "name" && !allowedFields.has(change.field)) {
       throw new TRPCError({
         code: "BAD_REQUEST",

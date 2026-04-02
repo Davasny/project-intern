@@ -218,7 +218,7 @@ export const createCrmMcpServer = () => {
     "crm_propose_patch",
     {
       description:
-        "Validate a structured patch proposal for the scoped record.",
+        "Validate a structured patch proposal for the scoped record. Patches edit record values only, not schemaVersion. Use the current record version as baseVersion. Valid patch targets are name and schema-backed context fields.",
       inputSchema: patchInputSchema,
     },
     async (input) => {
@@ -245,7 +245,8 @@ export const createCrmMcpServer = () => {
   server.registerTool(
     "crm_apply_patch",
     {
-      description: "Apply a validated structured patch to the scoped record.",
+      description:
+        "Apply a validated structured patch to the scoped record. Patches edit record values only, not schemaVersion. Use the current record version as baseVersion. Valid patch targets are name and schema-backed context fields.",
       inputSchema: patchInputSchema,
     },
     async (input) => {
@@ -283,7 +284,7 @@ export const createCrmMcpServer = () => {
     "crm_complete_task_record",
     {
       description:
-        "Complete the scoped task record and optionally apply a patch.",
+        "Complete the scoped task record and optionally apply a patch. Pass patch as null when no record values need to change, including schema-only migrations.",
       inputSchema: completeTaskRecordInputSchema,
     },
     async (input) => {
@@ -305,7 +306,7 @@ export const createCrmMcpServer = () => {
     "crm_fail_task_record",
     {
       description:
-        "Fail the scoped task record with a structured failure payload.",
+        "Fail the scoped task record with a structured failure payload. Use this whenever you cannot complete the task, including repeated tool validation errors or inability to produce a valid patch.",
       inputSchema: failTaskRecordInputSchema,
     },
     async (input) => {
