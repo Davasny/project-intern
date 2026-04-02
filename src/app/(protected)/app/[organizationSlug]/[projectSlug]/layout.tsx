@@ -27,6 +27,8 @@ const ProjectScopeLayout = async ({
       projectAccess={{
         ...projectAccess,
         userDisplayName: session.user.name ?? session.user.email,
+        userEmail: session.user.email,
+        userAvatar: session.user.image ?? "",
       }}
     >
       {children}
