@@ -8,7 +8,7 @@ type AppShellProps = {
   children: ReactNode
   organizationSwitcher?: ReactNode
   projectSwitcher?: ReactNode
-  projectNavItems?: Array<{ href: string; label: string }>
+  navItems: Array<{ href: string; label: string }>
   user: NavUserProps
 }
 
@@ -16,7 +16,7 @@ export function AppShell({
   children,
   organizationSwitcher,
   projectSwitcher,
-  projectNavItems,
+  navItems,
   user,
 }: AppShellProps) {
   return (
@@ -25,8 +25,9 @@ export function AppShell({
         <AppSidebar
           organizationSwitcher={organizationSwitcher}
           projectSwitcher={projectSwitcher}
-          projectNavItems={projectNavItems}
+          navItems={navItems}
         />
+
         <SidebarInset>
           <AppNavbar user={user} />
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6">

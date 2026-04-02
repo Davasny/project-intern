@@ -1,6 +1,15 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { Field, FieldLabel } from "@/components/ui/field"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 type ProjectSelectProps = {
   currentProjectSlug: string
@@ -20,18 +29,27 @@ export function ProjectSelect({
   const router = useRouter()
 
   return (
-    <select
-      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-slate-900"
-      value={currentProjectSlug}
-      onChange={(e) => {
-        router.push(`/app/${organizationSlug}/${e.target.value}`)
-      }}
-    >
-      {projects.map((project) => (
-        <option key={project.id} value={project.slug}>
-          {project.displayName}
-        </option>
-      ))}
-    </select>
+    <Field>
+      <FieldLabel>Project</FieldLabel>
+
+      <Select
+        value={currentProjectSlug}
+        onValueChange={(v) => router.push(`/app/${organizationSlug}/${v}`)}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Theme" />
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectGroup>
+            {projects.map((project) => (
+              <SelectItem key={project.id} value={project.slug}>
+                {project.displayName}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </Field>
   )
 }

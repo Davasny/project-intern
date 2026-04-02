@@ -10,12 +10,10 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
-import { LatestChange } from "@/components/leatest-change"
 import { LogoIcon } from "@/components/logo"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
@@ -31,22 +29,8 @@ type NavItem = {
 type AppSidebarProps = {
   organizationSwitcher?: ReactNode
   projectSwitcher?: ReactNode
-  projectNavItems?: NavItem[]
+  navItems: NavItem[]
 }
-
-const defaultNavItems: NavItem[] = [
-  { href: "#", label: "Queue" },
-  { href: "#", label: "Team insights" },
-  { href: "#", label: "Conversations" },
-  { href: "#", label: "Customers" },
-  { href: "#", label: "Channels" },
-  { href: "#", label: "Workspace" },
-]
-
-const footerNavLinks: NavItem[] = [
-  { href: "#", label: "Help Center" },
-  { href: "#", label: "System status" },
-]
 
 const iconMap: Record<string, ReactNode> = {
   Overview: <LayoutDashboardIcon />,
@@ -61,13 +45,8 @@ const iconMap: Record<string, ReactNode> = {
 export function AppSidebar({
   organizationSwitcher,
   projectSwitcher,
-  projectNavItems,
+  navItems,
 }: AppSidebarProps) {
-  const navItems =
-    projectNavItems && projectNavItems.length > 0
-      ? projectNavItems
-      : defaultNavItems
-
   return (
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader className="h-14 justify-center">
@@ -78,11 +57,14 @@ export function AppSidebar({
           </Link>
         </SidebarMenuButton>
       </SidebarHeader>
+
       <SidebarContent>
         {organizationSwitcher && (
           <SidebarGroup>{organizationSwitcher}</SidebarGroup>
         )}
+
         {projectSwitcher && <SidebarGroup>{projectSwitcher}</SidebarGroup>}
+
         <SidebarGroup>
           <SidebarMenu>
             {navItems.map((item) => (

@@ -81,7 +81,7 @@ export const ProjectScopeShell = ({
         projects={projectAccess.projects}
       />
     }
-    projectNavItems={projectNavItems(
+    navItems={projectNavItems(
       projectAccess.currentOrganization.slug,
       projectAccess.currentProject.slug,
     )}

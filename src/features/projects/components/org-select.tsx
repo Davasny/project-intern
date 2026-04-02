@@ -2,6 +2,16 @@
 
 import { useRouter } from "next/navigation"
 
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { FieldLabel, Field } from "@/components/ui/field"
+
 type OrgSelectProps = {
   currentOrganizationSlug: string
   organizations: Array<{
@@ -18,18 +28,27 @@ export function OrgSelect({
   const router = useRouter()
 
   return (
-    <select
-      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-slate-900"
-      value={currentOrganizationSlug}
-      onChange={(e) => {
-        router.push(`/app/${e.target.value}`)
-      }}
-    >
-      {organizations.map((org) => (
-        <option key={org.id} value={org.slug}>
-          {org.name}
-        </option>
-      ))}
-    </select>
+    <Field>
+      <FieldLabel>Organization</FieldLabel>
+
+      <Select
+        value={currentOrganizationSlug}
+        onValueChange={(v) => router.push(`/app/${v}`)}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Theme" />
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectGroup>
+            {organizations.map((org) => (
+              <SelectItem key={org.id} value={org.slug}>
+                {org.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </Field>
   )
 }
