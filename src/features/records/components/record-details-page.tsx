@@ -179,16 +179,18 @@ export const RecordDetailsPage = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {recordQuery.data.linkedTasks.map((task) => (
-                <RecordLinkedTaskRow
-                  key={task.taskRecordId}
-                  nextWaitingSortOrder={nextWaitingSortOrder}
-                  organizationSlug={organizationSlug}
-                  projectSlug={projectSlug}
-                  recordId={recordQuery.data.id}
-                  task={task}
-                />
-              ))}
+              {recordQuery.data.linkedTasks
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map((task) => (
+                  <RecordLinkedTaskRow
+                    key={task.taskRecordId}
+                    nextWaitingSortOrder={nextWaitingSortOrder}
+                    organizationSlug={organizationSlug}
+                    projectSlug={projectSlug}
+                    recordId={recordQuery.data.id}
+                    task={task}
+                  />
+                ))}
             </TableBody>
           </DataTable>
         </SectionCardContent>
