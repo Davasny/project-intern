@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import type { ReactNode } from "react"
 import { Providers } from "@/app/providers"
 import { frontendConfig } from "@/lib/config/frontend"
 import "@/app/globals.css"
@@ -13,8 +14,12 @@ export const metadata: Metadata = {
   description: "Agentic-first CRM foundation",
 }
 
-const RootLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => (
-  <html lang="en" className={cn("font-sans", geist.variable)}>
+const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => (
+  <html
+    lang="en"
+    className={cn("font-sans", geist.variable)}
+    suppressHydrationWarning
+  >
     <body>
       <Providers>
         <TooltipProvider>{children}</TooltipProvider>
