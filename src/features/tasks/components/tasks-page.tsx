@@ -5,13 +5,18 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { DataTableEmptyState } from "@/components/ui/data-table/data-table-empty-state"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { FilterBar } from "@/components/ui/filter-bar/filter-bar"
 import { FilterBarActions } from "@/components/ui/filter-bar/filter-bar-actions"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
-import { SidePanel } from "@/components/ui/side-panel/side-panel"
-import { SidePanelHeader } from "@/components/ui/side-panel/side-panel-header"
 import {
   TableBody,
   TableHead,
@@ -57,7 +62,7 @@ export const TasksPage = ({
   const latestSchemaVersion = schemaVersionOptions[0] ?? 1
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <>
       <div className="flex flex-col gap-6">
         <PageHeader>
           <div className="flex flex-col gap-2">
@@ -70,11 +75,8 @@ export const TasksPage = ({
             </p>
           </div>
           <PageHeaderActions>
-            <Button
-              onClick={() => setIsCreateOpen(!isCreateOpen)}
-              type="button"
-            >
-              {isCreateOpen ? "Hide task panel" : "New task"}
+            <Button onClick={() => setIsCreateOpen(true)} type="button">
+              New task
             </Button>
           </PageHeaderActions>
         </PageHeader>
@@ -128,22 +130,21 @@ export const TasksPage = ({
           />
         )}
       </div>
-      {isCreateOpen ? (
-        <SidePanel>
-          <SidePanelHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
-              Create task
-            </h2>
-            <p className="text-sm text-slate-500">
+      <Dialog onOpenChange={setIsCreateOpen} open={isCreateOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create task</DialogTitle>
+            <DialogDescription>
               New tasks fan out task-record rows to every current record.
-            </p>
-          </SidePanelHeader>
+            </DialogDescription>
+          </DialogHeader>
           <TaskForm
             initialDescriptionMarkdown=""
             initialModel={null}
             initialPipelineVersion={null}
             initialSchemaVersion={latestSchemaVersion}
             initialTitle=""
+            onSubmitted={() => setIsCreateOpen(false)}
             organizationSlug={organizationSlug}
             projectSlug={projectSlug}
             schemaVersionOptions={
@@ -151,10 +152,8 @@ export const TasksPage = ({
             }
             taskId={null}
           />
-        </SidePanel>
-      ) : (
-        <div />
-      )}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -39,12 +39,6 @@ export const RecordDetailsPage = ({
   recordId,
 }: RecordDetailsPageProps) => {
   const trpc = useTRPC()
-  const activeSchemaQuery = useQuery(
-    trpc.projectSchema.getActive.queryOptions({
-      organizationSlug,
-      projectSlug,
-    }),
-  )
   const recordQuery = useQuery({
     ...trpc.records.getById.queryOptions({
       organizationSlug,
@@ -56,12 +50,20 @@ export const RecordDetailsPage = ({
       return record && record.progress.inProgressCount > 0 ? 3000 : false
     },
   })
+  const recordSchemaQuery = useQuery({
+    ...trpc.projectSchema.getByVersion.queryOptions({
+      organizationSlug,
+      projectSlug,
+      version: recordQuery.data?.schemaVersion ?? 1,
+    }),
+    enabled: recordQuery.data !== undefined,
+  })
 
-  if (activeSchemaQuery.isLoading || recordQuery.isLoading) {
+  if (recordQuery.isLoading || recordSchemaQuery.isLoading) {
     return <LoadingState label="Loading record..." />
   }
 
-  if (!activeSchemaQuery.data || !recordQuery.data) {
+  if (!recordQuery.data || !recordSchemaQuery.data) {
     return <LoadingState label="Record details could not be loaded." />
   }
 
@@ -135,8 +137,8 @@ export const RecordDetailsPage = ({
             Record editor
           </h2>
           <p className="text-sm text-slate-500">
-            Updates are validated against the active schema version before they
-            are saved.
+            Updates are validated against this record's current schema version
+            before they are saved.
           </p>
         </SectionCardHeader>
         <SectionCardContent>
@@ -144,11 +146,12 @@ export const RecordDetailsPage = ({
             initialContext={recordQuery.data.context}
             initialName={recordQuery.data.name}
             key={`${recordQuery.data.id}-${recordQuery.data.version}`}
+            onSubmitted={() => {}}
             organizationSlug={organizationSlug}
             projectSlug={projectSlug}
             recordId={recordQuery.data.id}
             recordVersion={recordQuery.data.version}
-            schemaDefinition={activeSchemaQuery.data.schemaDefinition}
+            schemaDefinition={recordSchemaQuery.data.schemaDefinition}
           />
         </SectionCardContent>
       </SectionCard>
@@ -166,6 +169,7 @@ export const RecordDetailsPage = ({
                 <TableHeader>Task</TableHeader>
                 <TableHeader>Task record</TableHeader>
                 <TableHeader>Latest run</TableHeader>
+                <TableHeader>Actions</TableHeader>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -174,6 +178,7 @@ export const RecordDetailsPage = ({
                   key={task.taskRecordId}
                   organizationSlug={organizationSlug}
                   projectSlug={projectSlug}
+                  recordId={recordQuery.data.id}
                   task={task}
                 />
               ))}

@@ -6,6 +6,7 @@ import { createProjectSchemaVersion } from "@/features/project-schema/lib/create
 import { diffProjectSchemaVersions } from "@/features/project-schema/lib/diff-project-schema-versions"
 import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get-active-project-schema-version"
 import { getProjectSchemaSettingsReadModel } from "@/features/project-schema/lib/get-project-schema-settings-read-model"
+import { getProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-project-schema-version-by-project-id"
 import { listProjectSchemaVersions } from "@/features/project-schema/lib/list-project-schema-versions"
 import { projectSchemaCustomFieldSchema } from "@/features/project-schema/schemas/project-schema-field"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
@@ -102,6 +103,31 @@ export const projectSchemaRouter = router({
         userId: ctx.session.user.id,
       }),
     ),
+  getByVersion: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        version: z.number().int().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return getProjectSchemaVersionByProjectId({
+        projectId: project.id,
+        version: input.version,
+      })
+    }),
   getSettings: protectedProcedure
     .input(projectScopeSchema)
     .query(async ({ ctx, input }) => {

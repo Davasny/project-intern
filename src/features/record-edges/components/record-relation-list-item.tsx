@@ -203,25 +203,25 @@ export const RecordRelationListItem = ({
         />
       ) : null}
       <JsonViewer value={relation.relatedRecord.context} />
-      {isEditing ? (
-        <RelationEditorPanel
-          initialValues={{
-            confidence: getConfidenceMetadataValue(relation.metadata),
-            direction: relation.direction,
-            notes: getStringMetadataValue(relation.metadata, "notes"),
-            recordEdgeId: relation.id,
-            relationType: relation.relationType as RelationType,
-            source: getStringMetadataValue(relation.metadata, "source"),
-            targetProjectSlug: relation.relatedRecord.projectSlug,
-            targetRecordId: relation.relatedRecord.id,
-          }}
-          mode="edit"
-          onSubmitted={() => setIsEditing(false)}
-          organizationSlug={organizationSlug}
-          projectSlug={projectSlug}
-          recordId={recordId}
-        />
-      ) : null}
+      <RelationEditorPanel
+        initialValues={{
+          confidence: getConfidenceMetadataValue(relation.metadata),
+          direction: relation.direction,
+          notes: getStringMetadataValue(relation.metadata, "notes"),
+          recordEdgeId: relation.id,
+          relationType: relation.relationType as RelationType,
+          source: getStringMetadataValue(relation.metadata, "source"),
+          targetProjectSlug: relation.relatedRecord.projectSlug,
+          targetRecordId: relation.relatedRecord.id,
+        }}
+        isOpen={isEditing}
+        mode="edit"
+        onOpenChange={setIsEditing}
+        onSubmitted={() => setIsEditing(false)}
+        organizationSlug={organizationSlug}
+        projectSlug={projectSlug}
+        recordId={recordId}
+      />
     </RelationListItem>
   )
 }

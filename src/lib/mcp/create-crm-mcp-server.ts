@@ -13,6 +13,7 @@ import { resolveArtifactStoragePath } from "@/features/artifacts/lib/resolve-art
 import { completeScopedTaskRecord } from "@/features/execution/lib/complete-scoped-task-record"
 import { failScopedTaskRecord } from "@/features/execution/lib/fail-scoped-task-record"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
+import { getTaskRecordPatchSchemaVersion } from "@/features/execution/lib/get-task-record-patch-schema-version"
 import { writeWorkspaceManifest } from "@/features/execution/lib/write-workspace-manifest"
 import { executionRunScopeSchema } from "@/features/execution/schemas/execution-run-scope"
 import { patchProposalSchema } from "@/features/execution/schemas/patch-proposal"
@@ -222,10 +223,16 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      const schemaVersion = getTaskRecordPatchSchemaVersion({
+        recordSchemaVersion: scope.record.schemaVersion,
+        taskSchemaVersion: scope.task.schemaVersion,
+        taskTargetSchemaVersionId: scope.task.targetSchemaVersionId,
+      })
       const patch = await proposeRecordPatch({
         patch: input.patch,
         projectId: scope.project.id,
         recordId: scope.record.id,
+        schemaVersion,
       })
 
       return createMcpJsonResponse({
@@ -243,16 +250,23 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      const schemaVersion = getTaskRecordPatchSchemaVersion({
+        recordSchemaVersion: scope.record.schemaVersion,
+        taskSchemaVersion: scope.task.schemaVersion,
+        taskTargetSchemaVersionId: scope.task.targetSchemaVersionId,
+      })
       await proposeRecordPatch({
         patch: input.patch,
         projectId: scope.project.id,
         recordId: scope.record.id,
+        schemaVersion,
       })
 
       const record = await applyRecordPatch({
         patch: input.patch,
         projectId: scope.project.id,
         recordId: scope.record.id,
+        schemaVersion,
       })
 
       return createMcpJsonResponse({

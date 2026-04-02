@@ -23,7 +23,12 @@ const ProjectScopeLayout = async ({
   }
 
   return (
-    <ProjectScopeShell projectAccess={projectAccess}>
+    <ProjectScopeShell
+      projectAccess={{
+        ...projectAccess,
+        userDisplayName: session.user.name ?? session.user.email,
+      }}
+    >
       {children}
     </ProjectScopeShell>
   )

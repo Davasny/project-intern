@@ -37,6 +37,7 @@ type TaskFormProps = {
   initialPipelineVersion: string | null
   initialSchemaVersion: number
   initialTitle: string
+  onSubmitted: () => void
   organizationSlug: string
   projectSlug: string
   schemaVersionOptions: number[]
@@ -49,6 +50,7 @@ export const TaskForm = ({
   initialPipelineVersion,
   initialSchemaVersion,
   initialTitle,
+  onSubmitted,
   organizationSlug,
   projectSlug,
   schemaVersionOptions,
@@ -128,6 +130,7 @@ export const TaskForm = ({
         organizationSlug,
         projectSlug,
       })
+      onSubmitted()
       return
     }
 
@@ -142,6 +145,7 @@ export const TaskForm = ({
       organizationSlug,
       projectSlug,
     })
+    onSubmitted()
   })
 
   const submitLabel = taskId

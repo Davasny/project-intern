@@ -31,6 +31,7 @@ type RecordFormValues = z.infer<typeof recordFormSchema>
 type RecordFormProps = {
   initialContext: Record<string, unknown>
   initialName: string
+  onSubmitted: () => void
   organizationSlug: string
   projectSlug: string
   recordId: string | null
@@ -41,6 +42,7 @@ type RecordFormProps = {
 export const RecordForm = ({
   initialContext,
   initialName,
+  onSubmitted,
   organizationSlug,
   projectSlug,
   recordId,
@@ -109,6 +111,7 @@ export const RecordForm = ({
         organizationSlug,
         projectSlug,
       })
+      onSubmitted()
       return
     }
 
@@ -120,6 +123,7 @@ export const RecordForm = ({
       organizationSlug,
       projectSlug,
     })
+    onSubmitted()
   })
 
   const submitLabel = recordId

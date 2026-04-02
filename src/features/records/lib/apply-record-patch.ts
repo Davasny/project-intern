@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
 import type { PatchProposal } from "@/features/execution/schemas/patch-proposal"
-import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
+import { getProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-project-schema-version-by-project-id"
 import { recordTable } from "@/features/records/db"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 import { validateRecordContext } from "@/features/records/lib/validate-record-context"
@@ -11,12 +11,14 @@ type ApplyRecordPatchParams = {
   patch: PatchProposal
   projectId: string
   recordId: string
+  schemaVersion: number
 }
 
 export const applyRecordPatch = async ({
   patch,
   projectId,
   recordId,
+  schemaVersion,
 }: ApplyRecordPatchParams) => {
   const record = await getScopedRecord({ projectId, recordId })
 
@@ -75,12 +77,13 @@ export const applyRecordPatch = async ({
     nextContext[change.field] = change.value
   }
 
-  const activeSchemaVersion = await getActiveProjectSchemaVersionByProjectId({
+  const patchSchemaVersion = await getProjectSchemaVersionByProjectId({
     projectId,
+    version: schemaVersion,
   })
   const validatedContext = validateRecordContext({
     context: nextContext,
-    schemaDefinition: activeSchemaVersion.schemaDefinition,
+    schemaDefinition: patchSchemaVersion.schemaDefinition,
   })
 
   const [updatedRecord] = await db
@@ -88,7 +91,7 @@ export const applyRecordPatch = async ({
     .set({
       context: validatedContext,
       name: nextName,
-      schemaVersion: activeSchemaVersion.version,
+      schemaVersion,
       version: record.version + 1,
     })
     .where(

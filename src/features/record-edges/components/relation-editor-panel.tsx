@@ -1,5 +1,10 @@
-import { SidePanel } from "@/components/ui/side-panel/side-panel"
-import { SidePanelHeader } from "@/components/ui/side-panel/side-panel-header"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { RelationForm } from "@/features/record-edges/components/relation-form"
 import type { RelationType } from "@/features/record-edges/lib/relation-type-rules"
 
@@ -14,7 +19,9 @@ type RelationEditorPanelProps = {
     targetProjectSlug: string
     targetRecordId: string
   }
+  isOpen: boolean
   mode: "create" | "edit"
+  onOpenChange: (isOpen: boolean) => void
   organizationSlug: string
   onSubmitted: () => void
   projectSlug: string
@@ -23,28 +30,32 @@ type RelationEditorPanelProps = {
 
 export const RelationEditorPanel = ({
   initialValues,
+  isOpen,
   mode,
+  onOpenChange,
   organizationSlug,
   onSubmitted,
   projectSlug,
   recordId,
 }: RelationEditorPanelProps) => (
-  <SidePanel>
-    <SidePanelHeader>
-      <h3 className="text-lg font-semibold text-slate-950">
-        {mode === "create" ? "Create relation" : "Edit relation"}
-      </h3>
-      <p className="text-sm text-slate-500">
-        Relation edits stay canonical, auditable, and limited to depth-1
-        traversal reads.
-      </p>
-    </SidePanelHeader>
-    <RelationForm
-      initialValues={initialValues}
-      onSubmitted={onSubmitted}
-      organizationSlug={organizationSlug}
-      projectSlug={projectSlug}
-      recordId={recordId}
-    />
-  </SidePanel>
+  <Dialog onOpenChange={onOpenChange} open={isOpen}>
+    <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>
+          {mode === "create" ? "Create relation" : "Edit relation"}
+        </DialogTitle>
+        <DialogDescription>
+          Relation edits stay canonical, auditable, and limited to depth-1
+          traversal reads.
+        </DialogDescription>
+      </DialogHeader>
+      <RelationForm
+        initialValues={initialValues}
+        onSubmitted={onSubmitted}
+        organizationSlug={organizationSlug}
+        projectSlug={projectSlug}
+        recordId={recordId}
+      />
+    </DialogContent>
+  </Dialog>
 )

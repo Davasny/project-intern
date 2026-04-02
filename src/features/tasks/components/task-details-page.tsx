@@ -5,6 +5,13 @@ import { useState } from "react"
 import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-timeline"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { MarkdownViewer } from "@/components/ui/markdown-viewer/markdown-viewer"
 import { MetadataList } from "@/components/ui/metadata-list/metadata-list"
@@ -17,8 +24,6 @@ import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-met
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
-import { SidePanel } from "@/components/ui/side-panel/side-panel"
-import { SidePanelHeader } from "@/components/ui/side-panel/side-panel-header"
 import { TaskStatusBadge } from "@/components/ui/status-badge/task-status-badge"
 import {
   TableBody,
@@ -75,7 +80,7 @@ export const TaskDetailsPage = ({
   )
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <>
       <div className="flex flex-col gap-6">
         <PageHeader>
           <div className="flex flex-col gap-3">
@@ -94,8 +99,8 @@ export const TaskDetailsPage = ({
             </PageHeaderMeta>
           </div>
           <PageHeaderActions>
-            <Button onClick={() => setIsEditOpen(!isEditOpen)} type="button">
-              {isEditOpen ? "Hide editor" : "Edit task"}
+            <Button onClick={() => setIsEditOpen(true)} type="button">
+              Edit task
             </Button>
           </PageHeaderActions>
         </PageHeader>
@@ -199,20 +204,21 @@ export const TaskDetailsPage = ({
           </SectionCardContent>
         </SectionCard>
       </div>
-      {isEditOpen ? (
-        <SidePanel>
-          <SidePanelHeader>
-            <h2 className="text-lg font-semibold text-slate-950">Edit task</h2>
-            <p className="text-sm text-slate-500">
+      <Dialog onOpenChange={setIsEditOpen} open={isEditOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit task</DialogTitle>
+            <DialogDescription>
               Updating markdown creates a new description revision.
-            </p>
-          </SidePanelHeader>
+            </DialogDescription>
+          </DialogHeader>
           <TaskForm
             initialDescriptionMarkdown={taskQuery.data.descriptionMarkdown}
             initialModel={taskQuery.data.model}
             initialPipelineVersion={taskQuery.data.pipelineVersion}
             initialSchemaVersion={taskQuery.data.schemaVersion}
             initialTitle={taskQuery.data.title}
+            onSubmitted={() => setIsEditOpen(false)}
             organizationSlug={organizationSlug}
             projectSlug={projectSlug}
             schemaVersionOptions={
@@ -222,10 +228,8 @@ export const TaskDetailsPage = ({
             }
             taskId={taskQuery.data.id}
           />
-        </SidePanel>
-      ) : (
-        <div />
-      )}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/utils/cn"
 
 type OrganizationSwitcherItemProps = {
   isActive: boolean
@@ -15,12 +15,16 @@ export const OrganizationSwitcherItem = ({
   organization,
 }: OrganizationSwitcherItemProps) => (
   <li>
-    <Button
-      asChild
-      className="w-full justify-start"
-      variant={isActive ? "primary" : "secondary"}
+    <Link
+      className={cn(
+        "flex w-full rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+        isActive
+          ? "bg-slate-900 text-white hover:bg-slate-800"
+          : "bg-slate-100 text-slate-900 hover:bg-slate-200",
+      )}
+      href={`/app/${organization.slug}`}
     >
-      <Link href={`/app/${organization.slug}`}>{organization.name}</Link>
-    </Button>
+      {organization.name}
+    </Link>
   </li>
 )

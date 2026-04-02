@@ -43,6 +43,7 @@ export const getTaskRecordExecutionScope = async ({
       taskPipelineVersion: taskTable.pipelineVersion,
       taskSchemaVersion: taskTable.schemaVersion,
       taskSortOrder: taskTable.sortOrder,
+      taskTargetSchemaVersionId: taskTable.targetSchemaVersionId,
       taskTitle: taskTable.title,
       taskRecordId: taskRecordTable.id,
       taskRecordState: taskRecordTable.state,
@@ -105,6 +106,7 @@ export const getTaskRecordExecutionScope = async ({
       pipelineVersion: executionScope.taskPipelineVersion,
       schemaVersion: executionScope.taskSchemaVersion,
       sortOrder: executionScope.taskSortOrder,
+      targetSchemaVersionId: executionScope.taskTargetSchemaVersionId,
       title: executionScope.taskTitle,
     },
     taskRecord: {

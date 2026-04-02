@@ -67,11 +67,8 @@ export const RecordRelationsSection = ({
                 edges.
               </p>
             </div>
-            <Button
-              onClick={() => setIsCreateOpen(!isCreateOpen)}
-              type="button"
-            >
-              {isCreateOpen ? "Hide relation editor" : "New relation"}
+            <Button onClick={() => setIsCreateOpen(true)} type="button">
+              New relation
             </Button>
           </div>
         </SectionCardHeader>
@@ -121,25 +118,25 @@ export const RecordRelationsSection = ({
               title="No active relations"
             />
           )}
-          {isCreateOpen ? (
-            <RelationEditorPanel
-              initialValues={{
-                confidence: "",
-                direction: "outbound",
-                notes: "",
-                recordEdgeId: null,
-                relationType: "related_to",
-                source: "",
-                targetProjectSlug: projectSlug,
-                targetRecordId: "",
-              }}
-              mode="create"
-              onSubmitted={() => setIsCreateOpen(false)}
-              organizationSlug={organizationSlug}
-              projectSlug={projectSlug}
-              recordId={recordId}
-            />
-          ) : null}
+          <RelationEditorPanel
+            initialValues={{
+              confidence: "",
+              direction: "outbound",
+              notes: "",
+              recordEdgeId: null,
+              relationType: "related_to",
+              source: "",
+              targetProjectSlug: projectSlug,
+              targetRecordId: "",
+            }}
+            isOpen={isCreateOpen}
+            mode="create"
+            onOpenChange={setIsCreateOpen}
+            onSubmitted={() => setIsCreateOpen(false)}
+            organizationSlug={organizationSlug}
+            projectSlug={projectSlug}
+            recordId={recordId}
+          />
         </SectionCardContent>
       </SectionCard>
       <SectionCard>

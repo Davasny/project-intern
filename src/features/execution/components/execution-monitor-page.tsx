@@ -1,7 +1,6 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
@@ -11,6 +10,7 @@ import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-met
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import { Switch } from "@/components/ui/switch"
 import {
   TableBody,
   TableHead,
@@ -76,22 +76,20 @@ export const ExecutionMonitorPage = ({
         </div>
         {executionQuery.data.debugControlsEnabled ? (
           <PageHeaderActions>
-            <Button
-              disabled={toggleAutopickMutation.isPending}
-              onClick={() =>
-                toggleAutopickMutation.mutate({
-                  isAutopickEnabled: !executionQuery.data.isAutopickEnabled,
-                  organizationSlug,
-                  projectSlug,
-                })
-              }
-              type="button"
-              variant="secondary"
-            >
-              {executionQuery.data.isAutopickEnabled
-                ? "Disable autopick"
-                : "Enable autopick"}
-            </Button>
+            <div className="flex items-center gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+              <span>Autopick</span>
+              <Switch
+                checked={executionQuery.data.isAutopickEnabled}
+                disabled={toggleAutopickMutation.isPending}
+                onCheckedChange={(isAutopickEnabled) =>
+                  toggleAutopickMutation.mutate({
+                    isAutopickEnabled,
+                    organizationSlug,
+                    projectSlug,
+                  })
+                }
+              />
+            </div>
           </PageHeaderActions>
         ) : null}
       </PageHeader>

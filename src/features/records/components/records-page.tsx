@@ -3,16 +3,28 @@
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { DataTable } from "@/components/ui/data-table/data-table"
 import { DataTableEmptyState } from "@/components/ui/data-table/data-table-empty-state"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { FilterBar } from "@/components/ui/filter-bar/filter-bar"
 import { FilterBarActions } from "@/components/ui/filter-bar/filter-bar-actions"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
-import { SidePanel } from "@/components/ui/side-panel/side-panel"
-import { SidePanelHeader } from "@/components/ui/side-panel/side-panel-header"
+import {
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { RecordForm } from "@/features/records/components/record-form"
-import { RecordListItem } from "@/features/records/components/record-list-item"
+import { RecordListRow } from "@/features/records/components/record-list-row"
 import { useTRPC } from "@/lib/trpc/client"
 
 type RecordsPageProps = {
@@ -26,26 +38,27 @@ export const RecordsPage = ({
 }: RecordsPageProps) => {
   const trpc = useTRPC()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const activeSchemaQuery = useQuery(
-    trpc.projectSchema.getActive.queryOptions({
+  const initialSchemaQuery = useQuery(
+    trpc.projectSchema.getByVersion.queryOptions({
       organizationSlug,
       projectSlug,
+      version: 1,
     }),
   )
   const recordsQuery = useQuery(
     trpc.records.list.queryOptions({ organizationSlug, projectSlug }),
   )
 
-  if (activeSchemaQuery.isLoading || recordsQuery.isLoading) {
+  if (initialSchemaQuery.isLoading || recordsQuery.isLoading) {
     return <LoadingState label="Loading records..." />
   }
 
-  if (!activeSchemaQuery.data) {
-    return <LoadingState label="Active schema could not be loaded." />
+  if (!initialSchemaQuery.data) {
+    return <LoadingState label="Initial schema could not be loaded." />
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <>
       <div className="flex flex-col gap-6">
         <PageHeader>
           <div className="flex flex-col gap-2">
@@ -53,16 +66,13 @@ export const RecordsPage = ({
               Records
             </h1>
             <p className="text-sm text-slate-500">
-              Canonical project records validated against schema version{" "}
-              {activeSchemaQuery.data.version}.
+              New records always start at schema version{" "}
+              {initialSchemaQuery.data.version}.
             </p>
           </div>
           <PageHeaderActions>
-            <Button
-              onClick={() => setIsCreateOpen(!isCreateOpen)}
-              type="button"
-            >
-              {isCreateOpen ? "Hide record panel" : "New record"}
+            <Button onClick={() => setIsCreateOpen(true)} type="button">
+              New record
             </Button>
           </PageHeaderActions>
         </PageHeader>
@@ -82,16 +92,31 @@ export const RecordsPage = ({
           </FilterBarActions>
         </FilterBar>
         {recordsQuery.data && recordsQuery.data.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {recordsQuery.data.map((record) => (
-              <RecordListItem
-                key={record.id}
-                organizationSlug={organizationSlug}
-                projectSlug={projectSlug}
-                record={record}
-              />
-            ))}
-          </div>
+          <DataTable>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Record</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader>Completed</TableHeader>
+                <TableHeader>Active</TableHeader>
+                <TableHeader>Failed</TableHeader>
+                <TableHeader>Waiting</TableHeader>
+                <TableHeader>Latest run</TableHeader>
+                <TableHeader>Relations</TableHeader>
+                <TableHeader>Updated</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {recordsQuery.data.map((record) => (
+                <RecordListRow
+                  key={record.id}
+                  organizationSlug={organizationSlug}
+                  projectSlug={projectSlug}
+                  record={record}
+                />
+              ))}
+            </TableBody>
+          </DataTable>
         ) : (
           <DataTableEmptyState
             action={
@@ -104,31 +129,28 @@ export const RecordsPage = ({
           />
         )}
       </div>
-      {isCreateOpen ? (
-        <SidePanel>
-          <SidePanelHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
-              Create record
-            </h2>
-            <p className="text-sm text-slate-500">
-              Record creation backfills missing task-record rows across the
-              project queue.
-            </p>
-          </SidePanelHeader>
+      <Dialog onOpenChange={setIsCreateOpen} open={isCreateOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create record</DialogTitle>
+            <DialogDescription>
+              Record creation starts at schema v1 and backfills the full task
+              timeline.
+            </DialogDescription>
+          </DialogHeader>
           <RecordForm
             initialContext={{}}
             initialName=""
-            key={activeSchemaQuery.data.id}
+            key={initialSchemaQuery.data.id}
+            onSubmitted={() => setIsCreateOpen(false)}
             organizationSlug={organizationSlug}
             projectSlug={projectSlug}
             recordId={null}
             recordVersion={null}
-            schemaDefinition={activeSchemaQuery.data.schemaDefinition}
+            schemaDefinition={initialSchemaQuery.data.schemaDefinition}
           />
-        </SidePanel>
-      ) : (
-        <div />
-      )}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -1,18 +1,20 @@
 import { TRPCError } from "@trpc/server"
 import { patchProposalSchema } from "@/features/execution/schemas/patch-proposal"
-import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
+import { getProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-project-schema-version-by-project-id"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 
 type ProposeRecordPatchParams = {
   patch: unknown
   projectId: string
   recordId: string
+  schemaVersion: number
 }
 
 export const proposeRecordPatch = async ({
   patch,
   projectId,
   recordId,
+  schemaVersion,
 }: ProposeRecordPatchParams) => {
   const parsedPatch = patchProposalSchema.safeParse(patch)
 
@@ -33,12 +35,13 @@ export const proposeRecordPatch = async ({
     })
   }
 
-  const activeSchemaVersion = await getActiveProjectSchemaVersionByProjectId({
+  const patchSchemaVersion = await getProjectSchemaVersionByProjectId({
     projectId,
+    version: schemaVersion,
   })
 
   const allowedFields = new Set(
-    activeSchemaVersion.schemaDefinition.fields.map((field) => field.key),
+    patchSchemaVersion.schemaDefinition.fields.map((field) => field.key),
   )
 
   for (const change of parsedPatch.data.changes) {
@@ -52,7 +55,7 @@ export const proposeRecordPatch = async ({
     if (change.field !== "name" && !allowedFields.has(change.field)) {
       throw new TRPCError({
         code: "BAD_REQUEST",
-        message: `Field ${change.field} does not exist in the active schema.`,
+        message: `Field ${change.field} does not exist in schema v${schemaVersion}.`,
       })
     }
   }
