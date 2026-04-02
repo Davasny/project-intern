@@ -62,6 +62,7 @@ export const getRecordById = async ({
     .select({
       errorCode: taskRecordTable.errorCode,
       lastTransitionAt: taskRecordTable.lastTransitionAt,
+      sortOrder: taskTable.sortOrder,
       state: taskRecordTable.state,
       taskId: taskTable.id,
       taskRecordId: taskRecordTable.id,
@@ -103,6 +104,7 @@ export const getRecordById = async ({
       latestFailurePayload:
         executionReadModelMap.get(taskRecord.taskRecordId)
           ?.latestFailurePayload ?? null,
+      sortOrder: taskRecord.sortOrder,
     })),
     progress: {
       completedCount: linkedTaskRecords.filter(

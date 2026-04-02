@@ -59,6 +59,12 @@ export const RecordDetailsPage = ({
     enabled: recordQuery.data !== undefined,
   })
 
+  const nextWaitingSortOrder =
+    recordQuery.data?.linkedTasks
+      .filter((t) => t.state === "waiting")
+      .map((t) => t.sortOrder)
+      .sort((a, b) => a - b)[0] ?? null
+
   if (recordQuery.isLoading || recordSchemaQuery.isLoading) {
     return <LoadingState label="Loading record..." />
   }
@@ -176,6 +182,7 @@ export const RecordDetailsPage = ({
               {recordQuery.data.linkedTasks.map((task) => (
                 <RecordLinkedTaskRow
                   key={task.taskRecordId}
+                  nextWaitingSortOrder={nextWaitingSortOrder}
                   organizationSlug={organizationSlug}
                   projectSlug={projectSlug}
                   recordId={recordQuery.data.id}

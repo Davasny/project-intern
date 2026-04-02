@@ -9,6 +9,7 @@ import { TableCell, TableRow } from "@/components/ui/table"
 import { useTRPC } from "@/lib/trpc/client"
 
 type RecordLinkedTaskRowProps = {
+  nextWaitingSortOrder: number | null
   organizationSlug: string
   projectSlug: string
   recordId: string
@@ -24,6 +25,7 @@ type RecordLinkedTaskRowProps = {
         | "persisting_outputs"
         | "running"
     } | null
+    sortOrder: number
     state:
       | "completed"
       | "failed"
@@ -53,6 +55,7 @@ const getFailureMessage = (task: RecordLinkedTaskRowProps["task"]) => {
 }
 
 export const RecordLinkedTaskRow = ({
+  nextWaitingSortOrder,
   organizationSlug,
   projectSlug,
   recordId,
@@ -80,9 +83,42 @@ export const RecordLinkedTaskRow = ({
     }),
   )
   const canRetry = task.state === "failed" || task.state === "skipped"
+  const canTrigger =
+    task.state === "waiting" &&
+    nextWaitingSortOrder !== null &&
+    task.sortOrder === nextWaitingSortOrder
 
   const handleRetry = async () => {
     await retryTaskRecordMutation.mutateAsync({
+      organizationSlug,
+      projectSlug,
+      recordId,
+      taskRecordId: task.taskRecordId,
+    })
+  }
+
+  const triggerTaskRecordMutation = useMutation(
+    trpc.records.triggerTaskRecord.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.records.getById.queryFilter({
+            organizationSlug,
+            projectSlug,
+            recordId,
+          }),
+        )
+        await queryClient.invalidateQueries(
+          trpc.execution.getMonitor.queryFilter({
+            organizationSlug,
+            projectSlug,
+          }),
+        )
+      },
+    }),
+  )
+
+  const handleTrigger = async () => {
+    await triggerTaskRecordMutation.mutateAsync({
       organizationSlug,
       projectSlug,
       recordId,
@@ -118,7 +154,15 @@ export const RecordLinkedTaskRow = ({
         )}
       </TableCell>
       <TableCell>
-        {canRetry ? (
+        {canTrigger ? (
+          <Button
+            disabled={triggerTaskRecordMutation.isPending}
+            onClick={handleTrigger}
+            variant="secondary"
+          >
+            {triggerTaskRecordMutation.isPending ? "Triggering..." : "Trigger"}
+          </Button>
+        ) : canRetry ? (
           <Button
             disabled={retryTaskRecordMutation.isPending}
             onClick={handleRetry}
