@@ -224,6 +224,7 @@ export const executorService = async ({
 
     await markAgentRunBooting({
       agentRunId: initialScope.agentRun.id,
+      directory: workspace.workspaceDirectory,
       model: modelID,
       provider: providerID,
       sessionReference: session.data.id,

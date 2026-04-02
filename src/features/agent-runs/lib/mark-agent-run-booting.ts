@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger"
 
 type MarkAgentRunBootingParams = {
   agentRunId: string
+  directory: string | null
   model: string
   provider: string
   sessionReference: string | null
@@ -15,6 +16,7 @@ type MarkAgentRunBootingParams = {
 
 export const markAgentRunBooting = async ({
   agentRunId,
+  directory,
   model,
   provider,
   sessionReference,
@@ -24,6 +26,7 @@ export const markAgentRunBooting = async ({
   const startedAt = new Date()
   const toolCallCount = getToolCallCount(toolActivitySummary)
   const nextActor = await actor.send("boot", {
+    directory,
     model,
     provider,
     sessionReference,
@@ -48,6 +51,7 @@ export const markAgentRunBooting = async ({
       attemptNumber: activityScope.attemptNumber,
       model,
       provider,
+      directory,
       sessionReference,
       startedAt,
     },
@@ -60,7 +64,7 @@ export const markAgentRunBooting = async ({
   })
 
   logger.info(
-    { agentRunId, model, provider, sessionReference },
+    { agentRunId, directory, model, provider, sessionReference },
     "Marked agent run booting",
   )
 

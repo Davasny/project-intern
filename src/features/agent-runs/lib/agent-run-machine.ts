@@ -17,6 +17,7 @@ type AgentRunMachineContext = {
   resultPayload: Record<string, unknown> | null
   selectedAgent: string | null
   selectedModel: string | null
+  directory: string | null
   sessionReference: string | null
   startedAt: Date | null
   taskRecordId: string
@@ -28,6 +29,7 @@ type AgentRunMachineContext = {
 }
 
 type BootingEvent = {
+  directory: string | null
   model: string
   provider: string
   sessionReference: string | null
@@ -107,6 +109,7 @@ export const agentRunMachineDefinition =
       booting: {
         entry: (context, event: BootingEvent) => ({
           ...context,
+          directory: event.directory,
           model: event.model,
           provider: event.provider,
           sessionReference: event.sessionReference,

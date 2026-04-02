@@ -100,6 +100,7 @@ export const triggerTaskRecordForRecord = async ({
     await transactionAgentRunMachine.createActor(agentRunId, {
       attemptNumber: candidate.attemptNumber,
       costUsd: null,
+      directory: null,
       estimatedCostUsd: null,
       failurePayload: null,
       finishedAt: null,

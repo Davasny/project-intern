@@ -6,12 +6,11 @@ import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
-import { MetadataList } from "@/components/ui/metadata-list/metadata-list"
-import { MetadataListItem } from "@/components/ui/metadata-list/metadata-list-item"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import { StatsBar } from "@/components/ui/stats-bar/stats-bar"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import {
   TableBody,
@@ -20,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { AgentRunMessages } from "@/features/agent-runs/components/agent-run-messages"
 import { useTRPC } from "@/lib/trpc/client"
 
 type AgentRunDetailsPageProps = {
@@ -55,6 +55,76 @@ export const AgentRunDetailsPage = ({
   const durationDisplay =
     durationMs !== null ? `${(durationMs / 1000).toFixed(1)}s` : "—"
 
+  const totalTokens =
+    (run.inputTokens ?? run.tokenInput ?? 0) +
+    (run.outputTokens ?? run.tokenOutput ?? 0)
+
+  const stats = [
+    { label: "Model", value: run.selectedModel ?? run.model ?? "—" },
+    { label: "Agent", value: run.selectedAgent ?? "—" },
+    { label: "Duration", value: durationDisplay },
+    { label: "Tokens", value: totalTokens.toLocaleString() },
+    { label: "Tool Calls", value: run.taskCallCount },
+    {
+      label: "Cost",
+      value: run.costUsd !== null ? `$${Number(run.costUsd).toFixed(4)}` : "—",
+    },
+    { label: "Attempt", value: `#${run.attemptNumber}` },
+  ]
+
+  const details = [
+    [
+      { label: "Provider", value: run.provider ?? "—" },
+      { label: "Model", value: run.model ?? "—" },
+      { label: "Selected Model", value: run.selectedModel ?? "—" },
+      { label: "Selected Agent", value: run.selectedAgent ?? "—" },
+    ],
+    [
+      { label: "Session Reference", value: run.sessionReference ?? "—" },
+      { label: "Directory", value: run.directory ?? "—" },
+    ],
+    [
+      { label: "Started", value: run.startedAt?.toLocaleString() ?? "—" },
+      { label: "Finished", value: run.finishedAt?.toLocaleString() ?? "—" },
+      { label: "Duration", value: durationDisplay },
+    ],
+    [
+      {
+        label: "Token Input",
+        value:
+          run.inputTokens !== null
+            ? run.inputTokens.toLocaleString()
+            : run.tokenInput !== null
+              ? run.tokenInput.toLocaleString()
+              : "—",
+      },
+      {
+        label: "Token Output",
+        value:
+          run.outputTokens !== null
+            ? run.outputTokens.toLocaleString()
+            : run.tokenOutput !== null
+              ? run.tokenOutput.toLocaleString()
+              : "—",
+      },
+      { label: "Tool Calls", value: run.taskCallCount.toString() },
+    ],
+    [
+      {
+        label: "Estimated Cost",
+        value:
+          run.estimatedCostUsd !== null
+            ? `$${Number(run.estimatedCostUsd).toFixed(6)}`
+            : "—",
+      },
+      {
+        label: "Actual Cost",
+        value:
+          run.costUsd !== null ? `$${Number(run.costUsd).toFixed(6)}` : "—",
+      },
+    ],
+  ]
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader>
@@ -82,76 +152,7 @@ export const AgentRunDetailsPage = ({
           </div>
         </div>
       </PageHeader>
-      <MetadataList>
-        <MetadataListItem label="Provider" value={run.provider ?? "—"} />
-        <MetadataListItem label="Model" value={run.model ?? "—"} />
-        <MetadataListItem
-          label="Selected Model"
-          value={run.selectedModel ?? "—"}
-        />
-        <MetadataListItem
-          label="Selected Agent"
-          value={run.selectedAgent ?? "—"}
-        />
-        <MetadataListItem
-          label="Session Reference"
-          value={run.sessionReference ?? "—"}
-        />
-        <MetadataListItem label="Attempt" value={`#${run.attemptNumber}`} />
-      </MetadataList>
-      <MetadataList>
-        <MetadataListItem
-          label="Started"
-          value={run.startedAt?.toLocaleString() ?? "—"}
-        />
-        <MetadataListItem
-          label="Finished"
-          value={run.finishedAt?.toLocaleString() ?? "—"}
-        />
-        <MetadataListItem label="Duration" value={durationDisplay} />
-      </MetadataList>
-      <MetadataList>
-        <MetadataListItem
-          label="Token Input"
-          value={
-            run.inputTokens !== null
-              ? run.inputTokens.toLocaleString()
-              : run.tokenInput !== null
-                ? run.tokenInput.toLocaleString()
-                : "—"
-          }
-        />
-        <MetadataListItem
-          label="Token Output"
-          value={
-            run.outputTokens !== null
-              ? run.outputTokens.toLocaleString()
-              : run.tokenOutput !== null
-                ? run.tokenOutput.toLocaleString()
-                : "—"
-          }
-        />
-        <MetadataListItem
-          label="Tool Calls"
-          value={run.taskCallCount.toString()}
-        />
-      </MetadataList>
-      <MetadataList>
-        <MetadataListItem
-          label="Estimated Cost"
-          value={
-            run.estimatedCostUsd !== null
-              ? `$${Number(run.estimatedCostUsd).toFixed(6)}`
-              : "—"
-          }
-        />
-        <MetadataListItem
-          label="Actual Cost"
-          value={
-            run.costUsd !== null ? `$${Number(run.costUsd).toFixed(6)}` : "—"
-          }
-        />
-      </MetadataList>
+      <StatsBar stats={stats} details={details} />
       {run.taskActivitySummary &&
         Object.keys(run.taskActivitySummary).length > 0 && (
           <SectionCard>
@@ -240,6 +241,11 @@ export const AgentRunDetailsPage = ({
           </SectionCardContent>
         </SectionCard>
       )}
+      <AgentRunMessages
+        agentRunId={agentRunId}
+        organizationSlug={organizationSlug}
+        projectSlug={projectSlug}
+      />
     </div>
   )
 }

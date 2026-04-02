@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { getAgentRunById } from "@/features/agent-runs/lib/get-agent-run-by-id"
+import { getAgentRunSessionMessages } from "@/features/agent-runs/lib/get-agent-run-session-messages"
 import { listAgentRuns } from "@/features/agent-runs/lib/list-agent-runs"
 import { protectedProcedure, router } from "@/lib/trpc/init"
 
@@ -26,6 +27,20 @@ export const agentRunsRouter = router({
     )
     .query(async ({ ctx, input }) =>
       getAgentRunById({
+        agentRunId: input.agentRunId,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  getSessionMessages: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        agentRunId: z.string().uuid(),
+      }),
+    )
+    .query(async ({ ctx, input }) =>
+      getAgentRunSessionMessages({
         agentRunId: input.agentRunId,
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,

@@ -38,6 +38,7 @@ export const getAgentRunById = async ({
       attemptNumber: agentRunTable.attemptNumber,
       costUsd: agentRunTable.costUsd,
       createdAt: agentRunTable.createdAt,
+      directory: agentRunTable.directory,
       estimatedCostUsd: agentRunTable.estimatedCostUsd,
       failurePayload: agentRunTable.failurePayload,
       finishedAt: agentRunTable.finishedAt,

@@ -36,6 +36,7 @@ export const agentRunTable = pgTable(
     selectedModel: text("selected_model"),
     selectedAgent: text("selected_agent"),
     sessionReference: text("session_reference"),
+    directory: text("directory"),
     startedAt: timestamp("started_at", { withTimezone: true }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
     toolActivitySummary: jsonb("tool_activity_summary")
