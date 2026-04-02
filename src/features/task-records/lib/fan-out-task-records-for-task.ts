@@ -1,10 +1,14 @@
-import { eq } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
-import { createTaskRecordValues } from "@/features/task-records/lib/create-task-record-values"
+import { createTaskRecordMachineRow } from "@/features/task-records/lib/create-task-record-machine-row"
 import type { db } from "@/lib/db"
+import { generateUuidV7Values } from "@/lib/db/generate-uuid-v7-values"
 
-type DatabaseClient = Pick<typeof db, "insert" | "select">
+type DatabaseClient = Pick<
+  typeof db,
+  "execute" | "insert" | "select" | "update"
+>
 
 type FanOutTaskRecordsForTaskParams = {
   database: DatabaseClient
@@ -35,17 +39,43 @@ export const fanOutTaskRecordsForTask = async ({
     return []
   }
 
-  return database
-    .insert(taskRecordTable)
-    .values(
-      eligibleRecords.map((record) =>
-        createTaskRecordValues({ recordId: record.id, taskId }),
+  const existingTaskRecords = await database
+    .select({ recordId: taskRecordTable.recordId })
+    .from(taskRecordTable)
+    .where(
+      and(
+        eq(taskRecordTable.taskId, taskId),
+        inArray(
+          taskRecordTable.recordId,
+          eligibleRecords.map((record) => record.id),
+        ),
       ),
     )
-    .onConflictDoNothing({
-      target: [taskRecordTable.taskId, taskRecordTable.recordId],
-    })
-    .returning({
-      id: taskRecordTable.id,
-    })
+
+  const existingRecordIds = new Set(
+    existingTaskRecords.map((taskRecord) => taskRecord.recordId),
+  )
+  const missingRecords = eligibleRecords.filter(
+    (record) => !existingRecordIds.has(record.id),
+  )
+
+  const ids = await generateUuidV7Values({
+    count: missingRecords.length,
+    database,
+  })
+
+  const createdTaskRecords = await Promise.all(
+    missingRecords.map((record, index) =>
+      createTaskRecordMachineRow({
+        database,
+        id: ids[index],
+        recordId: record.id,
+        taskId,
+      }),
+    ),
+  )
+
+  return createdTaskRecords.flatMap((taskRecord) =>
+    taskRecord ? [{ id: taskRecord.id }] : [],
+  )
 }

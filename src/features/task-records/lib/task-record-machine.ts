@@ -11,44 +11,94 @@ type TaskRecordMachineContext = {
   taskId: string
 }
 
-const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
-  initial: "waiting",
-  states: {
-    waiting: {
-      on: {
-        claim: { target: "picked_up" },
-        skip: { target: "skipped" },
+type TaskRecordTransitionEvent = {
+  agentRunId: string | null
+  errorCode: string | null
+  lastTransitionAt: Date
+}
+
+export const taskRecordMachineDefinition =
+  machine<TaskRecordMachineContext>().define({
+    initial: "waiting",
+    states: {
+      waiting: {
+        entry: (context, event: TaskRecordTransitionEvent) => ({
+          ...context,
+          agentRunId: event.agentRunId,
+          errorCode: event.errorCode,
+          lastTransitionAt: event.lastTransitionAt,
+        }),
+        on: {
+          claim: { target: "picked_up" },
+          skip: { target: "skipped" },
+        },
+        onSuccess: { target: "waiting" },
+      },
+      picked_up: {
+        entry: (context, event: TaskRecordTransitionEvent) => ({
+          ...context,
+          agentRunId: event.agentRunId,
+          errorCode: event.errorCode,
+          lastTransitionAt: event.lastTransitionAt,
+        }),
+        on: {
+          cancel: { target: "skipped" },
+          fail: { target: "failed" },
+          release: { target: "waiting" },
+          start: { target: "in_progress" },
+        },
+        onSuccess: { target: "picked_up" },
+      },
+      in_progress: {
+        entry: (context, event: TaskRecordTransitionEvent) => ({
+          ...context,
+          agentRunId: event.agentRunId,
+          errorCode: event.errorCode,
+          lastTransitionAt: event.lastTransitionAt,
+        }),
+        on: {
+          cancel: { target: "skipped" },
+          complete: { target: "completed" },
+          fail: { target: "failed" },
+        },
+        onSuccess: { target: "in_progress" },
+      },
+      completed: {
+        entry: (context, event: TaskRecordTransitionEvent) => ({
+          ...context,
+          agentRunId: event.agentRunId,
+          errorCode: event.errorCode,
+          lastTransitionAt: event.lastTransitionAt,
+        }),
+        onSuccess: { target: "completed" },
+      },
+      failed: {
+        entry: (context, event: TaskRecordTransitionEvent) => ({
+          ...context,
+          agentRunId: event.agentRunId,
+          errorCode: event.errorCode,
+          lastTransitionAt: event.lastTransitionAt,
+        }),
+        on: {
+          retry: { target: "waiting" },
+          skip: { target: "skipped" },
+        },
+        onSuccess: { target: "failed" },
+      },
+      skipped: {
+        entry: (context, event: TaskRecordTransitionEvent) => ({
+          ...context,
+          agentRunId: event.agentRunId,
+          errorCode: event.errorCode,
+          lastTransitionAt: event.lastTransitionAt,
+        }),
+        on: {
+          retry: { target: "waiting" },
+        },
+        onSuccess: { target: "skipped" },
       },
     },
-    picked_up: {
-      on: {
-        cancel: { target: "skipped" },
-        fail: { target: "failed" },
-        release: { target: "waiting" },
-        start: { target: "in_progress" },
-      },
-    },
-    in_progress: {
-      on: {
-        cancel: { target: "skipped" },
-        complete: { target: "completed" },
-        fail: { target: "failed" },
-      },
-    },
-    completed: {},
-    failed: {
-      on: {
-        retry: { target: "waiting" },
-        skip: { target: "skipped" },
-      },
-    },
-    skipped: {
-      on: {
-        retry: { target: "waiting" },
-      },
-    },
-  },
-})
+  })
 
 export const taskRecordMachine = withDrizzlePg(taskRecordMachineDefinition, {
   db,

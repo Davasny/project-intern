@@ -1,5 +1,3 @@
-import { eq } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
 import { getAgentRunActor } from "@/features/agent-runs/lib/get-agent-run-actor"
 import { getToolCallCount } from "@/features/agent-runs/lib/get-tool-call-count"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
@@ -23,22 +21,17 @@ export const markAgentRunBooting = async ({
   toolActivitySummary,
 }: MarkAgentRunBootingParams) => {
   const actor = await getAgentRunActor(agentRunId)
-  await actor.send("boot")
   const startedAt = new Date()
-
-  await db
-    .update(agentRunTable)
-    .set({
-      model,
-      provider,
-      sessionReference,
-      startedAt,
-      state: "booting",
-      toolActivitySummary,
-      toolCallCount: getToolCallCount(toolActivitySummary),
-      toolSummary: toolActivitySummary,
-    })
-    .where(eq(agentRunTable.id, agentRunId))
+  const toolCallCount = getToolCallCount(toolActivitySummary)
+  const nextActor = await actor.send("boot", {
+    model,
+    provider,
+    sessionReference,
+    startedAt,
+    toolActivitySummary,
+    toolCallCount,
+    toolSummary: toolActivitySummary,
+  })
 
   const activityScope = await getAgentRunActivityScope(agentRunId)
 
@@ -71,5 +64,5 @@ export const markAgentRunBooting = async ({
     "Marked agent run booting",
   )
 
-  return actor
+  return nextActor
 }

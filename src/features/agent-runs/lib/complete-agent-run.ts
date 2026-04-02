@@ -1,5 +1,3 @@
-import { eq } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
 import { getAgentRunActor } from "@/features/agent-runs/lib/get-agent-run-actor"
 import { getToolCallCount } from "@/features/agent-runs/lib/get-tool-call-count"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
@@ -30,27 +28,22 @@ export const completeAgentRun = async ({
   toolActivitySummary,
 }: CompleteAgentRunParams) => {
   const actor = await getAgentRunActor(agentRunId)
-  await actor.send("complete")
   const finishedAt = new Date()
+  const nextActor = await actor.send("complete", {
+    costUsd,
+    estimatedCostUsd: costUsd,
+    finishedAt,
+    inputTokens: tokenInput,
+    latencyMs,
+    outputTokens: tokenOutput,
+    resultPayload,
+    tokenInput,
+    tokenOutput,
+    toolActivitySummary,
+    toolCallCount: getToolCallCount(toolActivitySummary),
+    toolSummary: toolActivitySummary,
+  })
 
-  await db
-    .update(agentRunTable)
-    .set({
-      costUsd,
-      estimatedCostUsd: costUsd,
-      finishedAt,
-      inputTokens: tokenInput,
-      latencyMs,
-      outputTokens: tokenOutput,
-      resultPayload,
-      state: "completed",
-      tokenInput,
-      tokenOutput,
-      toolActivitySummary,
-      toolCallCount: getToolCallCount(toolActivitySummary),
-      toolSummary: toolActivitySummary,
-    })
-    .where(eq(agentRunTable.id, agentRunId))
   await completeTaskRecord({ agentRunId, taskRecordId })
 
   const activityScope = await getAgentRunActivityScope(agentRunId)
@@ -80,5 +73,5 @@ export const completeAgentRun = async ({
 
   logger.info({ agentRunId, finishedAt, taskRecordId }, "Completed agent run")
 
-  return actor
+  return nextActor
 }

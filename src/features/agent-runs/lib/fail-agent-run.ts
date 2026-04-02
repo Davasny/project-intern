@@ -1,5 +1,3 @@
-import { eq } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
 import { getAgentRunActor } from "@/features/agent-runs/lib/get-agent-run-actor"
 import { getToolCallCount } from "@/features/agent-runs/lib/get-tool-call-count"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
@@ -32,27 +30,22 @@ export const failAgentRun = async ({
   toolActivitySummary,
 }: FailAgentRunParams) => {
   const actor = await getAgentRunActor(agentRunId)
-  await actor.send("fail")
   const finishedAt = new Date()
+  const nextActor = await actor.send("fail", {
+    costUsd,
+    estimatedCostUsd: costUsd,
+    failurePayload,
+    finishedAt,
+    inputTokens: tokenInput,
+    latencyMs,
+    outputTokens: tokenOutput,
+    tokenInput,
+    tokenOutput,
+    toolActivitySummary,
+    toolCallCount: getToolCallCount(toolActivitySummary),
+    toolSummary: toolActivitySummary,
+  })
 
-  await db
-    .update(agentRunTable)
-    .set({
-      costUsd,
-      estimatedCostUsd: costUsd,
-      failurePayload,
-      finishedAt,
-      inputTokens: tokenInput,
-      latencyMs,
-      outputTokens: tokenOutput,
-      state: "failed",
-      tokenInput,
-      tokenOutput,
-      toolActivitySummary,
-      toolCallCount: getToolCallCount(toolActivitySummary),
-      toolSummary: toolActivitySummary,
-    })
-    .where(eq(agentRunTable.id, agentRunId))
   await failTaskRecord({ agentRunId, errorCode, taskRecordId })
 
   const activityScope = await getAgentRunActivityScope(agentRunId)
@@ -86,5 +79,5 @@ export const failAgentRun = async ({
     "Failed agent run",
   )
 
-  return actor
+  return nextActor
 }

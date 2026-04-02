@@ -49,7 +49,21 @@ export const deactivateRecordEdge = async ({
   }
 
   const actor = await getRecordEdgeActor(recordEdge.id)
-  await actor.send("deactivate")
+  const nextMetadata = {
+    ...recordEdge.metadata,
+    deactivatedByUserId: userId,
+    deactivatedFromRecordId: input.recordId,
+  }
+  await actor.send("deactivate", {
+    createdByTaskId: recordEdge.createdByTaskId,
+    direction: recordEdge.direction,
+    fromProjectId: recordEdge.fromProjectId,
+    fromRecordId: recordEdge.fromRecordId,
+    metadata: nextMetadata,
+    relationType: recordEdge.relationType,
+    toProjectId: recordEdge.toProjectId,
+    toRecordId: recordEdge.toRecordId,
+  })
 
   const sourceRecord = await ensureRecordInProject({
     projectId: recordEdge.fromProjectId,
@@ -59,17 +73,6 @@ export const deactivateRecordEdge = async ({
     projectId: recordEdge.toProjectId,
     recordId: recordEdge.toRecordId,
   })
-
-  await db
-    .update(recordEdgeTable)
-    .set({
-      metadata: {
-        ...recordEdge.metadata,
-        deactivatedByUserId: userId,
-        deactivatedFromRecordId: input.recordId,
-      },
-    })
-    .where(eq(recordEdgeTable.id, recordEdge.id))
 
   await createActivityLog({
     actorId: userId,

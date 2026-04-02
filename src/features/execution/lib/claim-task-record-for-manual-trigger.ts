@@ -1,6 +1,11 @@
 import { sql } from "drizzle-orm"
+import { withDrizzlePg } from "machin/drizzle/pg"
+import { agentRunTable } from "@/features/agent-runs/db"
+import { agentRunMachineDefinition } from "@/features/agent-runs/lib/agent-run-machine"
 import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
+import { taskRecordTable } from "@/features/task-records/db"
+import { taskRecordMachineDefinition } from "@/features/task-records/lib/task-record-machine"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
@@ -26,6 +31,20 @@ type ClaimedTaskRecordRow = {
   taskRecordId: string
 }
 
+type ClaimCandidateRow = {
+  attemptNumber: number
+  model: string | null
+  organizationId: string
+  projectId: string
+  recordId: string
+  taskId: string
+  taskRecordId: string
+}
+
+type GeneratedIdRow = {
+  id: string
+}
+
 const createPgArray = (values: string[]) =>
   sql.raw(`ARRAY[${values.map((value) => `'${value}'`).join(", ")}]`)
 
@@ -38,14 +57,23 @@ export const claimTaskRecordForManualTrigger = async ({
   projectId,
   taskRecordId,
 }: ClaimTaskRecordForManualTriggerParams) => {
-  const claimResult = await db.execute<ClaimedTaskRecordRow>(sql`
-    with candidate as (
+  const claimedTaskRecord = await db.transaction(async (tx) => {
+    const candidateResult = await tx.execute<ClaimCandidateRow>(sql`
       select
-        tr.id as task_record_id,
-        tr.task_id,
-        tr.record_id,
-        t.project_id,
-        p.organization_id
+        tr.id as "taskRecordId",
+        tr.task_id as "taskId",
+        tr.record_id as "recordId",
+        t.project_id as "projectId",
+        p.organization_id as "organizationId",
+        t.model as "model",
+        coalesce(
+          (
+            select max(existing_ar.attempt_number)
+            from agent_run existing_ar
+            where existing_ar.task_record_id = tr.id
+          ),
+          0
+        ) + 1 as "attemptNumber"
       from task_record tr
       inner join task t on t.id = tr.task_id
       inner join project p on p.id = t.project_id
@@ -79,88 +107,85 @@ export const claimTaskRecordForManualTrigger = async ({
             and active_ar.state = any(${createPgArray(activeAgentRunStates)})
         )
       for update of tr skip locked
-    ),
-    inserted_agent_run as (
-      insert into agent_run (
-        task_record_id,
-        attempt_number,
-        state,
-        selected_model,
-        selected_agent,
-        session_reference,
-        provider,
-        model,
-        started_at,
-        finished_at,
-        latency_ms,
-        token_input,
-        token_output,
-        input_tokens,
-        output_tokens,
-        cost_usd,
-        estimated_cost_usd,
-        tool_call_count,
-        tool_activity_summary,
-        tool_summary,
-        result_payload,
-        failure_payload
-      )
-      select
-        candidate.task_record_id,
-        coalesce(max(existing_ar.attempt_number), 0) + 1,
-        'created',
-        t.model,
-        'record-worker',
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        0,
-        '{}'::jsonb,
-        '{}'::jsonb,
-        null,
-        null
-      from candidate
-      inner join task t on t.id = candidate.task_id
-      left join agent_run existing_ar on existing_ar.task_record_id = candidate.task_record_id
-      group by candidate.task_record_id, t.model
-      returning id, task_record_id
-    ),
-    updated_task_record as (
-      update task_record tr
-      set
-        state = 'picked_up',
-        agent_run_id = inserted_agent_run.id,
-        error_code = null,
-        last_transition_at = now(),
-        updated_at = now()
-      from inserted_agent_run
-      where
-        tr.id = inserted_agent_run.task_record_id
-        and tr.state = 'waiting'
-      returning tr.id, tr.task_id, tr.record_id
-    )
-    select
-      inserted_agent_run.id as "agentRunId",
-      candidate.organization_id as "organizationId",
-      candidate.project_id as "projectId",
-      updated_task_record.record_id as "recordId",
-      updated_task_record.task_id as "taskId",
-      updated_task_record.id as "taskRecordId"
-    from updated_task_record
-    inner join candidate on candidate.task_record_id = updated_task_record.id
-    inner join inserted_agent_run on inserted_agent_run.task_record_id = updated_task_record.id
-  `)
+    `)
 
-  const claimedTaskRecord = claimResult.rows[0] ?? null
+    const candidate = candidateResult.rows[0] ?? null
+
+    if (!candidate) {
+      return null
+    }
+
+    const agentRunIdResult = await tx.execute<GeneratedIdRow>(sql`
+      select uuidv7() as id
+    `)
+    const agentRunId = agentRunIdResult.rows[0]?.id ?? null
+
+    if (!agentRunId) {
+      return null
+    }
+
+    const transactionAgentRunMachine = withDrizzlePg(
+      agentRunMachineDefinition,
+      {
+        db: tx,
+        table: agentRunTable,
+      },
+    )
+    const transactionTaskRecordMachine = withDrizzlePg(
+      taskRecordMachineDefinition,
+      {
+        db: tx,
+        table: taskRecordTable,
+      },
+    )
+
+    await transactionAgentRunMachine.createActor(agentRunId, {
+      attemptNumber: candidate.attemptNumber,
+      costUsd: null,
+      estimatedCostUsd: null,
+      failurePayload: null,
+      finishedAt: null,
+      inputTokens: null,
+      latencyMs: null,
+      model: null,
+      outputTokens: null,
+      provider: null,
+      resultPayload: null,
+      selectedAgent: "record-worker",
+      selectedModel: candidate.model,
+      sessionReference: null,
+      startedAt: null,
+      taskRecordId: candidate.taskRecordId,
+      tokenInput: null,
+      tokenOutput: null,
+      toolActivitySummary: {},
+      toolCallCount: 0,
+      toolSummary: {},
+    })
+
+    const taskRecordActor = await transactionTaskRecordMachine.getActor(
+      candidate.taskRecordId,
+    )
+
+    if (!taskRecordActor) {
+      return null
+    }
+
+    await taskRecordActor.send("claim", {
+      agentRunId,
+      errorCode: null,
+      lastTransitionAt: new Date(),
+    })
+
+    return {
+      agentRunId,
+      organizationId: candidate.organizationId,
+      projectId: candidate.projectId,
+      recordId: candidate.recordId,
+      taskId: candidate.taskId,
+      taskRecordId: candidate.taskRecordId,
+    }
+  })
 
   if (!claimedTaskRecord) {
     return null

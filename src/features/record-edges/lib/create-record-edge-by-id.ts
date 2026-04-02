@@ -1,11 +1,14 @@
 import { TRPCError } from "@trpc/server"
+import { eq } from "drizzle-orm"
 import { recordEdgeTable } from "@/features/record-edges/db"
 import { assertRelationCardinality } from "@/features/record-edges/lib/assert-relation-cardinality"
 import { buildRecordEdgeMetadata } from "@/features/record-edges/lib/build-record-edge-metadata"
 import { createActivityLog } from "@/features/record-edges/lib/create-activity-log"
+import { createRecordEdgeMachineRow } from "@/features/record-edges/lib/create-record-edge-machine-row"
 import { ensureRecordInProject } from "@/features/record-edges/lib/ensure-record-in-project"
 import { relationMetadataInputSchema } from "@/features/record-edges/schemas/relation-metadata"
 import { db } from "@/lib/db"
+import { generateUuidV7Values } from "@/lib/db/generate-uuid-v7-values"
 
 type CreateRecordEdgeByIdParams = {
   agentRunId: string
@@ -56,22 +59,26 @@ export const createRecordEdgeById = async ({
     toRecordId: targetRecord.id,
   })
 
-  const [recordEdge] = await db
-    .insert(recordEdgeTable)
-    .values({
-      createdByTaskId: taskId,
-      direction,
-      fromProjectId: sourceProjectId,
-      fromRecordId: sourceRecord.id,
-      metadata: buildRecordEdgeMetadata(
-        relationMetadataInputSchema.parse(metadata),
-      ),
-      relationType,
-      state: "active",
-      toProjectId: targetProjectId,
-      toRecordId: targetRecord.id,
-    })
-    .returning({
+  const [recordEdgeId] = await generateUuidV7Values({ count: 1, database: db })
+  const nextMetadata = buildRecordEdgeMetadata(
+    relationMetadataInputSchema.parse(metadata),
+  )
+
+  await createRecordEdgeMachineRow({
+    createdByTaskId: taskId,
+    database: db,
+    direction,
+    fromProjectId: sourceProjectId,
+    fromRecordId: sourceRecord.id,
+    id: recordEdgeId,
+    metadata: nextMetadata,
+    relationType,
+    toProjectId: targetProjectId,
+    toRecordId: targetRecord.id,
+  })
+
+  const recordEdge = await db
+    .select({
       createdAt: recordEdgeTable.createdAt,
       direction: recordEdgeTable.direction,
       fromProjectId: recordEdgeTable.fromProjectId,
@@ -84,6 +91,16 @@ export const createRecordEdgeById = async ({
       toRecordId: recordEdgeTable.toRecordId,
       updatedAt: recordEdgeTable.updatedAt,
     })
+    .from(recordEdgeTable)
+    .where(eq(recordEdgeTable.id, recordEdgeId))
+    .then((rows) => rows[0] ?? null)
+
+  if (!recordEdge) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Relation was not found after creation.",
+    })
+  }
 
   await createActivityLog({
     actorId: agentRunId,

@@ -1,8 +1,5 @@
-import { eq } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
 import { getAgentRunActor } from "@/features/agent-runs/lib/get-agent-run-actor"
 import { skipTaskRecord } from "@/features/task-records/lib/skip-task-record"
-import { db } from "@/lib/db"
 
 type AbortAgentRunParams = {
   agentRunId: string
@@ -18,15 +15,15 @@ export const abortAgentRun = async ({
   toolActivitySummary,
 }: AbortAgentRunParams) => {
   const actor = await getAgentRunActor(agentRunId)
-  await actor.send("abort")
-  await db
-    .update(agentRunTable)
-    .set({ failurePayload, toolActivitySummary })
-    .where(eq(agentRunTable.id, agentRunId))
+  const nextActor = await actor.send("abort", {
+    failurePayload,
+    toolActivitySummary,
+    toolSummary: toolActivitySummary,
+  })
   await skipTaskRecord({
     agentRunId,
     errorCode: null,
     taskRecordId,
   })
-  return actor
+  return nextActor
 }

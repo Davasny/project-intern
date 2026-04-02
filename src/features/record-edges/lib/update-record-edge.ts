@@ -6,6 +6,7 @@ import { assertRelationCardinality } from "@/features/record-edges/lib/assert-re
 import { buildRecordEdgeMetadata } from "@/features/record-edges/lib/build-record-edge-metadata"
 import { createActivityLog } from "@/features/record-edges/lib/create-activity-log"
 import { ensureRecordInProject } from "@/features/record-edges/lib/ensure-record-in-project"
+import { getRecordEdgeActor } from "@/features/record-edges/lib/get-record-edge-actor"
 import { getScopedRecordEdge } from "@/features/record-edges/lib/get-scoped-record-edge"
 import type { RelationUpdateInput } from "@/features/record-edges/schemas/relation-input"
 import { db } from "@/lib/db"
@@ -88,18 +89,21 @@ export const updateRecordEdge = async ({
   })
 
   const metadata = buildRecordEdgeMetadata(input.metadata)
+  const actor = await getRecordEdgeActor(existingRecordEdge.id)
 
-  const [recordEdge] = await db
-    .update(recordEdgeTable)
-    .set({
-      direction: input.direction,
-      metadata,
-      relationType: input.relationType,
-      toProjectId: targetProject.id,
-      toRecordId: targetRecord.id,
-    })
-    .where(eq(recordEdgeTable.id, existingRecordEdge.id))
-    .returning({
+  await actor.send("edit", {
+    createdByTaskId: existingRecordEdge.createdByTaskId,
+    direction: input.direction,
+    fromProjectId: existingRecordEdge.fromProjectId,
+    fromRecordId: existingRecordEdge.fromRecordId,
+    metadata,
+    relationType: input.relationType,
+    toProjectId: targetProject.id,
+    toRecordId: targetRecord.id,
+  })
+
+  const recordEdge = await db
+    .select({
       createdAt: recordEdgeTable.createdAt,
       direction: recordEdgeTable.direction,
       fromProjectId: recordEdgeTable.fromProjectId,
@@ -112,6 +116,16 @@ export const updateRecordEdge = async ({
       toRecordId: recordEdgeTable.toRecordId,
       updatedAt: recordEdgeTable.updatedAt,
     })
+    .from(recordEdgeTable)
+    .where(eq(recordEdgeTable.id, existingRecordEdge.id))
+    .then((rows) => rows[0] ?? null)
+
+  if (!recordEdge) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Relation was not found after update.",
+    })
+  }
 
   await createActivityLog({
     actorId: userId,
@@ -119,7 +133,7 @@ export const updateRecordEdge = async ({
     entityId: recordEdge.id,
     eventType: "recordEdge.updated",
     payload: {
-      direction: recordEdge.direction,
+      direction: input.direction,
       previousRelationType: existingRecordEdge.relationType,
       relatedProjectDisplayName: targetProject.displayName,
       relatedProjectSlug: targetProject.slug,

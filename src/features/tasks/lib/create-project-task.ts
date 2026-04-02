@@ -5,7 +5,10 @@ import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import type { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
-type DatabaseClient = Pick<typeof db, "insert" | "select">
+type DatabaseClient = Pick<
+  typeof db,
+  "execute" | "insert" | "select" | "update"
+>
 
 type CreateProjectTaskParams = {
   createdByUserId: string | null

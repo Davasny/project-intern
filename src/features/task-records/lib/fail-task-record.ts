@@ -1,7 +1,5 @@
-import { eq } from "drizzle-orm"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
-import { taskRecordTable } from "@/features/task-records/db"
 import { getTaskRecordActor } from "@/features/task-records/lib/get-task-record-actor"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
@@ -18,15 +16,11 @@ export const failTaskRecord = async ({
   taskRecordId,
 }: FailTaskRecordParams) => {
   const actor = await getTaskRecordActor(taskRecordId)
-  await actor.send("fail")
-  await db
-    .update(taskRecordTable)
-    .set({
-      agentRunId,
-      errorCode,
-      lastTransitionAt: new Date(),
-    })
-    .where(eq(taskRecordTable.id, taskRecordId))
+  const nextActor = await actor.send("fail", {
+    agentRunId,
+    errorCode,
+    lastTransitionAt: new Date(),
+  })
 
   const activityScope = await getTaskRecordActivityScope(taskRecordId)
 
@@ -54,5 +48,5 @@ export const failTaskRecord = async ({
 
   logger.warn({ agentRunId, errorCode, taskRecordId }, "Failed task record")
 
-  return actor
+  return nextActor
 }

@@ -1,7 +1,4 @@
-import { eq } from "drizzle-orm"
-import { taskRecordTable } from "@/features/task-records/db"
 import { getTaskRecordActor } from "@/features/task-records/lib/get-task-record-actor"
-import { db } from "@/lib/db"
 
 type SkipTaskRecordParams = {
   agentRunId: string | null
@@ -15,28 +12,19 @@ export const skipTaskRecord = async ({
   taskRecordId,
 }: SkipTaskRecordParams) => {
   const actor = await getTaskRecordActor(taskRecordId)
+  const lastTransitionAt = new Date()
 
   if (actor.state === "waiting" || actor.state === "failed") {
-    await actor.send("skip")
-    await db
-      .update(taskRecordTable)
-      .set({
-        agentRunId,
-        errorCode,
-        lastTransitionAt: new Date(),
-      })
-      .where(eq(taskRecordTable.id, taskRecordId))
-    return actor
-  }
-
-  await actor.send("cancel")
-  await db
-    .update(taskRecordTable)
-    .set({
+    return actor.send("skip", {
       agentRunId,
       errorCode,
-      lastTransitionAt: new Date(),
+      lastTransitionAt,
     })
-    .where(eq(taskRecordTable.id, taskRecordId))
-  return actor
+  }
+
+  return actor.send("cancel", {
+    agentRunId,
+    errorCode,
+    lastTransitionAt,
+  })
 }

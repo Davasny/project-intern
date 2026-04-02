@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
-import { createTaskRecordValues } from "@/features/task-records/lib/create-task-record-values"
+import { createTaskRecordMachineRow } from "@/features/task-records/lib/create-task-record-machine-row"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
+import { generateUuidV7Values } from "@/lib/db/generate-uuid-v7-values"
 
 type BackfillTaskRecordsForRecordParams = {
   projectId: string
@@ -43,17 +44,43 @@ export const backfillTaskRecordsForRecord = async ({
     return []
   }
 
-  return db
-    .insert(taskRecordTable)
-    .values(
-      applicableTasks.map((task) =>
-        createTaskRecordValues({ recordId, taskId: task.id }),
+  const existingTaskRecords = await db
+    .select({ taskId: taskRecordTable.taskId })
+    .from(taskRecordTable)
+    .where(
+      and(
+        eq(taskRecordTable.recordId, recordId),
+        inArray(
+          taskRecordTable.taskId,
+          applicableTasks.map((task) => task.id),
+        ),
       ),
     )
-    .onConflictDoNothing({
-      target: [taskRecordTable.taskId, taskRecordTable.recordId],
-    })
-    .returning({
-      id: taskRecordTable.id,
-    })
+
+  const existingTaskIds = new Set(
+    existingTaskRecords.map((taskRecord) => taskRecord.taskId),
+  )
+  const missingTasks = applicableTasks.filter(
+    (task) => !existingTaskIds.has(task.id),
+  )
+
+  const ids = await generateUuidV7Values({
+    count: missingTasks.length,
+    database: db,
+  })
+
+  const createdTaskRecords = await Promise.all(
+    missingTasks.map((task, index) =>
+      createTaskRecordMachineRow({
+        database: db,
+        id: ids[index],
+        recordId,
+        taskId: task.id,
+      }),
+    ),
+  )
+
+  return createdTaskRecords.flatMap((taskRecord) =>
+    taskRecord ? [{ id: taskRecord.id }] : [],
+  )
 }
