@@ -7,10 +7,12 @@ type TaskRecordRowProps = {
   organizationSlug: string
   projectSlug: string
   taskRecord: {
+    errorCode: string | null
     id: string
     lastTransitionAt: Date
     latestAgentRun: {
       id: string
+      failurePayload: Record<string, unknown> | null
       selectedModel: string | null
       state:
         | "aborted"
@@ -33,6 +35,20 @@ type TaskRecordRowProps = {
   }
 }
 
+const getFailureMessage = (taskRecord: TaskRecordRowProps["taskRecord"]) => {
+  const failurePayload = taskRecord.latestAgentRun?.failurePayload
+
+  if (
+    failurePayload &&
+    "message" in failurePayload &&
+    typeof failurePayload.message === "string"
+  ) {
+    return failurePayload.message
+  }
+
+  return taskRecord.errorCode
+}
+
 export const TaskRecordRow = ({
   organizationSlug,
   projectSlug,
@@ -48,7 +64,14 @@ export const TaskRecordRow = ({
       </Link>
     </TableCell>
     <TableCell>
-      <TaskRecordStatusBadge state={taskRecord.state} />
+      <div className="flex flex-col gap-1">
+        <TaskRecordStatusBadge state={taskRecord.state} />
+        {taskRecord.state === "failed" && getFailureMessage(taskRecord) ? (
+          <span className="text-xs text-rose-700">
+            {getFailureMessage(taskRecord)}
+          </span>
+        ) : null}
+      </div>
     </TableCell>
     <TableCell>
       {taskRecord.latestAgentRun ? (

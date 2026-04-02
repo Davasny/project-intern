@@ -8,6 +8,7 @@ type RecordLinkedTaskRowProps = {
   projectSlug: string
   task: {
     latestAgentRun: {
+      failurePayload: Record<string, unknown> | null
       state:
         | "aborted"
         | "booting"
@@ -24,9 +25,24 @@ type RecordLinkedTaskRowProps = {
       | "picked_up"
       | "skipped"
       | "waiting"
+    errorCode: string | null
     taskId: string
     title: string
   }
+}
+
+const getFailureMessage = (task: RecordLinkedTaskRowProps["task"]) => {
+  const failurePayload = task.latestAgentRun?.failurePayload
+
+  if (
+    failurePayload &&
+    "message" in failurePayload &&
+    typeof failurePayload.message === "string"
+  ) {
+    return failurePayload.message
+  }
+
+  return task.errorCode
 }
 
 export const RecordLinkedTaskRow = ({
@@ -44,7 +60,14 @@ export const RecordLinkedTaskRow = ({
       </Link>
     </TableCell>
     <TableCell>
-      <TaskRecordStatusBadge state={task.state} />
+      <div className="flex flex-col gap-1">
+        <TaskRecordStatusBadge state={task.state} />
+        {task.state === "failed" && getFailureMessage(task) ? (
+          <span className="text-xs text-rose-700">
+            {getFailureMessage(task)}
+          </span>
+        ) : null}
+      </div>
     </TableCell>
     <TableCell>
       {task.latestAgentRun ? (

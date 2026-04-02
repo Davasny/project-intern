@@ -1,4 +1,9 @@
+import { config } from "dotenv"
 import { z } from "zod"
+
+config({
+  quiet: true,
+})
 
 const databaseConfigSchema = z.object({
   DATABASE_URL: z

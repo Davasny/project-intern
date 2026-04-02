@@ -12,6 +12,7 @@ import { listRecordFiles } from "@/features/files/lib/list-record-files"
 import { getPipelineDefinition } from "@/features/pipelines/lib/get-pipeline-definition"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
+import { startTaskRecord } from "@/features/task-records/lib/start-task-record"
 import { logger } from "@/lib/logger"
 import { getOpencodeClient } from "@/lib/opencode/get-opencode-client"
 
@@ -24,178 +25,364 @@ export const executorService = async ({
   agentRunId,
   taskRecordId,
 }: ExecutorServiceParams) => {
-  const initialScope = await getAgentRunExecutionScope({
+  let executionLogger = logger.child({
     agentRunId,
-  })
-  const executionLogger = logger.child({
-    agentRunId: initialScope.agentRun.id,
-    projectId: initialScope.project.id,
-    recordId: initialScope.record.id,
-    taskId: initialScope.task.id,
     taskRecordId,
   })
 
-  const runtimeModel = resolveRuntimeModel({
-    taskModel: initialScope.task.model,
-  })
-  const pipelineDefinition = await getPipelineDefinition({
-    projectId: initialScope.project.id,
-    version: initialScope.task.pipelineVersion,
-  })
-  const workspace = await ensureRecordWorkspace({
-    projectId: initialScope.project.id,
-    recordId: initialScope.record.id,
-  })
-  const hydratedWorkspace = await hydrateRecordWorkspace({
-    projectId: initialScope.project.id,
-    recordId: initialScope.record.id,
-  })
-  const schema = await getActiveProjectSchemaVersionByProjectId({
-    projectId: initialScope.project.id,
-  })
-  const [relations, files, artifacts] = await Promise.all([
-    listRecordRelationsByProjectId({
+  try {
+    executionLogger.info("Loading agent run execution scope")
+
+    const initialScope = await getAgentRunExecutionScope({
+      agentRunId,
+    })
+
+    executionLogger = executionLogger.child({
       projectId: initialScope.project.id,
       recordId: initialScope.record.id,
-    }),
-    listRecordFiles({
+      taskId: initialScope.task.id,
+    })
+
+    executionLogger.info(
+      {
+        pipelineVersion: initialScope.task.pipelineVersion,
+        recordName: initialScope.record.name,
+        taskTitle: initialScope.task.title,
+      },
+      "Loaded agent run execution scope",
+    )
+
+    const runtimeModel = resolveRuntimeModel({
+      taskModel: initialScope.task.model,
+    })
+
+    executionLogger.info({ runtimeModel }, "Resolved runtime model")
+
+    executionLogger.info(
+      { pipelineVersion: initialScope.task.pipelineVersion },
+      "Loading pipeline definition",
+    )
+
+    const pipelineDefinition = await getPipelineDefinition({
+      projectId: initialScope.project.id,
+      version: initialScope.task.pipelineVersion,
+    })
+
+    executionLogger.info(
+      {
+        hasPipelineDefinition: pipelineDefinition !== null,
+        parserAssetVersion: pipelineDefinition?.parserAssetVersion ?? null,
+        pipelineVersion: pipelineDefinition?.version ?? null,
+      },
+      "Loaded pipeline definition",
+    )
+
+    executionLogger.info("Ensuring record workspace")
+
+    const workspace = await ensureRecordWorkspace({
       projectId: initialScope.project.id,
       recordId: initialScope.record.id,
-    }),
-    listArtifacts({
+    })
+
+    executionLogger.info(
+      { workspaceDirectory: workspace.workspaceDirectory },
+      "Ensured record workspace",
+    )
+
+    executionLogger.info("Hydrating record workspace")
+
+    const hydratedWorkspace = await hydrateRecordWorkspace({
       projectId: initialScope.project.id,
       recordId: initialScope.record.id,
-    }),
-  ])
+    })
 
-  const parserAssetBundle =
-    pipelineDefinition === null
-      ? null
-      : await ensurePipelineAssetsInWorkspace({
-          parserAssetVersion: pipelineDefinition.parserAssetVersion,
-          projectId: initialScope.project.id,
-          recordId: initialScope.record.id,
-        })
+    executionLogger.info(
+      {
+        hydratedArtifactCount: hydratedWorkspace.artifactCount,
+        hydratedFileCount: hydratedWorkspace.fileCount,
+      },
+      "Hydrated record workspace",
+    )
 
-  await writeWorkspaceManifest({
-    artifactIds: artifacts.map((artifact) => artifact.id),
-    fileIds: files.map((file) => file.id),
-    parserAssetVersion: pipelineDefinition?.parserAssetVersion ?? null,
-    pipelineVersion: pipelineDefinition?.version ?? null,
-    projectId: initialScope.project.id,
-    recordId: initialScope.record.id,
-    taskId: initialScope.task.id,
-  })
+    executionLogger.info("Loading active project schema version")
 
-  const client = await getOpencodeClient()
-  const session = await client.session.create({
-    body: {
-      title: `${initialScope.task.title} · ${initialScope.record.name}`,
-    },
-    query: {
-      directory: workspace.workspaceDirectory,
-    },
-  })
+    const schema = await getActiveProjectSchemaVersionByProjectId({
+      projectId: initialScope.project.id,
+    })
 
-  if (!session.data) {
-    throw new Error("OpenCode session could not be created.")
-  }
+    executionLogger.info(
+      { schemaVersion: schema.version },
+      "Loaded active project schema version",
+    )
 
-  const [providerID, modelID] = runtimeModel.split("/")
+    executionLogger.info("Loading record relations, files, and artifacts")
 
-  await markAgentRunBooting({
-    agentRunId: initialScope.agentRun.id,
-    model: modelID,
-    provider: providerID,
-    sessionReference: session.data.id,
-    toolActivitySummary: {
-      filesAvailable: files.length,
-      artifactsAvailable: artifacts.length,
-      hydratedArtifactCount: hydratedWorkspace.artifactCount,
-      hydratedFileCount: hydratedWorkspace.fileCount,
+    const [relations, files, artifacts] = await Promise.all([
+      listRecordRelationsByProjectId({
+        projectId: initialScope.project.id,
+        recordId: initialScope.record.id,
+      }),
+      listRecordFiles({
+        projectId: initialScope.project.id,
+        recordId: initialScope.record.id,
+      }),
+      listArtifacts({
+        projectId: initialScope.project.id,
+        recordId: initialScope.record.id,
+      }),
+    ])
+
+    executionLogger.info(
+      {
+        artifactCount: artifacts.length,
+        fileCount: files.length,
+        relationCount: relations.summary.activeCount,
+      },
+      "Loaded record relations, files, and artifacts",
+    )
+
+    executionLogger.info(
+      {
+        hasPipelineDefinition: pipelineDefinition !== null,
+      },
+      "Ensuring pipeline assets in workspace when required",
+    )
+
+    const parserAssetBundle =
+      pipelineDefinition === null
+        ? null
+        : await ensurePipelineAssetsInWorkspace({
+            parserAssetVersion: pipelineDefinition.parserAssetVersion,
+            projectId: initialScope.project.id,
+            recordId: initialScope.record.id,
+          })
+
+    executionLogger.info(
+      {
+        parserAssetBundleDirectory: parserAssetBundle?.bundleDirectory ?? null,
+      },
+      "Prepared pipeline assets in workspace",
+    )
+
+    executionLogger.info("Writing workspace manifest")
+
+    await writeWorkspaceManifest({
+      artifactIds: artifacts.map((artifact) => artifact.id),
+      fileIds: files.map((file) => file.id),
       parserAssetVersion: pipelineDefinition?.parserAssetVersion ?? null,
-      relationCount: relations.summary.activeCount,
-    },
-  })
+      pipelineVersion: pipelineDefinition?.version ?? null,
+      projectId: initialScope.project.id,
+      recordId: initialScope.record.id,
+      taskId: initialScope.task.id,
+    })
 
-  await client.session.prompt({
-    body: {
-      agent: "record-worker",
-      model: {
+    executionLogger.info("Wrote workspace manifest")
+
+    executionLogger.info("Creating OpenCode client")
+
+    const client = await getOpencodeClient()
+
+    executionLogger.info("Created OpenCode client")
+
+    executionLogger.info(
+      { workspaceDirectory: workspace.workspaceDirectory },
+      "Creating OpenCode session",
+    )
+
+    const session = await client.session.create({
+      body: {
+        title: `${initialScope.task.title} · ${initialScope.record.name}`,
+      },
+      query: {
+        directory: workspace.workspaceDirectory,
+      },
+    })
+
+    executionLogger.info(
+      {
+        hasSessionData: session.data !== undefined,
+        sessionId: session.data?.id,
+      },
+      "Received OpenCode session create response",
+    )
+
+    if (!session.data) {
+      throw new Error("OpenCode session could not be created.")
+    }
+
+    const [providerID, modelID] = runtimeModel.split("/")
+
+    executionLogger.info(
+      {
         modelID,
         providerID,
+        sessionId: session.data.id,
       },
-      noReply: true,
-      parts: [
-        {
-          text: JSON.stringify(
-            {
-              artifacts,
-              files,
-              pipelineDefinition,
-              record: initialScope.record,
-              relations,
-              schema,
-              task: initialScope.task,
-            },
-            null,
-            2,
-          ),
-          type: "text",
+      "Marking agent run booting",
+    )
+
+    await markAgentRunBooting({
+      agentRunId: initialScope.agentRun.id,
+      model: modelID,
+      provider: providerID,
+      sessionReference: session.data.id,
+      toolActivitySummary: {
+        filesAvailable: files.length,
+        artifactsAvailable: artifacts.length,
+        hydratedArtifactCount: hydratedWorkspace.artifactCount,
+        hydratedFileCount: hydratedWorkspace.fileCount,
+        parserAssetVersion: pipelineDefinition?.parserAssetVersion ?? null,
+        relationCount: relations.summary.activeCount,
+      },
+    })
+
+    executionLogger.info(
+      { sessionId: session.data.id },
+      "Marked agent run booting",
+    )
+
+    const promptPayload = {
+      artifacts,
+      execution: {
+        agentRunId: initialScope.agentRun.id,
+        projectId: initialScope.project.id,
+        recordId: initialScope.record.id,
+        taskId: initialScope.task.id,
+        taskRecordId: initialScope.taskRecord.id,
+      },
+      files,
+      pipelineDefinition,
+      record: initialScope.record,
+      relations,
+      schema,
+      task: initialScope.task,
+    }
+
+    const promptText = JSON.stringify(promptPayload, null, 2)
+    const systemPrompt = buildTaskRecordSystemPrompt({
+      executionScope: {
+        agentRunId: initialScope.agentRun.id,
+        projectId: initialScope.project.id,
+        recordId: initialScope.record.id,
+        taskId: initialScope.task.id,
+        taskRecordId: initialScope.taskRecord.id,
+      },
+      projectDisplayName: initialScope.project.displayName,
+      recordName: initialScope.record.name,
+      taskDescriptionMarkdown: initialScope.task.descriptionMarkdown,
+      taskTitle: initialScope.task.title,
+    })
+
+    executionLogger.info(
+      {
+        promptBytes: Buffer.byteLength(promptText, "utf8"),
+        sessionId: session.data.id,
+        systemPromptBytes: Buffer.byteLength(systemPrompt, "utf8"),
+      },
+      "Preparing OpenCode prompt execution",
+    )
+
+    executionLogger.info(
+      { sessionId: session.data.id },
+      "Starting task record execution",
+    )
+
+    await startTaskRecord({
+      agentRunId: initialScope.agentRun.id,
+      taskRecordId: initialScope.taskRecord.id,
+    })
+
+    executionLogger.info(
+      { sessionId: session.data.id },
+      "Started task record execution",
+    )
+
+    executionLogger.info(
+      { sessionId: session.data.id },
+      "Marking agent run running",
+    )
+
+    await markAgentRunRunning({
+      agentRunId: initialScope.agentRun.id,
+      model: modelID,
+      latencyMs: null,
+      provider: providerID,
+      sessionReference: session.data.id,
+      tokenInput: null,
+      toolActivitySummary: {
+        filesAvailable: files.length,
+        model: runtimeModel,
+        parserAssetBundleDirectory: parserAssetBundle?.bundleDirectory ?? null,
+        relationCount: relations.summary.activeCount,
+        sessionId: session.data.id,
+      },
+    })
+
+    executionLogger.info(
+      { sessionId: session.data.id },
+      "Marked agent run running",
+    )
+
+    executionLogger.info(
+      { sessionId: session.data.id },
+      "Submitting OpenCode prompt asynchronously",
+    )
+
+    await client.session.promptAsync({
+      body: {
+        agent: "record-worker",
+        model: {
+          modelID,
+          providerID,
         },
-      ],
-      system: buildTaskRecordSystemPrompt({
-        projectDisplayName: initialScope.project.displayName,
-        recordName: initialScope.record.name,
-        taskDescriptionMarkdown: initialScope.task.descriptionMarkdown,
-        taskTitle: initialScope.task.title,
-      }),
-    },
-    path: {
-      id: session.data.id,
-    },
-    query: {
-      directory: workspace.workspaceDirectory,
-    },
-  })
+        parts: [
+          {
+            text: promptText,
+            type: "text",
+          },
+        ],
+        system: systemPrompt,
+      },
+      path: {
+        id: session.data.id,
+      },
+      query: {
+        directory: workspace.workspaceDirectory,
+      },
+    })
 
-  await markAgentRunRunning({
-    agentRunId: initialScope.agentRun.id,
-    model: modelID,
-    latencyMs: null,
-    provider: providerID,
-    sessionReference: session.data.id,
-    tokenInput: null,
-    toolActivitySummary: {
-      filesAvailable: files.length,
+    executionLogger.info(
+      {
+        model: runtimeModel,
+        sessionId: session.data.id,
+      },
+      "Submitted OpenCode prompt asynchronously",
+    )
+
+    return {
+      agentRunId: initialScope.agentRun.id,
+      artifacts,
+      files,
       model: runtimeModel,
-      parserAssetBundleDirectory: parserAssetBundle?.bundleDirectory ?? null,
-      relationCount: relations.summary.activeCount,
+      pipelineDefinition,
+      projectId: initialScope.project.id,
+      recordId: initialScope.record.id,
+      relations,
+      schema,
       sessionId: session.data.id,
-    },
-  })
+      taskId: initialScope.task.id,
+      taskRecordId: initialScope.taskRecord.id,
+      workspace,
+    }
+  } catch (error) {
+    executionLogger.error(
+      {
+        error,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      },
+      "Executor service failed",
+    )
 
-  executionLogger.info(
-    {
-      model: runtimeModel,
-      sessionId: session.data.id,
-    },
-    "Executor bootstrapped claimed task record",
-  )
-
-  return {
-    agentRunId: initialScope.agentRun.id,
-    artifacts,
-    files,
-    model: runtimeModel,
-    pipelineDefinition,
-    projectId: initialScope.project.id,
-    recordId: initialScope.record.id,
-    relations,
-    schema,
-    sessionId: session.data.id,
-    taskId: initialScope.task.id,
-    taskRecordId: initialScope.taskRecord.id,
-    workspace,
+    throw error
   }
 }

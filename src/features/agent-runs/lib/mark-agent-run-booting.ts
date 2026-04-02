@@ -33,6 +33,7 @@ export const markAgentRunBooting = async ({
       provider,
       sessionReference,
       startedAt,
+      state: "booting",
       toolActivitySummary,
       toolCallCount: getToolCallCount(toolActivitySummary),
       toolSummary: toolActivitySummary,

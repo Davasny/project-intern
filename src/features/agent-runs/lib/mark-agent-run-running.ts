@@ -33,6 +33,7 @@ export const markAgentRunRunning = async ({
       model,
       provider,
       sessionReference,
+      state: "running",
       tokenInput,
       toolActivitySummary,
       toolCallCount: getToolCallCount(toolActivitySummary),

@@ -1,4 +1,9 @@
+import { config } from "dotenv"
 import { z } from "zod"
+
+config({
+  quiet: true,
+})
 
 const frontendConfigSchema = z.object({
   NEXT_PUBLIC_APP_NAME: z.string().default("Project Intern"),

@@ -19,10 +19,25 @@ export const taskExecutorWorker = new Worker(taskExecutorQueue, async (job) => {
 
   childLogger.info("processing task executor job")
 
-  await executorService({
-    agentRunId: payload.agentRunId,
-    taskRecordId: payload.taskRecordId,
-  })
+  try {
+    const executionResult = await executorService({
+      agentRunId: payload.agentRunId,
+      taskRecordId: payload.taskRecordId,
+    })
 
-  childLogger.info("completed task executor job")
+    childLogger.info(
+      { sessionId: executionResult.sessionId },
+      "completed task executor job",
+    )
+  } catch (error) {
+    childLogger.error(
+      {
+        error,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      },
+      "task executor job failed during executor service",
+    )
+
+    throw error
+  }
 })

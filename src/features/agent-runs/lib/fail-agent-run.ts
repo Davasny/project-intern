@@ -45,6 +45,7 @@ export const failAgentRun = async ({
       inputTokens: tokenInput,
       latencyMs,
       outputTokens: tokenOutput,
+      state: "failed",
       tokenInput,
       tokenOutput,
       toolActivitySummary,

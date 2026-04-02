@@ -43,6 +43,7 @@ export const completeAgentRun = async ({
       latencyMs,
       outputTokens: tokenOutput,
       resultPayload,
+      state: "completed",
       tokenInput,
       tokenOutput,
       toolActivitySummary,

@@ -1,5 +1,10 @@
 import path from "node:path"
+import { config } from "dotenv"
 import { z } from "zod"
+
+config({
+  quiet: true,
+})
 
 const backendConfigSchema = z.object({
   BETTER_AUTH_SECRET: z
