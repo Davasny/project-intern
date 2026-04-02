@@ -15,6 +15,7 @@ type RecordLinkedTaskRowProps = {
   recordId: string
   task: {
     latestAgentRun: {
+      id: string
       failurePayload: Record<string, unknown> | null
       state:
         | "aborted"
@@ -148,7 +149,12 @@ export const RecordLinkedTaskRow = ({
       </TableCell>
       <TableCell>
         {task.latestAgentRun ? (
-          <RunStatusBadge state={task.latestAgentRun.state} />
+          <Link
+            className="cursor-pointer"
+            href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${task.latestAgentRun.id}`}
+          >
+            <RunStatusBadge state={task.latestAgentRun.state} />
+          </Link>
         ) : (
           <span className="text-sm text-slate-500">No run</span>
         )}

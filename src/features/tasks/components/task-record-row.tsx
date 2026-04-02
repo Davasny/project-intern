@@ -75,7 +75,12 @@ export const TaskRecordRow = ({
     </TableCell>
     <TableCell>
       {taskRecord.latestAgentRun ? (
-        <RunStatusBadge state={taskRecord.latestAgentRun.state} />
+        <Link
+          className="cursor-pointer"
+          href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${taskRecord.latestAgentRun.id}`}
+        >
+          <RunStatusBadge state={taskRecord.latestAgentRun.state} />
+        </Link>
       ) : (
         <span className="text-sm text-slate-500">No run</span>
       )}

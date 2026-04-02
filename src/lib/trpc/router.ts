@@ -1,3 +1,4 @@
+import { agentRunsRouter } from "@/features/agent-runs/router"
 import { artifactsRouter } from "@/features/artifacts/router"
 import { authRouter } from "@/features/auth/router"
 import { executionRouter } from "@/features/execution/router"
@@ -13,6 +14,7 @@ import { tasksRouter } from "@/features/tasks/router"
 import { router } from "@/lib/trpc/init"
 
 export const appRouter = router({
+  agentRuns: agentRunsRouter,
   artifacts: artifactsRouter,
   auth: authRouter,
   execution: executionRouter,
