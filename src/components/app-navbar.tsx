@@ -12,6 +12,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { cn } from "@/lib/utils"
 import { CustomSidebarTrigger } from "../../components/custom-sidebar-trigger"
 
@@ -98,15 +99,11 @@ const getBreadcrumbs = (
   return breadcrumbs
 }
 
-export function AppNavbar({
-  user,
-  projectName,
-}: {
-  user: NavUserProps
-  projectName?: string
-}) {
+export const AppNavbar = ({ user }: { user: NavUserProps }) => {
   const pathname = usePathname()
-  const breadcrumbs = getBreadcrumbs(pathname, projectName)
+  const { currentProject } = useProjectScope()
+
+  const breadcrumbs = getBreadcrumbs(pathname, currentProject?.displayName)
 
   return (
     <header

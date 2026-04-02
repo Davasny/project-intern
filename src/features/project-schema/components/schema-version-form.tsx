@@ -11,6 +11,7 @@ import {
   type SchemaVersionFormValues,
 } from "@/features/project-schema/components/schema-field-form"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 const schemaVersionFormSchema = z.object({
@@ -45,8 +46,6 @@ const schemaVersionFormSchema = z.object({
 
 type SchemaVersionFormProps = {
   initialSchemaDefinition: ProjectSchemaDefinition
-  organizationSlug: string
-  projectSlug: string
   onSuccess?: () => void
 }
 
@@ -112,10 +111,9 @@ const getInitialFormValues = (
 
 export const SchemaVersionForm = ({
   initialSchemaDefinition,
-  organizationSlug,
-  projectSlug,
   onSuccess,
 }: SchemaVersionFormProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const form = useForm<SchemaVersionFormValues>({

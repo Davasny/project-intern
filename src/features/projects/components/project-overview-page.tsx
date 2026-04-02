@@ -12,17 +12,12 @@ import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { TaskStatusBadge } from "@/components/ui/status-badge/task-status-badge"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
-type ProjectOverviewPageProps = {
-  organizationSlug: string
-  projectSlug: string
-}
-
-export const ProjectOverviewPage = ({
-  organizationSlug,
-  projectSlug,
-}: ProjectOverviewPageProps) => {
+export const ProjectOverviewPage = () => {
+  const { organizationSlug, projectSlug, currentOrganization, currentProject } =
+    useProjectScope()
   const trpc = useTRPC()
   const overviewQuery = useQuery(
     trpc.projects.overview.queryOptions({ organizationSlug, projectSlug }),
@@ -44,9 +39,9 @@ export const ProjectOverviewPage = ({
             Project overview
           </h1>
           <PageHeaderMeta>
-            <span>{organizationSlug}</span>
+            <span>{currentOrganization?.name ?? organizationSlug}</span>
             <span>/</span>
-            <span>{projectSlug}</span>
+            <span>{currentProject?.displayName ?? projectSlug}</span>
           </PageHeaderMeta>
         </div>
       </PageHeader>

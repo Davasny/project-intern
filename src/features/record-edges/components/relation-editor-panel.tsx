@@ -22,9 +22,7 @@ type RelationEditorPanelProps = {
   isOpen: boolean
   mode: "create" | "edit"
   onOpenChange: (isOpen: boolean) => void
-  organizationSlug: string
   onSubmitted: () => void
-  projectSlug: string
   recordId: string
 }
 
@@ -33,9 +31,7 @@ export const RelationEditorPanel = ({
   isOpen,
   mode,
   onOpenChange,
-  organizationSlug,
   onSubmitted,
-  projectSlug,
   recordId,
 }: RelationEditorPanelProps) => (
   <Dialog onOpenChange={onOpenChange} open={isOpen}>
@@ -52,8 +48,6 @@ export const RelationEditorPanel = ({
       <RelationForm
         initialValues={initialValues}
         onSubmitted={onSubmitted}
-        organizationSlug={organizationSlug}
-        projectSlug={projectSlug}
         recordId={recordId}
       />
     </DialogContent>

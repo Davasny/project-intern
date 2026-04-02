@@ -23,19 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { RecordForm } from "@/features/records/components/record-form"
 import { RecordListRow } from "@/features/records/components/record-list-row"
 import { useTRPC } from "@/lib/trpc/client"
 
-type RecordsPageProps = {
-  organizationSlug: string
-  projectSlug: string
-}
-
-export const RecordsPage = ({
-  organizationSlug,
-  projectSlug,
-}: RecordsPageProps) => {
+export const RecordsPage = () => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const initialSchemaQuery = useQuery(
@@ -108,12 +102,7 @@ export const RecordsPage = ({
             </TableHead>
             <TableBody>
               {recordsQuery.data.map((record) => (
-                <RecordListRow
-                  key={record.id}
-                  organizationSlug={organizationSlug}
-                  projectSlug={projectSlug}
-                  record={record}
-                />
+                <RecordListRow key={record.id} record={record} />
               ))}
             </TableBody>
           </DataTable>
@@ -143,8 +132,6 @@ export const RecordsPage = ({
             initialName=""
             key={initialSchemaQuery.data.id}
             onSubmitted={() => setIsCreateOpen(false)}
-            organizationSlug={organizationSlug}
-            projectSlug={projectSlug}
             recordId={null}
             recordVersion={null}
             schemaDefinition={initialSchemaQuery.data.schemaDefinition}

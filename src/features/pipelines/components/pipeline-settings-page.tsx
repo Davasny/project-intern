@@ -3,17 +3,11 @@
 import { useQuery } from "@tanstack/react-query"
 import { Card } from "@/components/ui/card"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
-type PipelineSettingsPageProps = {
-  organizationSlug: string
-  projectSlug: string
-}
-
-export const PipelineSettingsPage = ({
-  organizationSlug,
-  projectSlug,
-}: PipelineSettingsPageProps) => {
+export const PipelineSettingsPage = () => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const pipelineDefinitionsQuery = useQuery(
     trpc.pipelines.listDefinitions.queryOptions({

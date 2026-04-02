@@ -18,17 +18,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ExecutionMonitorRow } from "@/features/execution/components/execution-monitor-row"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
-type ExecutionMonitorPageProps = {
-  organizationSlug: string
-  projectSlug: string
-}
-
-export const ExecutionMonitorPage = ({
-  organizationSlug,
-  projectSlug,
-}: ExecutionMonitorPageProps) => {
+export const ExecutionMonitorPage = () => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const executionQuery = useQuery({
@@ -159,8 +153,6 @@ export const ExecutionMonitorPage = ({
                   }
                   isAutopickEnabled={executionQuery.data.isAutopickEnabled}
                   key={taskRecord.taskRecordId}
-                  organizationSlug={organizationSlug}
-                  projectSlug={projectSlug}
                   taskRecord={taskRecord}
                 />
               ))}

@@ -10,13 +10,12 @@ import { MetadataList } from "@/components/ui/metadata-list/metadata-list"
 import { MetadataListItem } from "@/components/ui/metadata-list/metadata-list-item"
 import { RelationListItem } from "@/components/ui/relation-list/relation-list-item"
 import { RecordEdgeStatusBadge } from "@/components/ui/status-badge/record-edge-status-badge"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { RelationEditorPanel } from "@/features/record-edges/components/relation-editor-panel"
 import type { RelationType } from "@/features/record-edges/lib/relation-type-rules"
 import { useTRPC } from "@/lib/trpc/client"
 
 type RecordRelationListItemProps = {
-  organizationSlug: string
-  projectSlug: string
   recordId: string
   relation: {
     canDeactivate: boolean
@@ -56,11 +55,10 @@ const getConfidenceMetadataValue = (metadata: Record<string, unknown>) => {
 }
 
 export const RecordRelationListItem = ({
-  organizationSlug,
-  projectSlug,
   recordId,
   relation,
 }: RecordRelationListItemProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
@@ -218,8 +216,6 @@ export const RecordRelationListItem = ({
         mode="edit"
         onOpenChange={setIsEditing}
         onSubmitted={() => setIsEditing(false)}
-        organizationSlug={organizationSlug}
-        projectSlug={projectSlug}
         recordId={recordId}
       />
     </RelationListItem>

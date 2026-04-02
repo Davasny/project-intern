@@ -23,19 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { TaskForm } from "@/features/tasks/components/task-form"
 import { TaskListRow } from "@/features/tasks/components/task-list-row"
 import { useTRPC } from "@/lib/trpc/client"
 
-type TasksPageProps = {
-  organizationSlug: string
-  projectSlug: string
-}
-
-export const TasksPage = ({
-  organizationSlug,
-  projectSlug,
-}: TasksPageProps) => {
+export const TasksPage = () => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const schemaVersionsQuery = useQuery(
@@ -109,12 +103,7 @@ export const TasksPage = ({
             </TableHead>
             <TableBody>
               {tasksQuery.data.map((task) => (
-                <TaskListRow
-                  key={task.id}
-                  organizationSlug={organizationSlug}
-                  projectSlug={projectSlug}
-                  task={task}
-                />
+                <TaskListRow key={task.id} task={task} />
               ))}
             </TableBody>
           </DataTable>
@@ -145,8 +134,6 @@ export const TasksPage = ({
             initialSchemaVersion={latestSchemaVersion}
             initialTitle=""
             onSubmitted={() => setIsCreateOpen(false)}
-            organizationSlug={organizationSlug}
-            projectSlug={projectSlug}
             schemaVersionOptions={
               schemaVersionOptions.length > 0 ? schemaVersionOptions : [1]
             }

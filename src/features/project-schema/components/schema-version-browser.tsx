@@ -16,18 +16,12 @@ import { CreateSchemaVersionModal } from "@/features/project-schema/components/c
 import { SchemaDiffModal } from "@/features/project-schema/components/schema-diff-modal"
 import { SchemaVersionFieldItem } from "@/features/project-schema/components/schema-version-field-item"
 import { SchemaVersionTimelineItem } from "@/features/project-schema/components/schema-version-timeline-item"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 import { cn } from "@/utils/cn"
 
-type SchemaVersionBrowserProps = {
-  organizationSlug: string
-  projectSlug: string
-}
-
-export const SchemaVersionBrowser = ({
-  organizationSlug,
-  projectSlug,
-}: SchemaVersionBrowserProps) => {
+export const SchemaVersionBrowser = () => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const [selectedDiffVersionId, setSelectedDiffVersionId] = useState<
     string | null
@@ -107,8 +101,6 @@ export const SchemaVersionBrowser = ({
             </div>
             <CreateSchemaVersionModal
               initialSchemaDefinition={activeVersion.schemaDefinition}
-              organizationSlug={organizationSlug}
-              projectSlug={projectSlug}
             />
           </div>
         </SectionCardHeader>
@@ -218,9 +210,7 @@ export const SchemaVersionBrowser = ({
         <SchemaDiffModal
           nextVersionId={activeVersion.id}
           onClose={() => setSelectedDiffVersionId(null)}
-          organizationSlug={organizationSlug}
           previousVersionId={selectedPreviousVersion.id}
-          projectSlug={projectSlug}
         />
       ) : null}
     </div>

@@ -6,19 +6,15 @@ import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { AgentRunMessageItem } from "@/features/agent-runs/components/agent-run-message-item"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 type AgentRunMessagesProps = {
   agentRunId: string
-  organizationSlug: string
-  projectSlug: string
 }
 
-export const AgentRunMessages = ({
-  agentRunId,
-  organizationSlug,
-  projectSlug,
-}: AgentRunMessagesProps) => {
+export const AgentRunMessages = ({ agentRunId }: AgentRunMessagesProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const messagesQuery = useQuery({
     ...trpc.agentRuns.getSessionMessages.queryOptions({

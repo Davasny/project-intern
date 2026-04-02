@@ -1,11 +1,12 @@
+"use client"
+
 import Link from "next/link"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 
 type TaskRecordRowProps = {
-  organizationSlug: string
-  projectSlug: string
   taskRecord: {
     errorCode: string | null
     id: string
@@ -49,45 +50,45 @@ const getFailureMessage = (taskRecord: TaskRecordRowProps["taskRecord"]) => {
   return taskRecord.errorCode
 }
 
-export const TaskRecordRow = ({
-  organizationSlug,
-  projectSlug,
-  taskRecord,
-}: TaskRecordRowProps) => (
-  <TableRow>
-    <TableCell>
-      <Link
-        className="font-medium text-slate-900 hover:text-slate-600"
-        href={`/app/${organizationSlug}/${projectSlug}/records/${taskRecord.recordId}`}
-      >
-        {taskRecord.recordName}
-      </Link>
-    </TableCell>
-    <TableCell>
-      <div className="flex flex-col gap-1">
-        <TaskRecordStatusBadge state={taskRecord.state} />
-        {taskRecord.state === "failed" && getFailureMessage(taskRecord) ? (
-          <span className="text-xs text-rose-700">
-            {getFailureMessage(taskRecord)}
-          </span>
-        ) : null}
-      </div>
-    </TableCell>
-    <TableCell>
-      {taskRecord.latestAgentRun ? (
+export const TaskRecordRow = ({ taskRecord }: TaskRecordRowProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
+
+  return (
+    <TableRow>
+      <TableCell>
         <Link
-          className="cursor-pointer"
-          href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${taskRecord.latestAgentRun.id}`}
+          className="font-medium text-slate-900 hover:text-slate-600"
+          href={`/app/${organizationSlug}/${projectSlug}/records/${taskRecord.recordId}`}
         >
-          <RunStatusBadge state={taskRecord.latestAgentRun.state} />
+          {taskRecord.recordName}
         </Link>
-      ) : (
-        <span className="text-sm text-slate-500">No run</span>
-      )}
-    </TableCell>
-    <TableCell>
-      {taskRecord.latestAgentRun?.selectedModel ?? "Default"}
-    </TableCell>
-    <TableCell>{taskRecord.lastTransitionAt.toLocaleString()}</TableCell>
-  </TableRow>
-)
+      </TableCell>
+      <TableCell>
+        <div className="flex flex-col gap-1">
+          <TaskRecordStatusBadge state={taskRecord.state} />
+          {taskRecord.state === "failed" && getFailureMessage(taskRecord) ? (
+            <span className="text-xs text-rose-700">
+              {getFailureMessage(taskRecord)}
+            </span>
+          ) : null}
+        </div>
+      </TableCell>
+      <TableCell>
+        {taskRecord.latestAgentRun ? (
+          <Link
+            className="cursor-pointer"
+            href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${taskRecord.latestAgentRun.id}`}
+          >
+            <RunStatusBadge state={taskRecord.latestAgentRun.state} />
+          </Link>
+        ) : (
+          <span className="text-sm text-slate-500">No run</span>
+        )}
+      </TableCell>
+      <TableCell>
+        {taskRecord.latestAgentRun?.selectedModel ?? "Default"}
+      </TableCell>
+      <TableCell>{taskRecord.lastTransitionAt.toLocaleString()}</TableCell>
+    </TableRow>
+  )
+}

@@ -4,23 +4,21 @@ import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { SchemaDiffItem } from "@/features/project-schema/components/schema-diff-item"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 type SchemaDiffModalProps = {
   nextVersionId: string
   onClose: () => void
-  organizationSlug: string
   previousVersionId: string
-  projectSlug: string
 }
 
 export const SchemaDiffModal = ({
   nextVersionId,
   onClose,
-  organizationSlug,
   previousVersionId,
-  projectSlug,
 }: SchemaDiffModalProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const diffQuery = useQuery(
     trpc.projectSchema.diffVersions.queryOptions({

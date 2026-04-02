@@ -12,23 +12,25 @@ const ProjectScopeLayout = async ({
 }>) => {
   const { organizationSlug, projectSlug } = await params
   const session = await getRequiredAuthSession()
-  const projectAccess = await resolveProjectAccess({
+
+  const hasAccess = await resolveProjectAccess({
     userId: session.user.id,
     organizationSlug,
     projectSlug,
   })
 
-  if (!projectAccess) {
+  if (!hasAccess) {
     notFound()
   }
 
   return (
     <ProjectScopeShell
-      projectAccess={{
-        ...projectAccess,
-        userDisplayName: session.user.name ?? session.user.email,
-        userEmail: session.user.email,
-        userAvatar: session.user.image ?? "",
+      organizationSlug={organizationSlug}
+      projectSlug={projectSlug}
+      user={{
+        name: session.user.name ?? session.user.email,
+        email: session.user.email,
+        avatar: session.user.image ?? undefined,
       }}
     >
       {children}

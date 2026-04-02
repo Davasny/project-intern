@@ -12,17 +12,14 @@ import {
 } from "@/components/ui/dialog"
 import { SchemaVersionForm } from "@/features/project-schema/components/schema-version-form"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 
 type CreateSchemaVersionModalProps = {
   initialSchemaDefinition: ProjectSchemaDefinition
-  organizationSlug: string
-  projectSlug: string
 }
 
 export const CreateSchemaVersionModal = ({
   initialSchemaDefinition,
-  organizationSlug,
-  projectSlug,
 }: CreateSchemaVersionModalProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -43,8 +40,6 @@ export const CreateSchemaVersionModal = ({
         <SchemaVersionForm
           initialSchemaDefinition={initialSchemaDefinition}
           key={initialSchemaDefinition.fields.map((f) => f.key).join(",")}
-          organizationSlug={organizationSlug}
-          projectSlug={projectSlug}
           onSuccess={() => setIsOpen(false)}
         />
       </DialogContent>

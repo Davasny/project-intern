@@ -6,32 +6,17 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 type AppShellProps = {
   children: ReactNode
-  organizationSwitcher?: ReactNode
-  projectSwitcher?: ReactNode
-  navItems: Array<{ href: string; label: string }>
-  projectName?: string
   user: NavUserProps
 }
 
-export function AppShell({
-  children,
-  organizationSwitcher,
-  projectSwitcher,
-  navItems,
-  projectName,
-  user,
-}: AppShellProps) {
+export const AppShell = ({ children, user }: AppShellProps) => {
   return (
     <div className="overflow-hidden">
       <SidebarProvider className="relative h-svh">
-        <AppSidebar
-          organizationSwitcher={organizationSwitcher}
-          projectSwitcher={projectSwitcher}
-          navItems={navItems}
-        />
+        <AppSidebar />
 
         <SidebarInset>
-          <AppNavbar projectName={projectName} user={user} />
+          <AppNavbar user={user} />
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6">
             {children}
           </div>

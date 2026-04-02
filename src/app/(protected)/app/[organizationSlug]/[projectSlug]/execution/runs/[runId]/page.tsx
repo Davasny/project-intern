@@ -2,22 +2,14 @@ import { AgentRunDetailsPage } from "@/features/agent-runs/components/agent-run-
 
 type PageProps = {
   params: Promise<{
-    organizationSlug: string
-    projectSlug: string
     runId: string
   }>
 }
 
 const ProjectExecutionRunDetailsPage = async ({ params }: PageProps) => {
-  const { organizationSlug, projectSlug, runId } = await params
+  const { runId } = await params
 
-  return (
-    <AgentRunDetailsPage
-      agentRunId={runId}
-      organizationSlug={organizationSlug}
-      projectSlug={projectSlug}
-    />
-  )
+  return <AgentRunDetailsPage agentRunId={runId} />
 }
 
 export default ProjectExecutionRunDetailsPage

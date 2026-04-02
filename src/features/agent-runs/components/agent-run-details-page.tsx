@@ -20,19 +20,17 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { AgentRunMessages } from "@/features/agent-runs/components/agent-run-messages"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 type AgentRunDetailsPageProps = {
   agentRunId: string
-  organizationSlug: string
-  projectSlug: string
 }
 
 export const AgentRunDetailsPage = ({
   agentRunId,
-  organizationSlug,
-  projectSlug,
 }: AgentRunDetailsPageProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const runQuery = useQuery({
     ...trpc.agentRuns.getById.queryOptions({
@@ -241,11 +239,7 @@ export const AgentRunDetailsPage = ({
           </SectionCardContent>
         </SectionCard>
       )}
-      <AgentRunMessages
-        agentRunId={agentRunId}
-        organizationSlug={organizationSlug}
-        projectSlug={projectSlug}
-      />
+      <AgentRunMessages agentRunId={agentRunId} />
     </div>
   )
 }

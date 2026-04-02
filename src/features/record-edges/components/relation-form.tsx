@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import {
   relationTypeRules,
   relationTypeValues,
@@ -38,9 +39,7 @@ type RelationFormValues = z.infer<typeof relationFormSchema>
 
 type RelationFormProps = {
   initialValues: RelationFormValues
-  organizationSlug: string
   onSubmitted: () => void
-  projectSlug: string
   recordId: string
 }
 
@@ -60,11 +59,10 @@ const buildConfidenceValue = (confidence: string) => {
 
 export const RelationForm = ({
   initialValues,
-  organizationSlug,
   onSubmitted,
-  projectSlug,
   recordId,
 }: RelationFormProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const form = useForm<RelationFormValues>({

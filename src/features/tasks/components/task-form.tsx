@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 const taskFormSchema = z.object({
@@ -38,8 +39,6 @@ type TaskFormProps = {
   initialSchemaVersion: number
   initialTitle: string
   onSubmitted: () => void
-  organizationSlug: string
-  projectSlug: string
   schemaVersionOptions: number[]
   taskId: string | null
 }
@@ -51,11 +50,10 @@ export const TaskForm = ({
   initialSchemaVersion,
   initialTitle,
   onSubmitted,
-  organizationSlug,
-  projectSlug,
   schemaVersionOptions,
   taskId,
 }: TaskFormProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const form = useForm<TaskFormValues>({

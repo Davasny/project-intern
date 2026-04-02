@@ -6,12 +6,11 @@ import { Button } from "@/components/ui/button"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 type RecordLinkedTaskRowProps = {
   nextWaitingSortOrder: number | null
-  organizationSlug: string
-  projectSlug: string
   recordId: string
   task: {
     latestAgentRun: {
@@ -57,11 +56,10 @@ const getFailureMessage = (task: RecordLinkedTaskRowProps["task"]) => {
 
 export const RecordLinkedTaskRow = ({
   nextWaitingSortOrder,
-  organizationSlug,
-  projectSlug,
   recordId,
   task,
 }: RecordLinkedTaskRowProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const retryTaskRecordMutation = useMutation(

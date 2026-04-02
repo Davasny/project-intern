@@ -15,10 +15,16 @@ const OrganizationEntryPage = async ({
   )
 
   if (!projectScope) {
-    redirect(`/app/select?organization=${organizationSlug}`)
+    redirect("/app")
   }
 
-  redirect(`/app/${projectScope.organizationSlug}/${projectScope.projectSlug}`)
+  if (projectScope.projectSlug) {
+    redirect(
+      `/app/${projectScope.organizationSlug}/${projectScope.projectSlug}`,
+    )
+  }
+
+  redirect(`/app/${projectScope.organizationSlug}/projects`)
 }
 
 export default OrganizationEntryPage

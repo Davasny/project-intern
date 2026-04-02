@@ -10,17 +10,11 @@ import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { ActivityLogItem } from "@/features/observability/components/activity-log-item"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
-type ActivityLogPageProps = {
-  organizationSlug: string
-  projectSlug: string
-}
-
-export const ActivityLogPage = ({
-  organizationSlug,
-  projectSlug,
-}: ActivityLogPageProps) => {
+export const ActivityLogPage = () => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const activityQuery = useQuery(
     trpc.observability.listActivityLogEvents.queryOptions({

@@ -13,17 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
-type AgentRunListPageProps = {
-  organizationSlug: string
-  projectSlug: string
-}
-
-export const AgentRunListPage = ({
-  organizationSlug,
-  projectSlug,
-}: AgentRunListPageProps) => {
+export const AgentRunListPage = () => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const runsQuery = useQuery({
     ...trpc.agentRuns.list.queryOptions({

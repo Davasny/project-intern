@@ -17,12 +17,8 @@ export const getOrganizationProjectPath = async (
   const projects = await listOrganizationProjectsById(organization.id)
   const firstProject = projects[0]
 
-  if (!firstProject) {
-    return null
-  }
-
   return {
     organizationSlug: organization.slug,
-    projectSlug: firstProject.slug,
+    projectSlug: firstProject?.slug ?? null,
   }
 }

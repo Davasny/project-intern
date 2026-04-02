@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { RecordContextFormField } from "@/features/records/components/record-context-form-field"
 import { buildRecordContextPayload } from "@/features/records/lib/build-record-context-payload"
 import { getRecordFormDefaultValues } from "@/features/records/lib/get-record-form-default-values"
@@ -32,8 +33,6 @@ type RecordFormProps = {
   initialContext: Record<string, unknown>
   initialName: string
   onSubmitted: () => void
-  organizationSlug: string
-  projectSlug: string
   recordId: string | null
   recordVersion: number | null
   schemaDefinition: ProjectSchemaDefinition
@@ -43,12 +42,11 @@ export const RecordForm = ({
   initialContext,
   initialName,
   onSubmitted,
-  organizationSlug,
-  projectSlug,
   recordId,
   recordVersion,
   schemaDefinition,
 }: RecordFormProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const form = useForm<RecordFormValues>({

@@ -1,3 +1,5 @@
+"use client"
+
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -5,14 +7,13 @@ import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
 import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import { useTRPC } from "@/lib/trpc/client"
 
 type ExecutionMonitorRowProps = {
   debugControlsEnabled: boolean
   isAutopickEnabled: boolean
-  organizationSlug: string
-  projectSlug: string
   taskRecord: {
     attemptCount: number
     lastTransitionAt: Date
@@ -31,10 +32,9 @@ type ExecutionMonitorRowProps = {
 export const ExecutionMonitorRow = ({
   debugControlsEnabled,
   isAutopickEnabled,
-  organizationSlug,
-  projectSlug,
   taskRecord,
 }: ExecutionMonitorRowProps) => {
+  const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const triggerMutation = useMutation(
