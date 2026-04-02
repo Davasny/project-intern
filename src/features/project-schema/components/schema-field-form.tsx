@@ -1,4 +1,4 @@
-import type { Control, UseFormReturn } from "react-hook-form"
+import { Control, Controller, UseFormReturn } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import {
   FormControl,
@@ -8,8 +8,16 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 
 export type SchemaVersionFormValues = {
   fields: Array<{
@@ -88,30 +96,44 @@ export const SchemaFieldForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={control}
+
+        <Controller
           name={`fields.${index}.type`}
+          control={control}
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <FormControl>
-                <Select {...field}>
-                  <option value="text">Text</option>
-                  <option value="long_text">Long text</option>
-                  <option value="number">Number</option>
-                  <option value="boolean">Boolean</option>
-                  <option value="date">Date</option>
-                  <option value="datetime">Datetime</option>
-                  <option value="url">URL</option>
-                  <option value="email">Email</option>
-                  <option value="enum">Enum</option>
-                  <option value="json">JSON</option>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+            <Field orientation="responsive">
+              <FieldContent>
+                <FieldLabel htmlFor="form-rhf-select-language">Type</FieldLabel>
+              </FieldContent>
+
+              <Select
+                name={field.name}
+                value={field.value}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="text">Text</SelectItem>
+                    <SelectItem value="long_text">Long text</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="boolean">Boolean</SelectItem>
+                    <SelectItem value="date">Date</SelectItem>
+                    <SelectItem value="datetime">Datetime</SelectItem>
+                    <SelectItem value="url">URL</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="enum">Enum</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
           )}
         />
+
         <FormField
           control={control}
           name={`fields.${index}.defaultValue`}

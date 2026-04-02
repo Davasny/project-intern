@@ -15,7 +15,14 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import {
@@ -218,12 +225,23 @@ export const RelationForm = ({
             <FormItem>
               <FormLabel>Relation type</FormLabel>
               <FormControl>
-                <Select {...field}>
-                  {relationTypeValues.map((relationType) => (
-                    <option key={relationType} value={relationType}>
-                      {relationTypeRules[relationType].label}
-                    </option>
-                  ))}
+                <Select
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {relationTypeValues.map((relationType) => (
+                        <SelectItem key={relationType} value={relationType}>
+                          {relationTypeRules[relationType].label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
                 </Select>
               </FormControl>
               <FormDescription>
@@ -240,9 +258,22 @@ export const RelationForm = ({
             <FormItem>
               <FormLabel>Direction</FormLabel>
               <FormControl>
-                <Select {...field}>
-                  <option value="outbound">Outbound</option>
-                  <option value="bidirectional">Bidirectional</option>
+                <Select
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="outbound">Outbound</SelectItem>
+                      <SelectItem value="bidirectional">
+                        Bidirectional
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
                 </Select>
               </FormControl>
               <FormDescription>
@@ -260,12 +291,23 @@ export const RelationForm = ({
             <FormItem>
               <FormLabel>Target project</FormLabel>
               <FormControl>
-                <Select {...field}>
-                  {projectsQuery.data?.map((project) => (
-                    <option key={project.id} value={project.slug}>
-                      {project.displayName}
-                    </option>
-                  ))}
+                <Select
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {projectsQuery.data?.map((project) => (
+                        <SelectItem key={project.id} value={project.slug}>
+                          {project.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
                 </Select>
               </FormControl>
               <FormMessage />
@@ -279,13 +321,26 @@ export const RelationForm = ({
             <FormItem>
               <FormLabel>Target record</FormLabel>
               <FormControl>
-                <Select {...field}>
-                  <option value="">Select a record</option>
-                  {availableTargetRecords.map((targetRecord) => (
-                    <option key={targetRecord.id} value={targetRecord.id}>
-                      {targetRecord.name}
-                    </option>
-                  ))}
+                <Select
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a record" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {availableTargetRecords.map((targetRecord) => (
+                        <SelectItem
+                          key={targetRecord.id}
+                          value={targetRecord.id}
+                        >
+                          {targetRecord.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
                 </Select>
               </FormControl>
               <FormDescription>
