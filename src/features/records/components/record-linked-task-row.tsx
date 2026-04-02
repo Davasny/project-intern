@@ -70,6 +70,12 @@ export const RecordLinkedTaskRow = ({
             recordId,
           }),
         )
+        await queryClient.invalidateQueries(
+          trpc.execution.getMonitor.queryFilter({
+            organizationSlug,
+            projectSlug,
+          }),
+        )
       },
     }),
   )

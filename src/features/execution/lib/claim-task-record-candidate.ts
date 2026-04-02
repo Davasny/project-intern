@@ -4,9 +4,9 @@ import {
   eq,
   inArray,
   lt,
-  max,
   notExists,
   notInArray,
+  sql,
 } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 import { agentRunTable } from "@/features/agent-runs/db"
@@ -60,7 +60,9 @@ export const claimTaskRecordCandidate = async (
   )
   const maxAttemptNumberByTaskRecord = database
     .select({
-      maxAttemptNumber: max(agentRunTable.attemptNumber),
+      maxAttemptNumber: sql<number>`max(${agentRunTable.attemptNumber})`.as(
+        "maxAttemptNumber",
+      ),
       taskRecordId: agentRunTable.taskRecordId,
     })
     .from(agentRunTable)
