@@ -5,5 +5,5 @@ export const SectionCardHeader = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col gap-2 p-6", className)} {...props} />
+  <div className={cn("flex flex-col gap-2", className)} {...props} />
 )

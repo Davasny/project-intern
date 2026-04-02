@@ -195,6 +195,7 @@ export const AgentRunDetailsPage = ({
               Failure Payload
             </h2>
           </SectionCardHeader>
+
           <SectionCardContent>
             <JsonViewer value={run.failurePayload} />
           </SectionCardContent>

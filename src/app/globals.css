@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 @import "tw-animate-css";
+@import "../styles/shiki.css";
 
 @custom-variant dark (&:is(.dark *));
 

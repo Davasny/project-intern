@@ -6,5 +6,8 @@ export const SectionCard = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>) => (
-  <Card className={cn("rounded-3xl", className)} {...props} />
+  <Card
+    className={cn("rounded-xl px-6 py-4 flex flex-col gap-3", className)}
+    {...props}
+  />
 )

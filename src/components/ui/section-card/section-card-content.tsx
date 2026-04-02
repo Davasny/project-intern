@@ -5,5 +5,5 @@ export const SectionCardContent = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("p-6", className)} {...props} />
+  <div className={cn("", className)} {...props} />
 )
