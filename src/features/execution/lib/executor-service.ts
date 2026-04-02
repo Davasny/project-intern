@@ -6,6 +6,7 @@ import { ensurePipelineAssetsInWorkspace } from "@/features/execution/lib/ensure
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
 import { getAgentRunExecutionScope } from "@/features/execution/lib/get-agent-run-execution-scope"
 import { hydrateRecordWorkspace } from "@/features/execution/lib/hydrate-record-workspace"
+import { pollSessionForMetrics } from "@/features/execution/lib/poll-session-for-metrics"
 import { resolveRuntimeModel } from "@/features/execution/lib/resolve-runtime-model"
 import { writeWorkspaceManifest } from "@/features/execution/lib/write-workspace-manifest"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
@@ -358,6 +359,11 @@ export const executorService = async ({
       },
       "Submitted OpenCode prompt asynchronously",
     )
+
+    void pollSessionForMetrics({
+      sessionId: session.data.id,
+      agentRunId: initialScope.agentRun.id,
+    })
 
     return {
       agentRunId: initialScope.agentRun.id,
