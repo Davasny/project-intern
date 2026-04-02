@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, or } from "drizzle-orm"
+import { and, desc, eq, inArray, or, type SQL } from "drizzle-orm"
 import { activityLogTable } from "@/features/observability/db"
 import { projectTable } from "@/features/projects/db"
 import { recordTable } from "@/features/records/db"
@@ -16,9 +16,7 @@ export const listActivityLogEvents = async ({
   recordIds,
   taskIds,
 }: ListActivityLogEventsParams) => {
-  const scopeConditions = [
-    and(isNull(activityLogTable.recordId), isNull(activityLogTable.taskId)),
-  ]
+  const scopeConditions: SQL[] = []
 
   if (recordIds.length > 0) {
     scopeConditions.push(inArray(activityLogTable.recordId, recordIds))
@@ -27,6 +25,9 @@ export const listActivityLogEvents = async ({
   if (taskIds.length > 0) {
     scopeConditions.push(inArray(activityLogTable.taskId, taskIds))
   }
+
+  const scopeFilter =
+    scopeConditions.length > 0 ? or(...scopeConditions) : undefined
 
   return db
     .select({
@@ -52,7 +53,9 @@ export const listActivityLogEvents = async ({
     .leftJoin(recordTable, eq(activityLogTable.recordId, recordTable.id))
     .leftJoin(taskTable, eq(activityLogTable.taskId, taskTable.id))
     .where(
-      and(eq(activityLogTable.projectId, projectId), or(...scopeConditions)),
+      scopeFilter
+        ? and(eq(activityLogTable.projectId, projectId), scopeFilter)
+        : eq(activityLogTable.projectId, projectId),
     )
     .orderBy(desc(activityLogTable.createdAt))
 }
