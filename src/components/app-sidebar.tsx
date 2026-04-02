@@ -2,11 +2,11 @@
 
 import {
   ActivityIcon,
-  CheckIcon,
+  ClipboardClockIcon,
   DatabaseIcon,
   FolderIcon,
   LayoutDashboardIcon,
-  LineChartIcon,
+  ListTodoIcon,
   SettingsIcon,
 } from "lucide-react"
 import Link from "next/link"
@@ -34,10 +34,10 @@ type NavItem = {
 
 const iconMap: Record<string, ReactNode> = {
   Overview: <LayoutDashboardIcon />,
-  Tasks: <CheckIcon />,
+  Tasks: <ListTodoIcon />,
   Records: <DatabaseIcon />,
   "Schema settings": <SettingsIcon />,
-  "Activity log": <ActivityIcon />,
+  "Activity log": <ClipboardClockIcon />,
   "Execution monitor": <ActivityIcon />,
 }
 
