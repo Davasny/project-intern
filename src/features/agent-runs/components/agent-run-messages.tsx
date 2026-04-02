@@ -32,12 +32,12 @@ export const AgentRunMessages = ({ agentRunId }: AgentRunMessagesProps) => {
     return (
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">
+          <h2 className="text-lg font-semibold text-foreground">
             OpenCode History
           </h2>
         </SectionCardHeader>
         <SectionCardContent>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             OpenCode history could not be loaded.
           </p>
         </SectionCardContent>
@@ -49,12 +49,12 @@ export const AgentRunMessages = ({ agentRunId }: AgentRunMessagesProps) => {
     return (
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">
+          <h2 className="text-lg font-semibold text-foreground">
             OpenCode History
           </h2>
         </SectionCardHeader>
         <SectionCardContent className="flex flex-col gap-2">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             This run does not have enough OpenCode session metadata to load
             message history.
           </p>
@@ -67,17 +67,17 @@ export const AgentRunMessages = ({ agentRunId }: AgentRunMessagesProps) => {
     <SectionCard>
       <SectionCardHeader>
         <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold text-slate-950">
+          <h2 className="text-lg font-semibold text-foreground">
             OpenCode History
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Conversation view with tool activity inline.
           </p>
         </div>
       </SectionCardHeader>
-      <SectionCardContent className="flex flex-col gap-6 bg-gradient-to-b from-slate-50 to-white">
+      <SectionCardContent className="flex flex-col gap-6 bg-gradient-to-b from-muted to-card">
         {messagesQuery.data.messages.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             No OpenCode messages were returned for this run.
           </p>
         ) : (

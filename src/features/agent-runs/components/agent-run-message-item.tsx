@@ -31,7 +31,7 @@ export const AgentRunMessageItem = ({ message }: AgentRunMessageItemProps) => {
           }
         >
           {isAssistant && message.agent ? (
-            <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium text-foreground">
               {message.agent}
             </span>
           ) : null}
@@ -40,8 +40,8 @@ export const AgentRunMessageItem = ({ message }: AgentRunMessageItemProps) => {
         <div
           className={
             isAssistant
-              ? "flex flex-col gap-3 rounded-[28px] rounded-tl-md border border-slate-200 bg-white p-5 shadow-sm"
-              : "flex flex-col gap-3 rounded-[28px] rounded-tr-md border border-emerald-200 bg-emerald-50 p-5 shadow-sm"
+              ? "flex flex-col gap-3 rounded-[28px] rounded-tl-md border border-border bg-card p-5 shadow-sm"
+              : "flex flex-col gap-3 rounded-[28px] rounded-tr-md border border-tone-success bg-tone-success-bg p-5 shadow-sm"
           }
         >
           <div className="flex flex-col gap-3">
@@ -50,17 +50,17 @@ export const AgentRunMessageItem = ({ message }: AgentRunMessageItemProps) => {
             ))}
           </div>
           {message.tokens || message.cost !== null || message.error ? (
-            <div className="flex flex-col gap-3 border-t border-slate-200 pt-3">
+            <div className="flex flex-col gap-3 border-t border-border pt-3">
               {message.error ? (
-                <div className="flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-3">
+                <div className="flex flex-col gap-2 rounded-2xl border border-tone-danger bg-tone-danger-bg p-3">
                   <StatusBadge label={message.error.name} tone="danger" />
-                  <pre className="whitespace-pre-wrap break-words text-sm text-red-700">
+                  <pre className="text-tone-danger-foreground whitespace-pre-wrap break-words text-sm">
                     {message.error.message}
                   </pre>
                 </div>
               ) : null}
               {message.tokens ? (
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
+                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
                   <span>in {message.tokens.input.toLocaleString()}</span>
                   <span>out {message.tokens.output.toLocaleString()}</span>
                   <span>
@@ -75,7 +75,7 @@ export const AgentRunMessageItem = ({ message }: AgentRunMessageItemProps) => {
                 </div>
               ) : null}
               {message.cost !== null ? (
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted-foreground">
                   cost ${message.cost.toFixed(6)}
                 </span>
               ) : null}

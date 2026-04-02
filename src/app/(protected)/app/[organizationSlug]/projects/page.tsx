@@ -34,7 +34,7 @@ const ProjectsPage = ({ params }: ProjectsPageProps) => {
         <h1 className="text-3xl font-semibold tracking-tight">
           {currentOrganization?.name ?? "Projects"}
         </h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted-foreground">
           Create your first project or reopen an existing scope.
         </p>
       </div>
@@ -43,7 +43,7 @@ const ProjectsPage = ({ params }: ProjectsPageProps) => {
           <ProjectCreateForm organizationSlug={organizationSlug} />
           {projects.length > 0 && (
             <div className="flex flex-col gap-3">
-              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-slate-500">
+              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
                 Existing projects
               </h2>
               <ProjectSelectionList

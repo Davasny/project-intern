@@ -45,12 +45,12 @@ export const RecordListRow = ({ record }: RecordListRowProps) => {
       <TableCell>
         <div className="flex flex-col gap-1">
           <Link
-            className="font-medium text-slate-900 hover:text-slate-600"
+            className="font-medium text-foreground hover:text-muted-foreground"
             href={`/app/${organizationSlug}/${projectSlug}/records/${record.id}`}
           >
             {record.name}
           </Link>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-muted-foreground">
             Schema v{record.schemaVersion} · Record v{record.version}
           </span>
         </div>

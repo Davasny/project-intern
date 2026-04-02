@@ -56,10 +56,10 @@ export const RecordsPage = () => {
       <div className="flex flex-col gap-6">
         <PageHeader>
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Records
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               New records always start at schema version{" "}
               {initialSchemaQuery.data.version}.
             </p>
@@ -71,7 +71,7 @@ export const RecordsPage = () => {
           </PageHeaderActions>
         </PageHeader>
         <FilterBar>
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-muted-foreground">
             {recordsQuery.data ? recordsQuery.data.length : 0} records in this
             project.
           </div>

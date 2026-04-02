@@ -37,8 +37,8 @@ export const RecordArtifactPanel = ({
   return (
     <SectionCard>
       <SectionCardHeader>
-        <h2 className="text-lg font-semibold text-slate-950">Artifacts</h2>
-        <p className="text-sm text-slate-500">
+        <h2 className="text-lg font-semibold text-foreground">Artifacts</h2>
+        <p className="text-sm text-muted-foreground">
           Derived outputs are canonically stored with lineage by file, stage,
           and source hash.
         </p>
@@ -55,7 +55,9 @@ export const RecordArtifactPanel = ({
             ))}
           </ArtifactList>
         ) : (
-          <p className="text-sm text-slate-500">No artifacts registered yet.</p>
+          <p className="text-sm text-muted-foreground">
+            No artifacts registered yet.
+          </p>
         )}
       </SectionCardContent>
     </SectionCard>

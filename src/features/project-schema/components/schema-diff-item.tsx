@@ -13,12 +13,14 @@ export const SchemaDiffItem = ({ diff }: SchemaDiffItemProps) => (
   <Card className="p-4">
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+        <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
           {diff.changeType}
         </span>
-        <span className="text-sm font-semibold text-slate-900">{diff.key}</span>
+        <span className="text-sm font-semibold text-foreground">
+          {diff.key}
+        </span>
       </div>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         {diff.before
           ? `${diff.before.label} (${diff.before.type})`
           : "missing before"}{" "}

@@ -20,7 +20,7 @@ export const TableHead = ({
   className,
   ...props
 }: HTMLAttributes<HTMLTableSectionElement>) => (
-  <thead className={cn("bg-slate-50", className)} {...props} />
+  <thead className={cn("bg-muted", className)} {...props} />
 )
 
 export const TableBody = ({
@@ -43,7 +43,7 @@ export const TableHeader = ({
 }: ThHTMLAttributes<HTMLTableCellElement>) => (
   <th
     className={cn(
-      "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500",
+      "text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide",
       className,
     )}
     {...props}
@@ -55,7 +55,7 @@ export const TableCell = ({
   ...props
 }: TdHTMLAttributes<HTMLTableCellElement>) => (
   <td
-    className={cn("px-4 py-3 align-top text-slate-700", className)}
+    className={cn("text-foreground px-4 py-3 align-top", className)}
     {...props}
   />
 )

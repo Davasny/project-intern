@@ -78,7 +78,7 @@ export const RecordDetailsPage = ({
       <PageHeader>
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               {recordQuery.data.name}
             </h1>
             <RecordStatusBadge state={recordQuery.data.state} />
@@ -108,10 +108,10 @@ export const RecordDetailsPage = ({
       </ProgressMetricGrid>
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">
+          <h2 className="text-lg font-semibold text-foreground">
             Record metadata
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Canonical record envelope and live task linkage summary.
           </p>
         </SectionCardHeader>
@@ -139,10 +139,10 @@ export const RecordDetailsPage = ({
       </SectionCard>
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">
+          <h2 className="text-lg font-semibold text-foreground">
             Record editor
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Updates are validated against this record's current schema version
             before they are saved.
           </p>
@@ -163,8 +163,10 @@ export const RecordDetailsPage = ({
       </SectionCard>
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">Linked tasks</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-lg font-semibold text-foreground">
+            Linked tasks
+          </h2>
+          <p className="text-sm text-muted-foreground">
             Persisted task-record and latest agent-run state for this record.
           </p>
         </SectionCardHeader>

@@ -60,10 +60,10 @@ export const TasksPage = () => {
       <div className="flex flex-col gap-6">
         <PageHeader>
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Tasks
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Ordered project-scoped work contracts with per-record execution
               state.
             </p>
@@ -75,7 +75,7 @@ export const TasksPage = () => {
           </PageHeaderActions>
         </PageHeader>
         <FilterBar>
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-muted-foreground">
             {tasksQuery.data.length} tasks ordered for this project queue.
           </div>
           <FilterBarActions>

@@ -9,8 +9,8 @@ type ProgressMetricProps = {
 export const ProgressMetric = ({ label, value }: ProgressMetricProps) => (
   <SectionCard>
     <SectionCardContent className="flex flex-col gap-2">
-      <span className="text-sm text-slate-500">{label}</span>
-      <span className="text-3xl font-semibold tracking-tight text-slate-900">
+      <span className="text-muted-foreground text-sm">{label}</span>
+      <span className="text-foreground text-3xl font-semibold tracking-tight">
         {value}
       </span>
     </SectionCardContent>

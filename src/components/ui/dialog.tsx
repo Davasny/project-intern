@@ -18,7 +18,7 @@ export const DialogOverlay = ({
 }: ComponentProps<typeof DialogPrimitive.Overlay>) => (
   <DialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in",
+      "fixed inset-0 z-50 bg-background/50 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in",
       className,
     )}
     {...props}
@@ -66,7 +66,7 @@ export const DialogTitle = ({
   ...props
 }: ComponentProps<typeof DialogPrimitive.Title>) => (
   <DialogPrimitive.Title
-    className={cn("text-lg font-semibold text-slate-950", className)}
+    className={cn("text-foreground text-lg font-semibold", className)}
     {...props}
   />
 )
@@ -76,7 +76,7 @@ export const DialogDescription = ({
   ...props
 }: ComponentProps<typeof DialogPrimitive.Description>) => (
   <DialogPrimitive.Description
-    className={cn("text-sm text-slate-500", className)}
+    className={cn("text-muted-foreground text-sm", className)}
     {...props}
   />
 )

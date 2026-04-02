@@ -59,7 +59,7 @@ export const RecordContextFormField = ({
           ) : schemaField.type === "boolean" ? (
             <input
               checked={field.value === true}
-              className="h-4 w-4 rounded border border-slate-300"
+              className="h-4 w-4 rounded border border-border"
               onBlur={field.onBlur}
               onChange={(event) => field.onChange(event.target.checked)}
               ref={field.ref}

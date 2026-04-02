@@ -52,15 +52,15 @@ export const ExecutionMonitorRow = ({
 
   return (
     <TableRow>
-      <TableCell className="font-medium text-slate-900">
+      <TableCell className="font-medium text-foreground">
         {taskRecord.taskSortOrder}
       </TableCell>
       <TableCell>
         <div className="flex flex-col gap-1">
-          <span className="font-medium text-slate-900">
+          <span className="font-medium text-foreground">
             {taskRecord.taskTitle}
           </span>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-muted-foreground">
             {taskRecord.recordName}
           </span>
         </div>
@@ -77,7 +77,7 @@ export const ExecutionMonitorRow = ({
             <RunStatusBadge state={taskRecord.latestAgentRun.state} />
           </Link>
         ) : (
-          <span className="text-sm text-slate-500">No run yet</span>
+          <span className="text-sm text-muted-foreground">No run yet</span>
         )}
       </TableCell>
       <TableCell>{taskRecord.attemptCount}</TableCell>
@@ -101,7 +101,7 @@ export const ExecutionMonitorRow = ({
             {triggerMutation.isPending ? "Triggering..." : "Trigger"}
           </Button>
         ) : (
-          <span className="text-sm text-slate-500">—</span>
+          <span className="text-sm text-muted-foreground">—</span>
         )}
       </TableCell>
     </TableRow>

@@ -214,7 +214,7 @@ export const SchemaVersionForm = ({
             />
           ))
         ) : (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             No custom fields yet. System fields are always included.
           </p>
         )}

@@ -29,13 +29,13 @@ export const AuthEntryPanel = () => {
     <Card className="w-full max-w-lg p-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
             Project Intern
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
             Auth, organizations, and projects
           </h1>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Sign in with GitHub, bootstrap your personal organization, and enter
             project scope.
           </p>

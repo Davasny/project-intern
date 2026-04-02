@@ -16,7 +16,7 @@ export const ProjectSwitcher = ({
   projects,
 }: ProjectSwitcherProps) => (
   <div className="flex flex-col gap-2">
-    <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
+    <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
       Projects
     </p>
     <ul className="flex flex-col gap-2">

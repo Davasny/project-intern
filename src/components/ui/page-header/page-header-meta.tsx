@@ -7,7 +7,7 @@ export const PageHeaderMeta = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-wrap items-center gap-2 text-sm text-slate-500",
+      "text-muted-foreground flex flex-wrap items-center gap-2 text-sm",
       className,
     )}
     {...props}

@@ -6,11 +6,13 @@ type StatusBadgeProps = {
 }
 
 const toneClasses = {
-  danger: "border-red-200 bg-red-50 text-red-700",
-  info: "border-blue-200 bg-blue-50 text-blue-700",
-  muted: "border-slate-200 bg-slate-100 text-slate-700",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  warning: "border-amber-200 bg-amber-50 text-amber-700",
+  danger: "border-tone-danger bg-tone-danger-bg text-tone-danger-foreground",
+  info: "border-tone-info bg-tone-info-bg text-tone-info-foreground",
+  muted: "border-tone-muted bg-tone-muted-bg text-tone-muted-foreground",
+  success:
+    "border-tone-success bg-tone-success-bg text-tone-success-foreground",
+  warning:
+    "border-tone-warning bg-tone-warning-bg text-tone-warning-foreground",
 }
 
 export const StatusBadge = ({ label, tone }: StatusBadgeProps) => (

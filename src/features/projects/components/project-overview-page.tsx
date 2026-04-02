@@ -35,7 +35,7 @@ export const ProjectOverviewPage = () => {
     <div className="flex flex-col gap-6">
       <PageHeader>
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Project overview
           </h1>
           <PageHeaderMeta>
@@ -66,10 +66,10 @@ export const ProjectOverviewPage = () => {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Recent tasks
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Queue summary derived from persisted task-record states.
             </p>
           </SectionCardHeader>
@@ -81,10 +81,10 @@ export const ProjectOverviewPage = () => {
                   key={task.id}
                 >
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-slate-900">
+                    <span className="text-sm font-medium text-foreground">
                       {task.title}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                       Updated {task.updatedAt.toLocaleString()}
                     </span>
                   </div>
@@ -92,7 +92,7 @@ export const ProjectOverviewPage = () => {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 No tasks exist in this project yet.
               </p>
             )}
@@ -100,10 +100,10 @@ export const ProjectOverviewPage = () => {
         </SectionCard>
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Recent activity
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Phase 3 activity foundation from persisted task and record
               updates.
             </p>

@@ -86,7 +86,11 @@ const FormLabel = ({
 
   return (
     <LabelPrimitive.Root
-      className={cn("text-sm font-medium", error && "text-red-600", className)}
+      className={cn(
+        "text-sm font-medium",
+        error && "text-destructive",
+        className,
+      )}
       htmlFor={formItemId}
       {...props}
     />
@@ -116,7 +120,7 @@ const FormDescription = ({
 
   return (
     <p
-      className={cn("text-sm text-slate-500", className)}
+      className={cn("text-sm text-muted-foreground", className)}
       id={formDescriptionId}
       {...props}
     />
@@ -136,7 +140,7 @@ const FormMessage = ({
 
   return (
     <p
-      className={cn("text-sm font-medium text-red-600", className)}
+      className={cn("text-destructive text-sm font-medium", className)}
       id={formMessageId}
       {...props}
     >

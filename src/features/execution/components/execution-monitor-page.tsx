@@ -103,10 +103,10 @@ export const ExecutionMonitorPage = () => {
     <div className="flex flex-col gap-6">
       <PageHeader>
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Execution monitor
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Queue-backed task-record execution, retries, and development
             controls.
           </p>
@@ -150,16 +150,16 @@ export const ExecutionMonitorPage = () => {
       </ProgressMetricGrid>
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">
+          <h2 className="text-lg font-semibold text-foreground">
             Debug controls
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Autopick is currently{" "}
             {executionQuery.data.isAutopickEnabled ? "enabled" : "disabled"}.
           </p>
         </SectionCardHeader>
         <SectionCardContent>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Manual task-record triggering appears only in development when
             autopick is disabled.
           </p>
@@ -167,10 +167,10 @@ export const ExecutionMonitorPage = () => {
       </SectionCard>
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">
+          <h2 className="text-lg font-semibold text-foreground">
             Task-record executions
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Live persisted processing state with retry counts and latest run
             status.
           </p>

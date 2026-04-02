@@ -129,7 +129,7 @@ export const RecordLinkedTaskRow = ({
     <TableRow>
       <TableCell>
         <Link
-          className="font-medium text-slate-900 hover:text-slate-600"
+          className="font-medium text-foreground hover:text-muted-foreground"
           href={`/app/${organizationSlug}/${projectSlug}/tasks/${task.taskId}`}
         >
           {task.title}
@@ -154,7 +154,7 @@ export const RecordLinkedTaskRow = ({
             <RunStatusBadge state={task.latestAgentRun.state} />
           </Link>
         ) : (
-          <span className="text-sm text-slate-500">No run</span>
+          <span className="text-sm text-muted-foreground">No run</span>
         )}
       </TableCell>
       <TableCell>
@@ -175,7 +175,7 @@ export const RecordLinkedTaskRow = ({
             {retryTaskRecordMutation.isPending ? "Retrying..." : "Retry"}
           </Button>
         ) : (
-          <span className="text-sm text-slate-500">—</span>
+          <span className="text-sm text-muted-foreground">—</span>
         )}
       </TableCell>
     </TableRow>

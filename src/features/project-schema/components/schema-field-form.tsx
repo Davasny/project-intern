@@ -1,5 +1,6 @@
-import { Control, Controller, UseFormReturn } from "react-hook-form"
+import { type Control, Controller, type UseFormReturn } from "react-hook-form"
 import { Button } from "@/components/ui/button"
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 import {
   FormControl,
   FormField,
@@ -17,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
 
 export type SchemaVersionFormValues = {
   fields: Array<{
@@ -62,9 +62,9 @@ export const SchemaFieldForm = ({
   const fieldType = form.watch(`fields.${index}.type`)
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-slate-200 p-4">
+    <div className="flex flex-col gap-4 rounded-xl border border-border p-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-slate-900">Custom field</h3>
+        <h3 className="text-sm font-semibold text-foreground">Custom field</h3>
         <Button onClick={onRemove} type="button" variant="ghost">
           Remove
         </Button>
@@ -222,10 +222,10 @@ export const SchemaFieldForm = ({
         name={`fields.${index}.required`}
         render={({ field }) => (
           <FormItem>
-            <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
+            <label className="flex items-center gap-3 text-sm font-medium text-foreground">
               <input
                 checked={field.value}
-                className="h-4 w-4 rounded border border-slate-300"
+                className="h-4 w-4 rounded border border-border"
                 onChange={(event) => field.onChange(event.target.checked)}
                 type="checkbox"
               />

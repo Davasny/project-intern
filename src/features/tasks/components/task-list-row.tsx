@@ -33,18 +33,18 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
 
   return (
     <TableRow>
-      <TableCell className="font-medium text-slate-900">
+      <TableCell className="font-medium text-foreground">
         {task.sortOrder}
       </TableCell>
       <TableCell>
         <div className="flex flex-col gap-1">
           <Link
-            className="font-medium text-slate-900 hover:text-slate-600"
+            className="font-medium text-foreground hover:text-muted-foreground"
             href={`/app/${organizationSlug}/${projectSlug}/tasks/${task.id}`}
           >
             {task.title}
           </Link>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-muted-foreground">
             Schema v{task.schemaVersion}
           </span>
         </div>

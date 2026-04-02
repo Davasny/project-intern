@@ -38,10 +38,10 @@ export const AgentRunListPage = () => {
     <div className="flex flex-col gap-6">
       <PageHeader>
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Agent runs
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Complete history of all agent run executions across tasks and
             records.
           </p>
@@ -80,7 +80,7 @@ export const AgentRunListPage = () => {
               <TableCell>{run.selectedAgent ?? "—"}</TableCell>
               <TableCell>
                 <Link
-                  className="font-medium text-slate-900 hover:text-slate-600"
+                  className="font-medium text-foreground hover:text-muted-foreground"
                   href={`/app/${organizationSlug}/${projectSlug}/tasks/${run.taskId}`}
                 >
                   {run.taskTitle}
@@ -88,7 +88,7 @@ export const AgentRunListPage = () => {
               </TableCell>
               <TableCell>
                 <Link
-                  className="font-medium text-slate-900 hover:text-slate-600"
+                  className="font-medium text-foreground hover:text-muted-foreground"
                   href={`/app/${organizationSlug}/${projectSlug}/records/${run.recordId}`}
                 >
                   {run.recordName}

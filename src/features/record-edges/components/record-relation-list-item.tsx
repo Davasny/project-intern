@@ -130,18 +130,18 @@ export const RecordRelationListItem = ({
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            <span className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {relation.relationTypeLabel}
             </span>
             <RecordEdgeStatusBadge state={relation.state} />
           </div>
           <Link
-            className="text-base font-semibold text-slate-950 hover:text-slate-600"
+            className="text-base font-semibold text-foreground hover:text-muted-foreground"
             href={`/app/${organizationSlug}/${relation.relatedRecord.projectSlug}/records/${relation.relatedRecord.id}`}
           >
             {relation.relatedRecord.name}
           </Link>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             {relation.relatedRecord.projectDisplayName} · {relation.perspective}{" "}
             · {relation.direction}
           </p>

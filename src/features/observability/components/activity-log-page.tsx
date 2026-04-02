@@ -35,10 +35,10 @@ export const ActivityLogPage = () => {
     <div className="flex flex-col gap-6">
       <PageHeader>
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Activity log
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Auditable runtime history for schema, task, and execution events.
           </p>
         </div>
@@ -64,8 +64,8 @@ export const ActivityLogPage = () => {
       </ProgressMetricGrid>
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">Timeline</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-lg font-semibold text-foreground">Timeline</h2>
+          <p className="text-sm text-muted-foreground">
             Persisted activity only. No frontend-invented status entries.
           </p>
         </SectionCardHeader>

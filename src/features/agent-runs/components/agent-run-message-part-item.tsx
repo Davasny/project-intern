@@ -51,9 +51,9 @@ const toolStateTone = {
 } as const
 
 const partToneClasses: Record<PartTone, string> = {
-  amber: "border-amber-200 bg-amber-50",
-  default: "border-slate-200 bg-slate-50",
-  violet: "border-violet-200 bg-violet-50/80",
+  amber: "border-tone-warning bg-tone-warning-bg",
+  default: "border-border bg-muted",
+  violet: "border-tone-info bg-tone-info-bg",
 }
 
 const partSpacingClasses: Record<PartSpacing, string> = {
@@ -64,9 +64,9 @@ const partSpacingClasses: Record<PartSpacing, string> = {
 
 const partTextBlockClasses: Record<PartTextBlockTone, string> = {
   danger:
-    "overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-red-950 p-4 text-xs text-red-100",
+    "text-tone-danger-foreground overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-tone-danger-bg p-4 text-xs",
   default:
-    "overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-slate-950 p-4 text-xs text-slate-100",
+    "overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-foreground p-4 text-xs text-background",
 }
 
 const PartContainer = ({ children, spacing, tone }: PartContainerProps) => (
@@ -96,7 +96,7 @@ const PartDisclosure = ({
 
 const PartField = ({ children, label }: PartFieldProps) => (
   <div className="flex flex-col gap-2">
-    <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
       {label}
     </span>
     {children}
@@ -108,11 +108,11 @@ const PartTextBlock = ({ text, tone }: PartTextBlockProps) => (
 )
 
 const AttachmentItem = ({ filename, mime, url }: AttachmentItemProps) => (
-  <div className="flex flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-3">
-    <span className="text-sm font-medium text-slate-900">
+  <div className="flex flex-col gap-1 rounded-2xl border border-border bg-card p-3">
+    <span className="text-sm font-medium text-foreground">
       {filename ?? url}
     </span>
-    <span className="text-xs text-slate-500">{mime}</span>
+    <span className="text-xs text-muted-foreground">{mime}</span>
   </div>
 )
 
@@ -122,7 +122,7 @@ export const AgentRunMessagePartItem = ({
   if (part.type === "text") {
     return (
       <div className="flex flex-col gap-2">
-        <pre className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+        <pre className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
           {part.text}
         </pre>
         {part.synthetic || part.ignored ? (
@@ -144,10 +144,10 @@ export const AgentRunMessagePartItem = ({
       <PartDisclosure
         spacing="3"
         tone="violet"
-        summaryClassName="cursor-pointer text-sm font-medium text-violet-900"
+        summaryClassName="text-tone-info-foreground cursor-pointer text-sm font-medium"
         summary={<span>Reasoning</span>}
       >
-        <pre className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+        <pre className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
           {part.text}
         </pre>
       </PartDisclosure>
@@ -162,20 +162,22 @@ export const AgentRunMessagePartItem = ({
         summaryClassName="flex cursor-pointer list-none flex-wrap items-center gap-2"
         summary={
           <>
-            <span className="font-medium text-slate-900">{part.tool}</span>
+            <span className="font-medium text-foreground">{part.tool}</span>
             <StatusBadge
               label={part.status}
               tone={toolStateTone[part.status]}
             />
             {part.title ? (
-              <span className="text-sm text-slate-500">{part.title}</span>
+              <span className="text-sm text-muted-foreground">
+                {part.title}
+              </span>
             ) : null}
           </>
         }
       >
         <div className="flex flex-col gap-4">
           <PartField label="Call ID">
-            <code className="break-all rounded-lg bg-white px-3 py-2 text-xs text-slate-700">
+            <code className="break-all rounded-lg bg-background px-3 py-2 text-xs text-foreground">
               {part.callId}
             </code>
           </PartField>
@@ -219,10 +221,10 @@ export const AgentRunMessagePartItem = ({
   if (part.type === "file") {
     return (
       <PartContainer spacing="2" tone="default">
-        <span className="text-sm font-medium text-slate-900">
+        <span className="text-sm font-medium text-foreground">
           {part.filename ?? part.url}
         </span>
-        <span className="text-xs text-slate-500">{part.mime}</span>
+        <span className="text-xs text-muted-foreground">{part.mime}</span>
       </PartContainer>
     )
   }
@@ -232,7 +234,7 @@ export const AgentRunMessagePartItem = ({
       <PartDisclosure
         spacing="3"
         tone="default"
-        summaryClassName="cursor-pointer text-sm font-medium text-slate-700"
+        summaryClassName="cursor-pointer text-sm font-medium text-foreground"
         summary={<span>Step start</span>}
       >
         {part.snapshot ? (
@@ -250,7 +252,7 @@ export const AgentRunMessagePartItem = ({
         summaryClassName="flex cursor-pointer list-none flex-wrap items-center gap-2"
         summary={
           <>
-            <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium text-foreground">
               Step finish
             </span>
             <StatusBadge label={part.reason} tone="info" />
@@ -289,7 +291,7 @@ export const AgentRunMessagePartItem = ({
   if (part.type === "agent") {
     return (
       <PartContainer spacing="2" tone="default">
-        <span className="text-sm text-slate-700">{part.name}</span>
+        <span className="text-sm text-foreground">{part.name}</span>
       </PartContainer>
     )
   }

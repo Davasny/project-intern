@@ -59,10 +59,10 @@ export const RecordRelationsSection = ({
         <SectionCardHeader>
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold text-slate-950">
+              <h2 className="text-lg font-semibold text-foreground">
                 Related records
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Canonical depth-1 linked record reads backed by active relation
                 edges.
               </p>
@@ -141,10 +141,10 @@ export const RecordRelationsSection = ({
       </SectionCard>
       <SectionCard>
         <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-slate-950">
+          <h2 className="text-lg font-semibold text-foreground">
             Relation activity
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Append-only relation lifecycle events for this record scope.
           </p>
         </SectionCardHeader>

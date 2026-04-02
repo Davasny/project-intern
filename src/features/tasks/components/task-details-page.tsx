@@ -85,7 +85,7 @@ export const TaskDetailsPage = ({
         <PageHeader>
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                 {taskQuery.data.title}
               </h1>
               <TaskStatusBadge state={taskQuery.data.summaryState} />
@@ -124,10 +124,10 @@ export const TaskDetailsPage = ({
         </ProgressMetricGrid>
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Task contract
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Canonical descriptive task definition stored on the task itself.
             </p>
           </SectionCardHeader>
@@ -151,10 +151,10 @@ export const TaskDetailsPage = ({
         </SectionCard>
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Per-record progress
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Persisted task-record and agent-run state only.
             </p>
           </SectionCardHeader>
@@ -184,10 +184,10 @@ export const TaskDetailsPage = ({
         </SectionCard>
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Revision history
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Append-only task description revisions.
             </p>
           </SectionCardHeader>

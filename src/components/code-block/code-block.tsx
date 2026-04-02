@@ -1,7 +1,6 @@
-import type { ComponentProps } from "react";
-
-import { cn } from "@/utils/cn";
-import { FileIcon } from "@react-symbols/icons/utils";
+import { FileIcon } from "@react-symbols/icons/utils"
+import type { ComponentProps } from "react"
+import { cn } from "@/utils/cn"
 
 const CodeBlock = ({
   children,
@@ -13,19 +12,19 @@ const CodeBlock = ({
       className={cn(
         "not-prose",
         "flex w-full flex-col overflow-clip rounded-lg shadow-xs",
-        "bg-neutral-200/40 dark:bg-neutral-800/70",
-        "border border-neutral-200 dark:border-neutral-800",
-        "text-neutral-950 dark:text-neutral-50",
+        "bg-muted/40 dark:bg-muted/70",
+        "border border-border",
+        "text-foreground",
         className,
       )}
       {...props}
     >
       {children}
     </div>
-  );
-};
+  )
+}
 
-type CodeBlockHeaderProps = ComponentProps<"div">;
+type CodeBlockHeaderProps = ComponentProps<"div">
 
 const CodeBlockHeader = ({
   children,
@@ -37,18 +36,18 @@ const CodeBlockHeader = ({
       className={cn(
         "not-prose", // Disable Markdown Styles
         "flex h-9 items-center justify-between px-2 py-1.5",
-        "text-sm text-neutral-600 dark:text-neutral-400",
+        "text-sm text-muted-foreground",
         className,
       )}
       {...props}
     >
       {children}
     </div>
-  );
-};
+  )
+}
 
 interface CodeBlockIconProps extends ComponentProps<"div"> {
-  language?: string;
+  language?: string
 }
 
 const CodeBlockIcon = ({ language, className }: CodeBlockIconProps) => {
@@ -60,10 +59,10 @@ const CodeBlockIcon = ({ language, className }: CodeBlockIconProps) => {
       autoAssign={true}
       className={cn(className)}
     />
-  );
-};
+  )
+}
 
-type CodeBlockGroupProps = ComponentProps<"div">;
+type CodeBlockGroupProps = ComponentProps<"div">
 
 const CodeBlockGroup = ({
   children,
@@ -74,15 +73,15 @@ const CodeBlockGroup = ({
     <div
       className={cn(
         "flex items-center space-x-2",
-        "text-sm text-neutral-600 dark:text-neutral-400",
+        "text-sm text-muted-foreground",
         className,
       )}
       {...props}
     >
       {children}
     </div>
-  );
-};
+  )
+}
 
 const CodeBlockContent = ({
   className,
@@ -93,7 +92,7 @@ const CodeBlockContent = ({
     <div
       className={cn(
         "max-h-96 overflow-y-auto",
-        "bg-white dark:bg-neutral-900",
+        "bg-background",
         "rounded-lg font-mono text-sm leading-5 whitespace-pre",
         className,
       )}
@@ -101,13 +100,13 @@ const CodeBlockContent = ({
     >
       {children}
     </div>
-  );
-};
+  )
+}
 
 export {
   CodeBlock,
+  CodeBlockContent,
+  CodeBlockGroup,
   CodeBlockHeader,
   CodeBlockIcon,
-  CodeBlockGroup,
-  CodeBlockContent,
-};
+}

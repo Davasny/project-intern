@@ -38,8 +38,8 @@ export const RecordFilePanel = ({
   return (
     <SectionCard>
       <SectionCardHeader>
-        <h2 className="text-lg font-semibold text-slate-950">Source files</h2>
-        <p className="text-sm text-slate-500">
+        <h2 className="text-lg font-semibold text-foreground">Source files</h2>
+        <p className="text-sm text-muted-foreground">
           Canonical files live under CRM_STORAGE_ROOT and hydrate into the long-
           lived record workspace when execution starts.
         </p>
@@ -61,7 +61,9 @@ export const RecordFilePanel = ({
             ))}
           </FileList>
         ) : (
-          <p className="text-sm text-slate-500">No source files registered.</p>
+          <p className="text-sm text-muted-foreground">
+            No source files registered.
+          </p>
         )}
       </SectionCardContent>
     </SectionCard>

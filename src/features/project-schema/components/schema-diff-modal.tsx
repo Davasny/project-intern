@@ -30,13 +30,13 @@ export const SchemaDiffModal = ({
   )
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/50 p-6">
       <Card className="max-h-[80vh] w-full max-w-3xl overflow-auto p-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col gap-1">
               <h2 className="text-lg font-semibold">Schema diff</h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Compare schema version history inside the current project.
               </p>
             </div>
@@ -45,10 +45,10 @@ export const SchemaDiffModal = ({
             </Button>
           </div>
           {diffQuery.isLoading ? (
-            <p className="text-sm text-slate-500">Loading diff...</p>
+            <p className="text-sm text-muted-foreground">Loading diff...</p>
           ) : diffQuery.data ? (
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 Comparing version {diffQuery.data.previousVersion.version} with
                 version {diffQuery.data.nextVersion.version}.
               </p>
@@ -60,13 +60,13 @@ export const SchemaDiffModal = ({
                   />
                 ))
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   No schema differences found.
                 </p>
               )}
             </div>
           ) : (
-            <p className="text-sm text-red-600">
+            <p className="text-destructive text-sm">
               Schema diff could not be loaded.
             </p>
           )}

@@ -57,7 +57,7 @@ export const TaskRecordRow = ({ taskRecord }: TaskRecordRowProps) => {
     <TableRow>
       <TableCell>
         <Link
-          className="font-medium text-slate-900 hover:text-slate-600"
+          className="font-medium text-foreground hover:text-muted-foreground"
           href={`/app/${organizationSlug}/${projectSlug}/records/${taskRecord.recordId}`}
         >
           {taskRecord.recordName}
@@ -82,7 +82,7 @@ export const TaskRecordRow = ({ taskRecord }: TaskRecordRowProps) => {
             <RunStatusBadge state={taskRecord.latestAgentRun.state} />
           </Link>
         ) : (
-          <span className="text-sm text-slate-500">No run</span>
+          <span className="text-sm text-muted-foreground">No run</span>
         )}
       </TableCell>
       <TableCell>

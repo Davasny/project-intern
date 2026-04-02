@@ -129,12 +129,12 @@ export const AgentRunDetailsPage = ({
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                 Agent Run
               </h1>
               <RunStatusBadge state={run.state} />
             </div>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Attempt #{run.attemptNumber} for task &quot;{run.taskTitle}&quot;
               on record &quot;{run.recordName}&quot;
             </p>
@@ -155,7 +155,7 @@ export const AgentRunDetailsPage = ({
         Object.keys(run.taskActivitySummary).length > 0 && (
           <SectionCard>
             <SectionCardHeader>
-              <h2 className="text-lg font-semibold text-slate-950">
+              <h2 className="text-lg font-semibold text-foreground">
                 Tool Activity Summary
               </h2>
             </SectionCardHeader>
@@ -167,7 +167,7 @@ export const AgentRunDetailsPage = ({
       {run.toolSummary && Object.keys(run.toolSummary).length > 0 && (
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Tool Summary
             </h2>
           </SectionCardHeader>
@@ -179,7 +179,7 @@ export const AgentRunDetailsPage = ({
       {run.resultPayload && (
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Result Payload
             </h2>
           </SectionCardHeader>
@@ -191,7 +191,7 @@ export const AgentRunDetailsPage = ({
       {run.failurePayload && (
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Failure Payload
             </h2>
           </SectionCardHeader>
@@ -204,7 +204,7 @@ export const AgentRunDetailsPage = ({
       {run.siblingRuns.length > 1 && (
         <SectionCard>
           <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-slate-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Previous Attempts
             </h2>
           </SectionCardHeader>

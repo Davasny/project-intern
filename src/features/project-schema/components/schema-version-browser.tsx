@@ -60,10 +60,10 @@ export const SchemaVersionBrowser = () => {
     <div className="flex flex-col gap-6">
       <PageHeader>
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Schema settings
           </h1>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Active schema version {activeVersion.version} governs all record
             validation and migration status.
           </p>
@@ -94,7 +94,7 @@ export const SchemaVersionBrowser = () => {
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col gap-1">
               <h2 className="text-lg font-semibold">Active schema fields</h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 System fields are always present. Custom fields define runtime
                 record context.
               </p>
@@ -121,20 +121,20 @@ export const SchemaVersionBrowser = () => {
         >
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold">Schema version history</h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {settingsQuery.data.versions.length} versions · Compare with
               active version
             </p>
           </div>
           <ChevronDown
             className={cn(
-              "h-5 w-5 text-slate-500 transition-transform",
+              "h-5 w-5 text-muted-foreground transition-transform",
               isVersionsExpanded && "rotate-180",
             )}
           />
         </button>
         {isVersionsExpanded ? (
-          <SectionCardContent className="flex flex-col gap-1 border-t border-slate-200 pt-4">
+          <SectionCardContent className="flex flex-col gap-1 border-t border-border pt-4">
             {settingsQuery.data.versions.length > 0 ? (
               settingsQuery.data.versions.map((version) => (
                 <SchemaVersionTimelineItem
@@ -147,7 +147,7 @@ export const SchemaVersionBrowser = () => {
                 />
               ))
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 No schema versions found.
               </p>
             )}
@@ -163,19 +163,19 @@ export const SchemaVersionBrowser = () => {
         >
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold">Latest schema activity</h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Recent schema version, migration, and migration-task events.
             </p>
           </div>
           <ChevronDown
             className={cn(
-              "h-5 w-5 text-slate-500 transition-transform",
+              "h-5 w-5 text-muted-foreground transition-transform",
               isActivityExpanded && "rotate-180",
             )}
           />
         </button>
         {isActivityExpanded ? (
-          <SectionCardContent className="border-t border-slate-200 pt-4">
+          <SectionCardContent className="border-t border-border pt-4">
             <ActivityTimeline>
               {settingsQuery.data.latestSchemaActivity.map((event) => (
                 <ActivityTimelineItem

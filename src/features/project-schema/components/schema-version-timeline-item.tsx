@@ -43,7 +43,7 @@ export const SchemaVersionTimelineItem = ({
   <div className="flex items-center gap-4 py-2">
     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-slate-900">
+        <span className="text-sm font-medium text-foreground">
           Version {version.version}
         </span>
         {isActive ? (
@@ -56,7 +56,7 @@ export const SchemaVersionTimelineItem = ({
           tone={migrationToneByStatus[version.migration.status]}
         />
       </div>
-      <div className="flex items-center gap-2 text-xs text-slate-500">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span>{version.createdAt.toLocaleDateString()}</span>
         <span>·</span>
         <span>{version.migration.affectedRecordCount} affected</span>
@@ -70,7 +70,7 @@ export const SchemaVersionTimelineItem = ({
           <>
             <span>·</span>
             <Link
-              className="font-medium text-slate-700 underline-offset-2 hover:underline"
+              className="font-medium text-foreground underline-offset-2 hover:underline"
               href={`${taskHrefBase}/${version.migration.taskId}`}
             >
               {version.migration.taskTitle ?? "View task"}
