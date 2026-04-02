@@ -47,6 +47,7 @@ type SchemaVersionFormProps = {
   initialSchemaDefinition: ProjectSchemaDefinition
   organizationSlug: string
   projectSlug: string
+  onSuccess?: () => void
 }
 
 const parseNumberValue = (value: string) => {
@@ -113,6 +114,7 @@ export const SchemaVersionForm = ({
   initialSchemaDefinition,
   organizationSlug,
   projectSlug,
+  onSuccess,
 }: SchemaVersionFormProps) => {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
@@ -145,6 +147,7 @@ export const SchemaVersionForm = ({
             projectSlug,
           }),
         )
+        onSuccess?.()
       },
     }),
   )
@@ -194,17 +197,14 @@ export const SchemaVersionForm = ({
   return (
     <Form {...form}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold">Create schema version</h2>
-            <p className="text-sm text-slate-500">
-              Changes become the next active schema version for this project.
-            </p>
-          </div>
-          <Button onClick={handleAddField} type="button" variant="secondary">
-            Add field
-          </Button>
-        </div>
+        <Button
+          className="self-start"
+          onClick={handleAddField}
+          type="button"
+          variant="secondary"
+        >
+          Add field
+        </Button>
         {fieldArray.fields.length > 0 ? (
           fieldArray.fields.map((field, index) => (
             <SchemaFieldForm

@@ -1,22 +1,23 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { ChevronDown } from "lucide-react"
 import { useState } from "react"
 import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-timeline"
 import { ActivityTimelineItem } from "@/components/ui/activity-timeline/activity-timeline-item"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
-import { ProgressMetric } from "@/components/ui/progress-metric/progress-metric"
-import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-metric-grid"
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import { StatsBar } from "@/components/ui/stats-bar/stats-bar"
 import { formatActivityLogEntry } from "@/features/observability/lib/format-activity-log-entry"
+import { CreateSchemaVersionModal } from "@/features/project-schema/components/create-schema-version-modal"
 import { SchemaDiffModal } from "@/features/project-schema/components/schema-diff-modal"
 import { SchemaVersionFieldItem } from "@/features/project-schema/components/schema-version-field-item"
-import { SchemaVersionForm } from "@/features/project-schema/components/schema-version-form"
-import { SchemaVersionHistoryItem } from "@/features/project-schema/components/schema-version-history-item"
+import { SchemaVersionTimelineItem } from "@/features/project-schema/components/schema-version-timeline-item"
 import { useTRPC } from "@/lib/trpc/client"
+import { cn } from "@/utils/cn"
 
 type SchemaVersionBrowserProps = {
   organizationSlug: string
@@ -31,6 +32,8 @@ export const SchemaVersionBrowser = ({
   const [selectedDiffVersionId, setSelectedDiffVersionId] = useState<
     string | null
   >(null)
+  const [isVersionsExpanded, setIsVersionsExpanded] = useState(false)
+  const [isActivityExpanded, setIsActivityExpanded] = useState(false)
   const settingsQuery = useQuery(
     trpc.projectSchema.getSettings.queryOptions({
       organizationSlug,
@@ -72,35 +75,44 @@ export const SchemaVersionBrowser = ({
           </p>
         </div>
       </PageHeader>
-      <ProgressMetricGrid>
-        <ProgressMetric
-          label="Records"
-          value={settingsQuery.data.totalRecordCount}
-        />
-        <ProgressMetric
-          label="Affected"
-          value={activeMigration?.migration.affectedRecordCount ?? 0}
-        />
-        <ProgressMetric
-          label="Pending"
-          value={activeMigration?.migration.pendingRecordCount ?? 0}
-        />
-        <ProgressMetric
-          label="Completed"
-          value={activeMigration?.migration.completedCount ?? 0}
-        />
-      </ProgressMetricGrid>
+
+      <StatsBar
+        stats={[
+          { label: "Records", value: settingsQuery.data.totalRecordCount },
+          {
+            label: "Affected",
+            value: activeMigration?.migration.affectedRecordCount ?? 0,
+          },
+          {
+            label: "Pending",
+            value: activeMigration?.migration.pendingRecordCount ?? 0,
+          },
+          {
+            label: "Completed",
+            value: activeMigration?.migration.completedCount ?? 0,
+          },
+        ]}
+        details={[]}
+      />
+
       <SectionCard>
         <SectionCardHeader>
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold">Active schema fields</h2>
-            <p className="text-sm text-slate-500">
-              System fields are always present. Custom fields define runtime
-              record context.
-            </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold">Active schema fields</h2>
+              <p className="text-sm text-slate-500">
+                System fields are always present. Custom fields define runtime
+                record context.
+              </p>
+            </div>
+            <CreateSchemaVersionModal
+              initialSchemaDefinition={activeVersion.schemaDefinition}
+              organizationSlug={organizationSlug}
+              projectSlug={projectSlug}
+            />
           </div>
         </SectionCardHeader>
-        <SectionCardContent className="flex flex-col gap-4">
+        <SectionCardContent className="flex flex-col gap-2">
           {settingsQuery.data.activeVersion.schemaDefinition.fields.map(
             (field) => (
               <SchemaVersionFieldItem field={field} key={field.key} />
@@ -108,81 +120,100 @@ export const SchemaVersionBrowser = ({
           )}
         </SectionCardContent>
       </SectionCard>
+
       <SectionCard>
-        <SectionCardHeader>
+        <button
+          className="flex w-full items-center justify-between gap-3 p-6 text-left"
+          onClick={() => setIsVersionsExpanded(!isVersionsExpanded)}
+          type="button"
+        >
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold">Schema version history</h2>
             <p className="text-sm text-slate-500">
-              Compare any prior version with the active version in the diff
-              modal.
+              {settingsQuery.data.versions.length} versions · Compare with
+              active version
             </p>
           </div>
-        </SectionCardHeader>
-        <SectionCardContent className="flex flex-col gap-4">
-          {settingsQuery.data.versions.length > 0 ? (
-            settingsQuery.data.versions.map((version) => (
-              <SchemaVersionHistoryItem
-                canCompare={version.id !== activeVersion.id}
-                isActive={version.id === activeVersion.id}
-                key={version.id}
-                onCompare={() => setSelectedDiffVersionId(version.id)}
-                taskHrefBase={taskHrefBase}
-                version={version}
-              />
-            ))
-          ) : (
-            <p className="text-sm text-slate-500">No schema versions found.</p>
-          )}
-        </SectionCardContent>
+          <ChevronDown
+            className={cn(
+              "h-5 w-5 text-slate-500 transition-transform",
+              isVersionsExpanded && "rotate-180",
+            )}
+          />
+        </button>
+        {isVersionsExpanded ? (
+          <SectionCardContent className="flex flex-col gap-1 border-t border-slate-200 pt-4">
+            {settingsQuery.data.versions.length > 0 ? (
+              settingsQuery.data.versions.map((version) => (
+                <SchemaVersionTimelineItem
+                  canCompare={version.id !== activeVersion.id}
+                  isActive={version.id === activeVersion.id}
+                  key={version.id}
+                  onCompare={() => setSelectedDiffVersionId(version.id)}
+                  taskHrefBase={taskHrefBase}
+                  version={version}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">
+                No schema versions found.
+              </p>
+            )}
+          </SectionCardContent>
+        ) : null}
       </SectionCard>
+
       <SectionCard>
-        <SectionCardHeader>
+        <button
+          className="flex w-full items-center justify-between gap-3 p-6 text-left"
+          onClick={() => setIsActivityExpanded(!isActivityExpanded)}
+          type="button"
+        >
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-semibold">Latest schema activity</h2>
             <p className="text-sm text-slate-500">
               Recent schema version, migration, and migration-task events.
             </p>
           </div>
-        </SectionCardHeader>
-        <SectionCardContent>
-          <ActivityTimeline>
-            {settingsQuery.data.latestSchemaActivity.map((event) => (
-              <ActivityTimelineItem
-                description={
-                  formatActivityLogEntry({
-                    createdAt: event.createdAt,
-                    eventType: event.eventType,
-                    payload: event.payload,
-                    recordName: null,
-                    taskTitle: event.taskTitle,
-                  }).description
-                }
-                key={event.id}
-                label={
-                  formatActivityLogEntry({
-                    createdAt: event.createdAt,
-                    eventType: event.eventType,
-                    payload: event.payload,
-                    recordName: null,
-                    taskTitle: event.taskTitle,
-                  }).label
-                }
-                timestamp={event.createdAt.toLocaleString()}
-              />
-            ))}
-          </ActivityTimeline>
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard>
-        <SectionCardContent>
-          <SchemaVersionForm
-            initialSchemaDefinition={activeVersion.schemaDefinition}
-            key={activeVersion.id}
-            organizationSlug={organizationSlug}
-            projectSlug={projectSlug}
+          <ChevronDown
+            className={cn(
+              "h-5 w-5 text-slate-500 transition-transform",
+              isActivityExpanded && "rotate-180",
+            )}
           />
-        </SectionCardContent>
+        </button>
+        {isActivityExpanded ? (
+          <SectionCardContent className="border-t border-slate-200 pt-4">
+            <ActivityTimeline>
+              {settingsQuery.data.latestSchemaActivity.map((event) => (
+                <ActivityTimelineItem
+                  description={
+                    formatActivityLogEntry({
+                      createdAt: event.createdAt,
+                      eventType: event.eventType,
+                      payload: event.payload,
+                      recordName: null,
+                      taskTitle: event.taskTitle,
+                    }).description
+                  }
+                  key={event.id}
+                  label={
+                    formatActivityLogEntry({
+                      createdAt: event.createdAt,
+                      eventType: event.eventType,
+                      payload: event.payload,
+                      recordName: null,
+                      taskTitle: event.taskTitle,
+                    }).label
+                  }
+                  timestamp={event.createdAt.toLocaleString()}
+                />
+              ))}
+            </ActivityTimeline>
+          </SectionCardContent>
+        ) : null}
       </SectionCard>
+
       {selectedPreviousVersion ? (
         <SchemaDiffModal
           nextVersionId={activeVersion.id}
