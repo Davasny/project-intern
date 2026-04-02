@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import type { AgentRunSessionMessagePart } from "@/features/agent-runs/lib/get-agent-run-session-messages"
@@ -6,12 +7,114 @@ type AgentRunMessagePartItemProps = {
   part: AgentRunSessionMessagePart
 }
 
+type PartTone = "amber" | "default" | "violet"
+
+type PartSpacing = "2" | "3" | "4"
+
+type PartContainerProps = {
+  children: ReactNode
+  spacing: PartSpacing
+  tone: PartTone
+}
+
+type PartDisclosureProps = {
+  children: ReactNode
+  spacing: PartSpacing
+  summaryClassName: string
+  summary: ReactNode
+  tone: PartTone
+}
+
+type PartFieldProps = {
+  children: ReactNode
+  label: string
+}
+
+type PartTextBlockTone = "default" | "danger"
+
+type PartTextBlockProps = {
+  text: string
+  tone: PartTextBlockTone
+}
+
+type AttachmentItemProps = {
+  filename: string | null
+  mime: string
+  url: string
+}
+
 const toolStateTone = {
   completed: "success",
   error: "danger",
   pending: "warning",
   running: "info",
 } as const
+
+const partToneClasses: Record<PartTone, string> = {
+  amber: "border-amber-200 bg-amber-50",
+  default: "border-slate-200 bg-slate-50",
+  violet: "border-violet-200 bg-violet-50/80",
+}
+
+const partSpacingClasses: Record<PartSpacing, string> = {
+  "2": "gap-2",
+  "3": "gap-3",
+  "4": "gap-4",
+}
+
+const partTextBlockClasses: Record<PartTextBlockTone, string> = {
+  danger:
+    "overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-red-950 p-4 text-xs text-red-100",
+  default:
+    "overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-slate-950 p-4 text-xs text-slate-100",
+}
+
+const PartContainer = ({ children, spacing, tone }: PartContainerProps) => (
+  <div className={`rounded-2xl border p-4 ${partToneClasses[tone]}`}>
+    <div className={`flex flex-col ${partSpacingClasses[spacing]}`}>
+      {children}
+    </div>
+  </div>
+)
+
+const PartDisclosure = ({
+  children,
+  spacing,
+  summaryClassName,
+  summary,
+  tone,
+}: PartDisclosureProps) => (
+  <details className={`rounded-2xl border p-4 ${partToneClasses[tone]}`}>
+    <summary className={summaryClassName}>{summary}</summary>
+    <div
+      className={`flex flex-col pt-4 empty:pt-0 ${partSpacingClasses[spacing]}`}
+    >
+      {children}
+    </div>
+  </details>
+)
+
+const PartField = ({ children, label }: PartFieldProps) => (
+  <div className="flex flex-col gap-2">
+    <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      {label}
+    </span>
+    {children}
+  </div>
+)
+
+const PartTextBlock = ({ text, tone }: PartTextBlockProps) => (
+  <pre className={partTextBlockClasses[tone]}>{text}</pre>
+)
+
+const AttachmentItem = ({ filename, mime, url }: AttachmentItemProps) => (
+  <div className="flex flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-3">
+    <span className="text-sm font-medium text-slate-900">
+      {filename ?? url}
+    </span>
+    <span className="text-xs text-slate-500">{mime}</span>
+  </div>
+)
 
 export const AgentRunMessagePartItem = ({
   part,
@@ -38,132 +141,122 @@ export const AgentRunMessagePartItem = ({
 
   if (part.type === "reasoning") {
     return (
-      <details className="flex flex-col gap-3 rounded-2xl border border-violet-200 bg-violet-50/80 p-4">
-        <summary className="cursor-pointer text-sm font-medium text-violet-900">
-          Reasoning
-        </summary>
+      <PartDisclosure
+        spacing="3"
+        tone="violet"
+        summaryClassName="cursor-pointer text-sm font-medium text-violet-900"
+        summary={<span>Reasoning</span>}
+      >
         <pre className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
           {part.text}
         </pre>
-      </details>
+      </PartDisclosure>
     )
   }
 
   if (part.type === "tool") {
     return (
-      <details className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2">
-          <span className="font-medium text-slate-900">{part.tool}</span>
-          <StatusBadge label={part.status} tone={toolStateTone[part.status]} />
-          {part.title ? (
-            <span className="text-sm text-slate-500">{part.title}</span>
-          ) : null}
-        </summary>
+      <PartDisclosure
+        spacing="4"
+        tone="default"
+        summaryClassName="flex cursor-pointer list-none flex-wrap items-center gap-2"
+        summary={
+          <>
+            <span className="font-medium text-slate-900">{part.tool}</span>
+            <StatusBadge
+              label={part.status}
+              tone={toolStateTone[part.status]}
+            />
+            {part.title ? (
+              <span className="text-sm text-slate-500">{part.title}</span>
+            ) : null}
+          </>
+        }
+      >
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Call ID
-            </span>
+          <PartField label="Call ID">
             <code className="break-all rounded-lg bg-white px-3 py-2 text-xs text-slate-700">
               {part.callId}
             </code>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Input
-            </span>
+          </PartField>
+          <PartField label="Input">
             <JsonViewer value={part.input} />
-          </div>
+          </PartField>
           {part.metadata ? (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Metadata
-              </span>
+            <PartField label="Metadata">
               <JsonViewer value={part.metadata} />
-            </div>
+            </PartField>
           ) : null}
           {part.output ? (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Output
-              </span>
-              <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">
-                {part.output}
-              </pre>
-            </div>
+            <PartField label="Output">
+              <PartTextBlock text={part.output} tone="default" />
+            </PartField>
           ) : null}
           {part.error ? (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Error
-              </span>
-              <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-red-950 p-4 text-xs text-red-100">
-                {part.error}
-              </pre>
-            </div>
+            <PartField label="Error">
+              <PartTextBlock text={part.error} tone="danger" />
+            </PartField>
           ) : null}
           {part.attachments.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Attachments
-              </span>
+            <PartField label="Attachments">
               <div className="flex flex-col gap-2">
                 {part.attachments.map((attachment) => (
-                  <div
+                  <AttachmentItem
                     key={attachment.url}
-                    className="flex flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-3"
-                  >
-                    <span className="text-sm font-medium text-slate-900">
-                      {attachment.filename ?? attachment.url}
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      {attachment.mime}
-                    </span>
-                  </div>
+                    filename={attachment.filename}
+                    mime={attachment.mime}
+                    url={attachment.url}
+                  />
                 ))}
               </div>
-            </div>
+            </PartField>
           ) : null}
         </div>
-      </details>
+      </PartDisclosure>
     )
   }
 
   if (part.type === "file") {
     return (
-      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <PartContainer spacing="2" tone="default">
         <span className="text-sm font-medium text-slate-900">
           {part.filename ?? part.url}
         </span>
         <span className="text-xs text-slate-500">{part.mime}</span>
-      </div>
+      </PartContainer>
     )
   }
 
   if (part.type === "step-start") {
     return (
-      <details className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <summary className="cursor-pointer text-sm font-medium text-slate-700">
-          Step start
-        </summary>
+      <PartDisclosure
+        spacing="3"
+        tone="default"
+        summaryClassName="cursor-pointer text-sm font-medium text-slate-700"
+        summary={<span>Step start</span>}
+      >
         {part.snapshot ? (
-          <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">
-            {part.snapshot}
-          </pre>
+          <PartTextBlock text={part.snapshot} tone="default" />
         ) : null}
-      </details>
+      </PartDisclosure>
     )
   }
 
   if (part.type === "step-finish") {
     return (
-      <details className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-slate-700">
-            Step finish
-          </span>
-          <StatusBadge label={part.reason} tone="info" />
-        </summary>
+      <PartDisclosure
+        spacing="3"
+        tone="default"
+        summaryClassName="flex cursor-pointer list-none flex-wrap items-center gap-2"
+        summary={
+          <>
+            <span className="text-sm font-medium text-slate-700">
+              Step finish
+            </span>
+            <StatusBadge label={part.reason} tone="info" />
+          </>
+        }
+      >
         <JsonViewer
           value={{
             cost: part.cost,
@@ -171,42 +264,39 @@ export const AgentRunMessagePartItem = ({
             tokens: part.tokens,
           }}
         />
-      </details>
+      </PartDisclosure>
     )
   }
 
   if (part.type === "snapshot") {
     return (
-      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Snapshot
-        </span>
-        <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">
-          {part.snapshot}
-        </pre>
-      </div>
+      <PartContainer spacing="2" tone="default">
+        <PartField label="Snapshot">
+          <PartTextBlock text={part.snapshot} tone="default" />
+        </PartField>
+      </PartContainer>
     )
   }
 
   if (part.type === "patch") {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <PartContainer spacing="3" tone="default">
         <JsonViewer value={{ files: part.files, hash: part.hash }} />
-      </div>
+      </PartContainer>
     )
   }
 
   if (part.type === "agent") {
     return (
-      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <PartContainer spacing="2" tone="default">
         <span className="text-sm text-slate-700">{part.name}</span>
-      </div>
+      </PartContainer>
     )
   }
 
   if (part.type === "retry") {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      <PartContainer spacing="3" tone="amber">
         <div className="flex flex-wrap gap-2">
           <StatusBadge label="Retry" tone="warning" />
           <StatusBadge
@@ -220,33 +310,39 @@ export const AgentRunMessagePartItem = ({
             error: part.error,
           }}
         />
-      </div>
+      </PartContainer>
     )
   }
 
   if (part.type === "compaction") {
     return (
-      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <PartContainer spacing="2" tone="default">
         <div className="flex flex-wrap gap-2">
           <StatusBadge label="Compaction" tone="muted" />
           <StatusBadge label={part.auto ? "Auto" : "Manual"} tone="muted" />
         </div>
-      </div>
+      </PartContainer>
     )
   }
 
   return (
-    <details className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <summary className="flex cursor-pointer list-none flex-wrap gap-2">
-        <StatusBadge label="Subtask" tone="info" />
-        <StatusBadge label={part.agent} tone="info" />
-      </summary>
+    <PartDisclosure
+      spacing="3"
+      tone="default"
+      summaryClassName="flex cursor-pointer list-none flex-wrap gap-2"
+      summary={
+        <>
+          <StatusBadge label="Subtask" tone="info" />
+          <StatusBadge label={part.agent} tone="info" />
+        </>
+      }
+    >
       <JsonViewer
         value={{
           description: part.description,
           prompt: part.prompt,
         }}
       />
-    </details>
+    </PartDisclosure>
   )
 }
