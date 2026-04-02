@@ -85,6 +85,7 @@ export const ProjectScopeShell = ({
       projectAccess.currentOrganization.slug,
       projectAccess.currentProject.slug,
     )}
+    projectName={projectAccess.currentProject.displayName}
     user={{
       name: projectAccess.userDisplayName,
       email: projectAccess.userEmail,

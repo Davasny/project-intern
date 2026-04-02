@@ -9,6 +9,7 @@ type AppShellProps = {
   organizationSwitcher?: ReactNode
   projectSwitcher?: ReactNode
   navItems: Array<{ href: string; label: string }>
+  projectName?: string
   user: NavUserProps
 }
 
@@ -17,6 +18,7 @@ export function AppShell({
   organizationSwitcher,
   projectSwitcher,
   navItems,
+  projectName,
   user,
 }: AppShellProps) {
   return (
@@ -29,7 +31,7 @@ export function AppShell({
         />
 
         <SidebarInset>
-          <AppNavbar user={user} />
+          <AppNavbar projectName={projectName} user={user} />
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6">
             {children}
           </div>
