@@ -159,7 +159,7 @@ export const createCrmMcpServer = () => {
   })
 
   server.registerTool(
-    "crm_read_record",
+    "crm_record_read",
     {
       description: "Read the scoped record envelope and context.",
       inputSchema: executionScopeInputSchema,
@@ -180,7 +180,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_read_project_schema",
+    "crm_project_read_schema",
     {
       description: "Read the active project schema and versions.",
       inputSchema: executionScopeInputSchema,
@@ -206,7 +206,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_propose_patch",
+    "crm_record_propose_patch",
     {
       description:
         "Validate a structured patch proposal for the scoped record. Patches edit record values only, not schemaVersion. Use the current record version as baseVersion. Valid patch targets are name and schema-backed context fields.",
@@ -235,7 +235,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_apply_patch",
+    "crm_record_apply_patch",
     {
       description:
         "Apply a validated structured patch to the scoped record. Patches edit record values only, not schemaVersion. Use the current record version as baseVersion. Valid patch targets are name and schema-backed context fields.",
@@ -274,7 +274,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_complete_task_record",
+    "crm_record_complete_task",
     {
       description:
         "Complete the scoped task record and optionally apply a patch. Pass patch as null when no record values need to change, including schema-only migrations.",
@@ -298,7 +298,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_fail_task_record",
+    "crm_record_fail_task",
     {
       description:
         "Fail the scoped task record with a structured failure payload. Use this whenever you cannot complete the task, including repeated tool validation errors or inability to produce a valid patch.",
@@ -321,7 +321,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_list_relations",
+    "crm_record_list_relations",
     {
       description: "List active relations for the scoped record.",
       inputSchema: executionScopeInputSchema,
@@ -342,7 +342,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_get_related_record",
+    "crm_record_get_related",
     {
       description: "Read one related record linked from the scoped record.",
       inputSchema: relatedRecordInputSchema,
@@ -364,7 +364,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_get_related_records",
+    "crm_record_get_related_records",
     {
       description: "Read related records linked from the scoped record.",
       inputSchema: executionScopeInputSchema,
@@ -385,7 +385,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_create_relation_edge",
+    "crm_record_create_relation_edge",
     {
       description: "Create a relation edge from the scoped record.",
       inputSchema: relationCreateInputSchema,
@@ -416,7 +416,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_deactivate_relation_edge",
+    "crm_record_deactivate_relation_edge",
     {
       description: "Deactivate a relation edge from the scoped record.",
       inputSchema: relationDeactivateInputSchema,
@@ -439,7 +439,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_list_record_files",
+    "crm_record_list_files",
     {
       description: "List files available for the scoped record.",
       inputSchema: executionScopeInputSchema,
@@ -467,7 +467,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_fetch_file",
+    "crm_record_fetch_file",
     {
       description: "Hydrate one scoped file into the record workspace.",
       inputSchema: fileFetchInputSchema,
@@ -496,7 +496,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_list_artifacts",
+    "crm_record_list_artifacts",
     {
       description: "List artifacts available for the scoped record.",
       inputSchema: executionScopeInputSchema,
@@ -524,7 +524,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_get_artifact",
+    "crm_record_get_artifact",
     {
       description: "Hydrate one artifact into the scoped record workspace.",
       inputSchema: artifactGetInputSchema,
@@ -553,7 +553,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_put_artifact",
+    "crm_record_put_artifact",
     {
       description: "Persist a new artifact for the scoped record.",
       inputSchema: artifactPutInputSchema,
@@ -589,7 +589,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_write_workspace_manifest",
+    "crm_record_write_workspace_manifest",
     {
       description:
         "Write the workspace manifest for the scoped record workspace.",
