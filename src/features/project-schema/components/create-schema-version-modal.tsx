@@ -32,9 +32,10 @@ export const CreateSchemaVersionModal = ({
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create schema version</DialogTitle>
+          <DialogTitle>Create schema change</DialogTitle>
           <DialogDescription>
-            Changes become the next active schema version for this project.
+            Save as draft for review, or create and accept a new schema version
+            immediately.
           </DialogDescription>
         </DialogHeader>
         <SchemaVersionForm

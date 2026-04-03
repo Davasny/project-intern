@@ -14,7 +14,13 @@ type SchemaVersionTimelineItemProps = {
     migration: {
       affectedRecordCount: number
       pendingRecordCount: number
-      status: "completed" | "failed" | "in_progress" | "pending" | "queued"
+      status:
+        | "completed"
+        | "failed"
+        | "in_progress"
+        | "pending"
+        | "queued"
+        | "rejected"
       taskId: string | null
       taskTitle: string | null
     }
@@ -28,6 +34,7 @@ const migrationToneByStatus = {
   in_progress: "info",
   pending: "warning",
   queued: "muted",
+  rejected: "danger",
 } satisfies Record<
   SchemaVersionTimelineItemProps["version"]["migration"]["status"],
   "danger" | "info" | "muted" | "success" | "warning"

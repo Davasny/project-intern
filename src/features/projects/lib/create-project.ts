@@ -78,7 +78,9 @@ export const createProject = async ({
       .insert(projectSchemaVersionTable)
       .values({
         projectId: project.id,
+        proposedBy: null,
         schemaDefinition: validateProjectSchemaDefinition([]),
+        state: "accepted",
         version: 1,
       })
       .returning({

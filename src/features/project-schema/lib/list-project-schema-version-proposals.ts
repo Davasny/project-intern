@@ -4,17 +4,17 @@ import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { db } from "@/lib/db"
 
-type ListProjectSchemaVersionsParams = {
+type ListProjectSchemaVersionProposalsParams = {
   organizationSlug: string
   projectSlug: string
   userId: string
 }
 
-export const listProjectSchemaVersions = async ({
+export const listProjectSchemaVersionProposals = async ({
   organizationSlug,
   projectSlug,
   userId,
-}: ListProjectSchemaVersionsParams) => {
+}: ListProjectSchemaVersionProposalsParams) => {
   const project = await ensureProjectAccess({
     organizationSlug,
     projectSlug,
@@ -33,6 +33,7 @@ export const listProjectSchemaVersions = async ({
       createdAt: projectSchemaVersionTable.createdAt,
       id: projectSchemaVersionTable.id,
       parentVersionId: projectSchemaVersionTable.parentVersionId,
+      proposedBy: projectSchemaVersionTable.proposedBy,
       schemaDefinition: projectSchemaVersionTable.schemaDefinition,
       state: projectSchemaVersionTable.state,
       version: projectSchemaVersionTable.version,
@@ -41,14 +42,8 @@ export const listProjectSchemaVersions = async ({
     .where(
       and(
         eq(projectSchemaVersionTable.projectId, project.id),
-        eq(projectSchemaVersionTable.state, "accepted"),
+        eq(projectSchemaVersionTable.state, "created"),
       ),
     )
     .orderBy(desc(projectSchemaVersionTable.version))
-    .then((rows) =>
-      rows.map((row) => ({
-        ...row,
-        isActive: row.id === project.activeSchemaVersionId,
-      })),
-    )
 }

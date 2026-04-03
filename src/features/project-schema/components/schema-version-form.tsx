@@ -149,6 +149,37 @@ export const SchemaVersionForm = ({
       },
     }),
   )
+  const createDraftMutation = useMutation(
+    trpc.projectSchema.createDraft.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.projectSchema.getActive.queryFilter({
+            organizationSlug,
+            projectSlug,
+          }),
+        )
+        await queryClient.invalidateQueries(
+          trpc.projectSchema.listVersions.queryFilter({
+            organizationSlug,
+            projectSlug,
+          }),
+        )
+        await queryClient.invalidateQueries(
+          trpc.projectSchema.listProposals.queryFilter({
+            organizationSlug,
+            projectSlug,
+          }),
+        )
+        await queryClient.invalidateQueries(
+          trpc.projectSchema.getSettings.queryFilter({
+            organizationSlug,
+            projectSlug,
+          }),
+        )
+        onSuccess?.()
+      },
+    }),
+  )
 
   const handleAddField = () => {
     fieldArray.append({
@@ -167,34 +198,48 @@ export const SchemaVersionForm = ({
     })
   }
 
-  const handleSubmit = form.handleSubmit(async (values) => {
+  const buildCustomFieldsPayload = (values: SchemaVersionFormValues) =>
+    values.fields.map((field) => ({
+      config: {
+        enumOptions: field.config.enumOptions
+          .split(",")
+          .map((option) => option.trim())
+          .filter((option) => option.length > 0),
+        max: parseNumberValue(field.config.max),
+        min: parseNumberValue(field.config.min),
+        multilineRows: parseNumberValue(field.config.multilineRows),
+      },
+      defaultValue: parseDefaultValue(field.type, field.defaultValue),
+      description: field.description,
+      isSystem: false as const,
+      key: field.key,
+      label: field.label,
+      required: field.required,
+      type: field.type,
+    }))
+
+  const handleCreateVersion = form.handleSubmit(async (values) => {
     await createVersionMutation.mutateAsync({
-      customFields: values.fields.map((field) => ({
-        config: {
-          enumOptions: field.config.enumOptions
-            .split(",")
-            .map((option) => option.trim())
-            .filter((option) => option.length > 0),
-          max: parseNumberValue(field.config.max),
-          min: parseNumberValue(field.config.min),
-          multilineRows: parseNumberValue(field.config.multilineRows),
-        },
-        defaultValue: parseDefaultValue(field.type, field.defaultValue),
-        description: field.description,
-        isSystem: false,
-        key: field.key,
-        label: field.label,
-        required: field.required,
-        type: field.type,
-      })),
+      customFields: buildCustomFieldsPayload(values),
       organizationSlug,
       projectSlug,
     })
   })
 
+  const handleCreateDraft = form.handleSubmit(async (values) => {
+    await createDraftMutation.mutateAsync({
+      customFields: buildCustomFieldsPayload(values),
+      organizationSlug,
+      projectSlug,
+    })
+  })
+
+  const isSubmitting =
+    createDraftMutation.isPending || createVersionMutation.isPending
+
   return (
     <Form {...form}>
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-4" onSubmit={handleCreateVersion}>
         <Button
           className="self-start"
           onClick={handleAddField}
@@ -218,11 +263,23 @@ export const SchemaVersionForm = ({
             No custom fields yet. System fields are always included.
           </p>
         )}
-        <Button disabled={createVersionMutation.isPending} type="submit">
-          {createVersionMutation.isPending
-            ? "Creating schema version..."
-            : "Create schema version"}
-        </Button>
+        <div className="flex flex-row gap-2">
+          <Button
+            disabled={isSubmitting}
+            onClick={handleCreateDraft}
+            type="button"
+            variant="outline"
+          >
+            {createDraftMutation.isPending
+              ? "Creating draft..."
+              : "Create draft"}
+          </Button>
+          <Button disabled={isSubmitting} type="submit">
+            {createVersionMutation.isPending
+              ? "Creating schema version..."
+              : "Create schema version"}
+          </Button>
+        </div>
       </form>
     </Form>
   )

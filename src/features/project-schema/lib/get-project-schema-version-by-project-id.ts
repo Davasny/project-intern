@@ -24,6 +24,7 @@ export const getProjectSchemaVersionByProjectId = async ({
     .where(
       and(
         eq(projectSchemaVersionTable.projectId, projectId),
+        eq(projectSchemaVersionTable.state, "accepted"),
         eq(projectSchemaVersionTable.version, version),
       ),
     )

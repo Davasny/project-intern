@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { db } from "@/lib/db"
@@ -21,10 +21,16 @@ export const listProjectSchemaVersionsByProjectId = async ({
       parentVersionId: projectSchemaVersionTable.parentVersionId,
       projectId: projectSchemaVersionTable.projectId,
       schemaDefinition: projectSchemaVersionTable.schemaDefinition,
+      state: projectSchemaVersionTable.state,
       version: projectSchemaVersionTable.version,
     })
     .from(projectSchemaVersionTable)
-    .where(eq(projectSchemaVersionTable.projectId, projectId))
+    .where(
+      and(
+        eq(projectSchemaVersionTable.projectId, projectId),
+        eq(projectSchemaVersionTable.state, "accepted"),
+      ),
+    )
 
   return versions.map((version) => ({
     ...version,

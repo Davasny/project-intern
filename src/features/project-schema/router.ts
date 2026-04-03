@@ -2,12 +2,16 @@ import { TRPCError } from "@trpc/server"
 import { and, eq, inArray } from "drizzle-orm"
 import { z } from "zod"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
+import { acceptProjectSchemaVersionProposalById } from "@/features/project-schema/lib/accept-project-schema-version-proposal-by-id"
 import { createProjectSchemaVersion } from "@/features/project-schema/lib/create-project-schema-version"
+import { createProjectSchemaVersionDraft } from "@/features/project-schema/lib/create-project-schema-version-draft"
 import { diffProjectSchemaVersions } from "@/features/project-schema/lib/diff-project-schema-versions"
 import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get-active-project-schema-version"
 import { getProjectSchemaSettingsReadModel } from "@/features/project-schema/lib/get-project-schema-settings-read-model"
 import { getProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-project-schema-version-by-project-id"
+import { listProjectSchemaVersionProposals } from "@/features/project-schema/lib/list-project-schema-version-proposals"
 import { listProjectSchemaVersions } from "@/features/project-schema/lib/list-project-schema-versions"
+import { rejectProjectSchemaVersionProposalById } from "@/features/project-schema/lib/reject-project-schema-version-proposal-by-id"
 import { projectSchemaCustomFieldSchema } from "@/features/project-schema/schemas/project-schema-field"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { db } from "@/lib/db"
@@ -27,6 +31,20 @@ export const projectSchemaRouter = router({
     )
     .mutation(({ ctx, input }) =>
       createProjectSchemaVersion({
+        customFields: input.customFields,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  createDraft: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        customFields: z.array(projectSchemaCustomFieldSchema),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      createProjectSchemaVersionDraft({
         customFields: input.customFields,
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
@@ -94,6 +112,20 @@ export const projectSchemaRouter = router({
         previousVersion,
       }
     }),
+  acceptProposal: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        schemaVersionId: z.string().uuid(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      acceptProjectSchemaVersionProposalById({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        schemaVersionId: input.schemaVersionId,
+        userId: ctx.session.user.id,
+      }),
+    ),
   getActive: protectedProcedure
     .input(projectScopeSchema)
     .query(({ ctx, input }) =>
@@ -152,6 +184,29 @@ export const projectSchemaRouter = router({
       listProjectSchemaVersions({
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  listProposals: protectedProcedure
+    .input(projectScopeSchema)
+    .query(({ ctx, input }) =>
+      listProjectSchemaVersionProposals({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  rejectProposal: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        schemaVersionId: z.string().uuid(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      rejectProjectSchemaVersionProposalById({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        schemaVersionId: input.schemaVersionId,
         userId: ctx.session.user.id,
       }),
     ),

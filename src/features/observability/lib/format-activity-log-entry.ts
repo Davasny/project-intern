@@ -22,6 +22,20 @@ export const formatActivityLogEntry = ({
     }
   }
 
+  if (eventType === "schema.version_proposed") {
+    return {
+      description: `Schema proposal ${String(payload.version ?? "")}`,
+      label: "Schema version proposed",
+    }
+  }
+
+  if (eventType === "schema.version_rejected") {
+    return {
+      description: `Schema proposal ${String(payload.version ?? "")}`,
+      label: "Schema version rejected",
+    }
+  }
+
   if (eventType === "schema.migration_finalized") {
     return {
       description: `${getStringValue(payload.title) ?? taskTitle ?? "Migration task"} finished for all records.`,

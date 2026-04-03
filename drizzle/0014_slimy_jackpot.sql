@@ -1,0 +1,1 @@
+ALTER TABLE "project_schema_version" ALTER COLUMN "state" SET DEFAULT 'accepted';

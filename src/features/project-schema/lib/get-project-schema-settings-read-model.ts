@@ -64,20 +64,50 @@ export const getProjectSchemaSettingsReadModel = async ({
       id: projectSchemaVersionTable.id,
       parentVersionId: projectSchemaVersionTable.parentVersionId,
       schemaDefinition: projectSchemaVersionTable.schemaDefinition,
+      state: projectSchemaVersionTable.state,
       version: projectSchemaVersionTable.version,
     })
     .from(projectSchemaVersionTable)
-    .where(eq(projectSchemaVersionTable.projectId, project.id))
+    .where(
+      and(
+        eq(projectSchemaVersionTable.projectId, project.id),
+        or(
+          eq(projectSchemaVersionTable.state, "accepted"),
+          eq(projectSchemaVersionTable.state, "rejected"),
+        ),
+      ),
+    )
     .orderBy(desc(projectSchemaVersionTable.version))
 
-  const versionIds = versions.map((version) => version.id)
+  const pendingProposals = await db
+    .select({
+      createdAt: projectSchemaVersionTable.createdAt,
+      id: projectSchemaVersionTable.id,
+      parentVersionId: projectSchemaVersionTable.parentVersionId,
+      proposedBy: projectSchemaVersionTable.proposedBy,
+      schemaDefinition: projectSchemaVersionTable.schemaDefinition,
+      state: projectSchemaVersionTable.state,
+      version: projectSchemaVersionTable.version,
+    })
+    .from(projectSchemaVersionTable)
+    .where(
+      and(
+        eq(projectSchemaVersionTable.projectId, project.id),
+        eq(projectSchemaVersionTable.state, "created"),
+      ),
+    )
+    .orderBy(desc(projectSchemaVersionTable.version))
+
+  const acceptedVersionIds = versions
+    .filter((version) => version.state === "accepted")
+    .map((version) => version.id)
   const records = await db
     .select({ id: recordTable.id, schemaVersion: recordTable.schemaVersion })
     .from(recordTable)
     .where(eq(recordTable.projectId, project.id))
 
   const migrationTasks =
-    versionIds.length === 0
+    acceptedVersionIds.length === 0
       ? []
       : await db
           .select({
@@ -93,8 +123,8 @@ export const getProjectSchemaSettingsReadModel = async ({
             and(
               eq(taskTable.projectId, project.id),
               or(
-                inArray(taskTable.sourceSchemaVersionId, versionIds),
-                inArray(taskTable.targetSchemaVersionId, versionIds),
+                inArray(taskTable.sourceSchemaVersionId, acceptedVersionIds),
+                inArray(taskTable.targetSchemaVersionId, acceptedVersionIds),
               ),
             ),
           )
@@ -112,7 +142,7 @@ export const getProjectSchemaSettingsReadModel = async ({
           .where(inArray(taskRecordTable.taskId, migrationTaskIds))
 
   const latestSchemaActivity =
-    versionIds.length === 0 && migrationTaskIds.length === 0
+    versions.length === 0 && migrationTaskIds.length === 0
       ? []
       : migrationTaskIds.length === 0
         ? await db
@@ -132,7 +162,6 @@ export const getProjectSchemaSettingsReadModel = async ({
               and(
                 eq(activityLogTable.projectId, project.id),
                 eq(activityLogTable.entityType, "projectSchemaVersion"),
-                inArray(activityLogTable.entityId, versionIds),
               ),
             )
             .orderBy(desc(activityLogTable.createdAt))
@@ -154,10 +183,7 @@ export const getProjectSchemaSettingsReadModel = async ({
               and(
                 eq(activityLogTable.projectId, project.id),
                 or(
-                  and(
-                    eq(activityLogTable.entityType, "projectSchemaVersion"),
-                    inArray(activityLogTable.entityId, versionIds),
-                  ),
+                  eq(activityLogTable.entityType, "projectSchemaVersion"),
                   inArray(activityLogTable.taskId, migrationTaskIds),
                 ),
               ),
@@ -172,6 +198,7 @@ export const getProjectSchemaSettingsReadModel = async ({
   return {
     activeVersion,
     latestSchemaActivity,
+    pendingProposals,
     totalRecordCount: records.length,
     versions: versions.map((version) => {
       const migrationTask =
@@ -205,23 +232,37 @@ export const getProjectSchemaSettingsReadModel = async ({
         ...version,
         isActive: version.id === project.activeSchemaVersionId,
         migration: {
-          affectedRecordCount:
-            migrationTask === null
-              ? pendingRecordCount
-              : linkedTaskRecords.length,
-          completedCount,
-          failedCount,
-          inProgressCount,
-          pendingRecordCount,
-          status: getMigrationStatus({
-            failedCount,
-            inProgressCount,
-            pendingRecordCount,
-            waitingCount,
-          }),
-          taskId: migrationTask?.id ?? null,
-          taskTitle: migrationTask?.title ?? null,
-          waitingCount,
+          ...(version.state === "rejected"
+            ? {
+                affectedRecordCount: 0,
+                completedCount: 0,
+                failedCount: 0,
+                inProgressCount: 0,
+                pendingRecordCount: 0,
+                status: "rejected" as const,
+                taskId: null,
+                taskTitle: null,
+                waitingCount: 0,
+              }
+            : {
+                affectedRecordCount:
+                  migrationTask === null
+                    ? pendingRecordCount
+                    : linkedTaskRecords.length,
+                completedCount,
+                failedCount,
+                inProgressCount,
+                pendingRecordCount,
+                status: getMigrationStatus({
+                  failedCount,
+                  inProgressCount,
+                  pendingRecordCount,
+                  waitingCount,
+                }),
+                taskId: migrationTask?.id ?? null,
+                taskTitle: migrationTask?.title ?? null,
+                waitingCount,
+              }),
         },
       }
     }),

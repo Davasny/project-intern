@@ -1,23 +1,22 @@
 import { TRPCError } from "@trpc/server"
-import { acceptProjectSchemaVersionProposal } from "@/features/project-schema/lib/accept-project-schema-version-proposal"
 import { createProjectSchemaVersionProposal } from "@/features/project-schema/lib/create-project-schema-version-proposal"
 import { validateProjectSchemaDefinition } from "@/features/project-schema/lib/validate-project-schema-definition"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { db } from "@/lib/db"
 
-type CreateProjectSchemaVersionParams = {
+type CreateProjectSchemaVersionDraftParams = {
   customFields: unknown[]
   organizationSlug: string
   projectSlug: string
   userId: string
 }
 
-export const createProjectSchemaVersion = async ({
+export const createProjectSchemaVersionDraft = async ({
   customFields,
   organizationSlug,
   projectSlug,
   userId,
-}: CreateProjectSchemaVersionParams) => {
+}: CreateProjectSchemaVersionDraftParams) => {
   const project = await ensureProjectAccess({
     organizationSlug,
     projectSlug,
@@ -34,26 +33,20 @@ export const createProjectSchemaVersion = async ({
   const schemaDefinition = validateProjectSchemaDefinition(customFields)
 
   return db.transaction(async (transaction) => {
-    const createdProposal = await createProjectSchemaVersionProposal({
+    const proposal = await createProjectSchemaVersionProposal({
       database: transaction,
       projectId: project.id,
       proposedBy: userId,
       schemaDefinition,
     })
 
-    if (!createdProposal) {
+    if (!proposal) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Schema proposal could not be created.",
+        message: "Schema draft could not be created.",
       })
     }
 
-    return acceptProjectSchemaVersionProposal({
-      acceptedByUserId: userId,
-      database: transaction,
-      organizationId: project.organizationId,
-      projectId: project.id,
-      schemaVersionId: createdProposal.id,
-    })
+    return proposal
   })
 }

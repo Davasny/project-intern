@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { desc, eq } from "drizzle-orm"
+import { and, desc, eq } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { validateProjectSchemaDefinition } from "@/features/project-schema/lib/validate-project-schema-definition"
 import { projectTable } from "@/features/projects/db"
@@ -18,13 +18,16 @@ const createInitialProjectSchemaVersion = async (projectId: string) => {
     .insert(projectSchemaVersionTable)
     .values({
       projectId,
+      proposedBy: null,
       schemaDefinition,
+      state: "accepted",
       version: 1,
     })
     .returning({
       id: projectSchemaVersionTable.id,
       projectId: projectSchemaVersionTable.projectId,
       schemaDefinition: projectSchemaVersionTable.schemaDefinition,
+      state: projectSchemaVersionTable.state,
       version: projectSchemaVersionTable.version,
     })
 
@@ -61,6 +64,7 @@ export const getActiveProjectSchemaVersion = async ({
         parentVersionId: projectSchemaVersionTable.parentVersionId,
         projectId: projectSchemaVersionTable.projectId,
         schemaDefinition: projectSchemaVersionTable.schemaDefinition,
+        state: projectSchemaVersionTable.state,
         version: projectSchemaVersionTable.version,
       })
       .from(projectSchemaVersionTable)
@@ -81,10 +85,16 @@ export const getActiveProjectSchemaVersion = async ({
       parentVersionId: projectSchemaVersionTable.parentVersionId,
       projectId: projectSchemaVersionTable.projectId,
       schemaDefinition: projectSchemaVersionTable.schemaDefinition,
+      state: projectSchemaVersionTable.state,
       version: projectSchemaVersionTable.version,
     })
     .from(projectSchemaVersionTable)
-    .where(eq(projectSchemaVersionTable.projectId, project.id))
+    .where(
+      and(
+        eq(projectSchemaVersionTable.projectId, project.id),
+        eq(projectSchemaVersionTable.state, "accepted"),
+      ),
+    )
     .orderBy(desc(projectSchemaVersionTable.version))
     .then((rows) => rows[0] ?? null)
 
