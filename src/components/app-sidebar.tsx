@@ -134,6 +134,16 @@ export const AppSidebar = () => {
           <SidebarGroupLabel>OpenCode</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Sessions">
+                <Link
+                  href={`/app/${organizationSlug}/${projectSlug}/opencode/sessions`}
+                >
+                  <BotIcon />
+                  <span>Sessions</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Skills">
                 <Link
                   href={`/app/${organizationSlug}/${projectSlug}/opencode/skills`}
