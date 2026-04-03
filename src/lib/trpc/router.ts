@@ -4,6 +4,7 @@ import { authRouter } from "@/features/auth/router"
 import { executionRouter } from "@/features/execution/router"
 import { filesRouter } from "@/features/files/router"
 import { observabilityRouter } from "@/features/observability/router"
+import { opencodeRouter } from "@/features/opencode/router"
 import { organizationsRouter } from "@/features/organizations/router"
 import { projectSchemaRouter } from "@/features/project-schema/router"
 import { projectsRouter } from "@/features/projects/router"
@@ -19,6 +20,7 @@ export const appRouter = router({
   execution: executionRouter,
   files: filesRouter,
   observability: observabilityRouter,
+  opencode: opencodeRouter,
   organizations: organizationsRouter,
   projectSchema: projectSchemaRouter,
   projects: projectsRouter,

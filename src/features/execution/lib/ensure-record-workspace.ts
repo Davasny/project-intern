@@ -22,6 +22,7 @@ export const ensureRecordWorkspace = async ({
     ensureDirectory(path.join(workspaceDirectory, "logs")),
     ensureDirectory(path.join(workspaceDirectory, "scratch")),
     ensureDirectory(path.join(workspaceDirectory, "source-files")),
+    ensureDirectory(path.join(workspaceDirectory, ".opencode", "skills")),
   ])
 
   return {
@@ -30,5 +31,10 @@ export const ensureRecordWorkspace = async ({
     scratchDirectory: path.join(workspaceDirectory, "scratch"),
     sourceFilesDirectory: path.join(workspaceDirectory, "source-files"),
     workspaceDirectory,
+    opencodeSkillsDirectory: path.join(
+      workspaceDirectory,
+      ".opencode",
+      "skills",
+    ),
   }
 }

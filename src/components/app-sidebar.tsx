@@ -2,6 +2,7 @@
 
 import {
   ActivityIcon,
+  BotIcon,
   ClipboardClockIcon,
   DatabaseIcon,
   FolderIcon,
@@ -126,6 +127,22 @@ export const AppSidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>OpenCode</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Skills">
+                <Link
+                  href={`/app/${organizationSlug}/${projectSlug}/opencode/skills`}
+                >
+                  <BotIcon />
+                  <span>Skills</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

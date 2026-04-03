@@ -24,6 +24,8 @@ const segmentLabels: Record<string, string> = {
   activity: "Activity",
   execution: "Execution",
   runs: "Runs",
+  opencode: "OpenCode",
+  skills: "Skills",
 }
 
 const isUuidLike = (segment: string): boolean => {

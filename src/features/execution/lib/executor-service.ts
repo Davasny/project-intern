@@ -2,6 +2,7 @@ import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-bo
 import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
 import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
 import { buildTaskRecordSystemPrompt } from "@/features/execution/lib/build-task-record-system-prompt"
+import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
 import { getAgentRunExecutionScope } from "@/features/execution/lib/get-agent-run-execution-scope"
 import { hydrateRecordWorkspace } from "@/features/execution/lib/hydrate-record-workspace"
@@ -66,6 +67,18 @@ export const executorService = async ({
     executionLogger.info(
       { workspaceDirectory: workspace.workspaceDirectory },
       "Ensured record workspace",
+    )
+
+    executionLogger.info("Ensuring project skills directory")
+
+    const projectSkills = await ensureProjectSkillsOnDisk({
+      organizationId: initialScope.project.organizationId,
+      projectId: initialScope.project.id,
+    })
+
+    executionLogger.info(
+      { skillsDirectory: projectSkills.skillsDirectory },
+      "Ensured project skills directory",
     )
 
     executionLogger.info("Hydrating record workspace")
@@ -163,6 +176,14 @@ export const executorService = async ({
     if (!session.data) {
       throw new Error("OpenCode session could not be created.")
     }
+
+    executionLogger.info(
+      {
+        opencodeSkillsDirectory: workspace.opencodeSkillsDirectory,
+        projectSkillsDirectory: projectSkills.skillsDirectory,
+      },
+      "OpenCode skills directories ready — place skill folders at opencodeSkillsDirectory for auto-discovery",
+    )
 
     const [providerID, modelID] = runtimeModel.split("/")
 

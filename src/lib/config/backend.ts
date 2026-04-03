@@ -36,6 +36,10 @@ const backendConfigSchema = z.object({
     .string()
     .min(1)
     .default(path.join(process.cwd(), "agent-workspaces")),
+  CRM_SKILLS_ROOT: z
+    .string()
+    .min(1)
+    .default(path.join(process.cwd(), "storage", "opencode-skills")),
   GITHUB_CLIENT_ID: z.string().min(1).default("github-client-id"),
   GITHUB_CLIENT_SECRET: z.string().min(1).default("github-client-secret"),
   NODE_ENV: z
@@ -56,6 +60,7 @@ const parsedBackendConfig = backendConfigSchema.parse({
   CRM_OPENCODE_TIMEOUT_MS: process.env.CRM_OPENCODE_TIMEOUT_MS,
   CRM_STORAGE_ROOT: process.env.CRM_STORAGE_ROOT,
   CRM_WORKSPACE_ROOT: process.env.CRM_WORKSPACE_ROOT,
+  CRM_SKILLS_ROOT: process.env.CRM_SKILLS_ROOT,
   GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
   NODE_ENV: process.env.NODE_ENV,
@@ -65,3 +70,16 @@ export const backendConfig = {
   ...parsedBackendConfig,
   IS_DEVELOPMENT: parsedBackendConfig.NODE_ENV === "development",
 }
+
+export const getProjectSkillsDirectory = (
+  organizationId: string,
+  projectId: string,
+) =>
+  path.join(
+    parsedBackendConfig.CRM_SKILLS_ROOT,
+    "organizations",
+    organizationId,
+    "projects",
+    projectId,
+    "skills",
+  )
