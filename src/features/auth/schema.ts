@@ -1,5 +1,6 @@
 import {
   account,
+  apikey,
   invitation,
   organization,
   organizationMembership,
@@ -10,6 +11,7 @@ import {
 
 export const authSchema = {
   account,
+  apikey,
   invitation,
   organization,
   organizationMembership,

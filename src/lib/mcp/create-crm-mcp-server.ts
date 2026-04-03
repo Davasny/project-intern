@@ -32,6 +32,7 @@ import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list
 import { applyRecordPatch } from "@/features/records/lib/apply-record-patch"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 import { proposeRecordPatch } from "@/features/records/lib/propose-record-patch"
+import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
 import { createArtifactResourceUri } from "@/lib/mcp/create-artifact-resource-uri"
 import { createFileResourceUri } from "@/lib/mcp/create-file-resource-uri"
 import { createMcpJsonResponse } from "@/lib/mcp/create-mcp-json-response"
@@ -165,6 +166,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const record = await getScopedRecord({
         projectId: scope.project.id,
         recordId: scope.record.id,
@@ -185,6 +187,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const [activeSchema, versions] = await Promise.all([
         getActiveProjectSchemaVersionByProjectId({
           projectId: scope.project.id,
@@ -211,6 +214,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const schemaVersion = getTaskRecordPatchSchemaVersion({
         recordSchemaVersion: scope.record.schemaVersion,
         taskSchemaVersion: scope.task.schemaVersion,
@@ -239,6 +243,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const schemaVersion = getTaskRecordPatchSchemaVersion({
         recordSchemaVersion: scope.record.schemaVersion,
         taskSchemaVersion: scope.task.schemaVersion,
@@ -276,6 +281,8 @@ export const createCrmMcpServer = () => {
       inputSchema: completeTaskRecordInputSchema,
     },
     async (input) => {
+      const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const completedScope = await completeScopedTaskRecord({
         executionScope: input.execution,
         patch: input.patch,
@@ -298,6 +305,8 @@ export const createCrmMcpServer = () => {
       inputSchema: failTaskRecordInputSchema,
     },
     async (input) => {
+      const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const failedScope = await failScopedTaskRecord({
         executionScope: input.execution,
         failure: input.failure,
@@ -319,6 +328,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const relations = await listRecordRelationsByProjectId({
         projectId: scope.project.id,
         recordId: scope.record.id,
@@ -339,6 +349,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const relation = await getRelatedRecordByEdgeId({
         projectId: scope.project.id,
         recordEdgeId: input.recordEdgeId,
@@ -360,6 +371,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const relatedRecords = await getRelatedRecordsByProjectId({
         projectId: scope.project.id,
         recordId: scope.record.id,
@@ -380,6 +392,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const relation = await createRecordEdgeById({
         agentRunId: scope.agentRun.id,
         direction: input.direction,
@@ -410,6 +423,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const relation = await deactivateRecordEdgeById({
         agentRunId: scope.agentRun.id,
         projectId: scope.project.id,
@@ -432,6 +446,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const files = await listRecordFiles({
         projectId: scope.project.id,
         recordId: scope.record.id,
@@ -459,6 +474,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const fetchedFile = await fetchRecordFile({
         fileId: input.fileId,
         projectId: scope.project.id,
@@ -487,6 +503,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const artifacts = await listArtifacts({
         projectId: scope.project.id,
         recordId: scope.record.id,
@@ -514,6 +531,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const hydratedArtifact = await getArtifact({
         artifactId: input.artifactId,
         projectId: scope.project.id,
@@ -542,6 +560,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const artifact = await putArtifact({
         contentBase64: input.contentBase64,
         fileId: input.fileId,
@@ -578,6 +597,7 @@ export const createCrmMcpServer = () => {
     },
     async (input) => {
       const scope = await getTaskRecordExecutionScope(input.execution)
+      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
       const manifest = await writeWorkspaceManifest({
         artifactIds: input.artifactIds,
         fileIds: input.fileIds,
@@ -608,6 +628,8 @@ export const createCrmMcpServer = () => {
       const fileId = getResourceVariable(variables.fileId, "fileId")
       const projectId = getResourceVariable(variables.projectId, "projectId")
       const recordId = getResourceVariable(variables.recordId, "recordId")
+
+      await assertMcpOrgOwnsProject({ projectId })
 
       const file = await getRecordFileById({
         fileId,
@@ -643,6 +665,8 @@ export const createCrmMcpServer = () => {
       const artifactId = getResourceVariable(variables.artifactId, "artifactId")
       const projectId = getResourceVariable(variables.projectId, "projectId")
       const recordId = getResourceVariable(variables.recordId, "recordId")
+
+      await assertMcpOrgOwnsProject({ projectId })
 
       const artifact = await getArtifactById({
         artifactId,

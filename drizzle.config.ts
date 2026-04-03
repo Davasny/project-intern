@@ -1,6 +1,6 @@
 import "dotenv/config"
 import { defineConfig } from "drizzle-kit"
-import { databaseConfig } from "@/lib/config/database";
+import { databaseConfig } from "@/lib/config/database"
 
 export default defineConfig({
   dialect: "postgresql",
@@ -16,6 +16,7 @@ export default defineConfig({
     "./src/features/agent-runs/db.ts",
     "./src/features/files/db.ts",
     "./src/features/artifacts/db.ts",
+    "./src/features/opencode/db.ts",
     "./src/features/pipelines/db.ts",
   ],
   out: "./drizzle",

@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, organization } from "better-auth/plugins"
@@ -8,28 +9,32 @@ import { backendConfig } from "@/lib/config/backend"
 import { frontendConfig } from "@/lib/config/frontend"
 import { db } from "@/lib/db"
 
-const organizationPlugin = organization({
-  schema: {
-    member: {
-      modelName: "organizationMembership",
-    },
-  },
-})
-
-const authPlugins = backendConfig.IS_DEVELOPMENT
-  ? [
-      organizationPlugin,
-      anonymous({
-        generateName: () => `Guest ${crypto.randomUUID().slice(0, 8)}`,
-        generateRandomEmail: () =>
-          `guest-${crypto.randomUUID()}@project-intern.local`,
-      }),
-    ]
-  : [organizationPlugin]
-
 export const auth = betterAuth({
   baseURL: backendConfig.BETTER_AUTH_URL,
   secret: backendConfig.BETTER_AUTH_SECRET,
+  plugins: [
+    organization({
+      schema: {
+        member: {
+          modelName: "organizationMembership",
+        },
+      },
+    }),
+    apiKey({
+      configId: "mcp",
+      defaultPrefix: "mcp_",
+      enableMetadata: true,
+      rateLimit: {
+        enabled: false,
+      },
+      references: "organization",
+    }),
+    anonymous({
+      generateName: () => `Guest ${crypto.randomUUID().slice(0, 8)}`,
+      generateRandomEmail: () =>
+        `guest-${crypto.randomUUID()}@project-intern.local`,
+    }),
+  ],
   advanced: {
     database: {
       generateId: "uuid",
@@ -89,5 +94,4 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: authPlugins,
 })

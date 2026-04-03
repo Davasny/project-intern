@@ -2,16 +2,17 @@ import type { Config } from "@opencode-ai/sdk"
 import { backendConfig } from "@/lib/config/backend"
 
 type BuildOpencodeConfigParams = {
+  mcpToken: string
   skillsPaths?: Array<string>
-  skillPermission?: "allow" | "deny" | "ask"
+  // skillPermission?: "allow" | "deny" | "ask"
 }
 
 export const buildOpencodeConfig = (
-  params: BuildOpencodeConfigParams = {},
+  params: BuildOpencodeConfigParams,
 ): Config => {
-  const { skillsPaths = [], skillPermission = "allow" } = params
+  const { mcpToken, skillsPaths = [] } = params
 
-  const partialConfig = {
+  const partialConfig: Config = {
     agent: {
       "record-worker": {
         description: "Scoped CRM record worker",
@@ -36,7 +37,7 @@ export const buildOpencodeConfig = (
     mcp: {
       crm: {
         headers: {
-          Authorization: `Bearer ${backendConfig.CRM_MCP_TOKEN}`,
+          Authorization: `Bearer ${mcpToken}`,
         },
         type: "remote",
         url: `${backendConfig.BETTER_AUTH_URL}/api/mcp`,
@@ -49,12 +50,8 @@ export const buildOpencodeConfig = (
       edit: "allow",
       external_directory: "deny",
       webfetch: "allow",
-      skill: skillPermission,
-    },
-    skills: {
-      paths: skillsPaths,
     },
   }
 
-  return partialConfig as Config
+  return partialConfig
 }

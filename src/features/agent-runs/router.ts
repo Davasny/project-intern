@@ -1,7 +1,10 @@
+import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 import { getAgentRunById } from "@/features/agent-runs/lib/get-agent-run-by-id"
 import { getAgentRunSessionMessages } from "@/features/agent-runs/lib/get-agent-run-session-messages"
 import { listAgentRuns } from "@/features/agent-runs/lib/list-agent-runs"
+import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
+import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { protectedProcedure, router } from "@/lib/trpc/init"
 
 const projectScopeSchema = z.object({
@@ -39,12 +42,30 @@ export const agentRunsRouter = router({
         agentRunId: z.string().uuid(),
       }),
     )
-    .query(async ({ ctx, input }) =>
-      getAgentRunSessionMessages({
-        agentRunId: input.agentRunId,
+    .query(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
         userId: ctx.session.user.id,
-      }),
-    ),
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return withOpencodeForOrg({
+        fn: async ({ client }) =>
+          getAgentRunSessionMessages({
+            agentRunId: input.agentRunId,
+            client,
+            organizationSlug: input.organizationSlug,
+            projectSlug: input.projectSlug,
+            userId: ctx.session.user.id,
+          }),
+        organizationId: project.organizationId,
+      })
+    }),
 })

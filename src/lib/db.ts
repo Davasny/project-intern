@@ -5,6 +5,7 @@ import { artifactTable } from "@/features/artifacts/db"
 import { authSchema } from "@/features/auth/schema"
 import { sourceFileTable } from "@/features/files/db"
 import { activityLogTable } from "@/features/observability/db"
+import { opencodeServerTable } from "@/features/opencode/db"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
 import { recordEdgeTable } from "@/features/record-edges/db"
@@ -26,6 +27,7 @@ const schema = {
   taskDescriptionRevisionTable,
   taskRecordTable,
   taskTable,
+  opencodeServerTable,
 }
 
 const globalForDatabase = globalThis as {

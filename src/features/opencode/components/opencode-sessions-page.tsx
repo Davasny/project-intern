@@ -1,7 +1,13 @@
 "use client"
 
 import { useMutation } from "@tanstack/react-query"
-import { CheckIcon, CopyIcon, PlusIcon, RefreshCwIcon } from "lucide-react"
+import {
+  CheckIcon,
+  CopyIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  StopCircleIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header/page-header"
@@ -20,11 +26,25 @@ export const OpencodeSessionsPage = () => {
     trpc.opencode.spawnSession.mutationOptions(),
   )
 
+  const stopMutation = useMutation(trpc.opencode.stopSession.mutationOptions())
+
   const handleSpawn = () => {
     spawnMutation.mutate({
       organizationSlug,
       projectSlug,
     })
+  }
+
+  const handleStop = () => {
+    if (!spawnMutation.data?.serverId) return
+    stopMutation.mutate(
+      { serverId: spawnMutation.data.serverId },
+      {
+        onSuccess: () => {
+          spawnMutation.reset()
+        },
+      },
+    )
   }
 
   const handleCopyCommand = async () => {
@@ -54,24 +74,43 @@ export const OpencodeSessionsPage = () => {
               Spawn a new session
             </span>
             <span className="text-xs text-muted-foreground">
-              Creates an ephemeral session on the OpenCode server. Use the
-              generated command to attach from your terminal.
+              Starts a dedicated OpenCode server and creates a session. Use the
+              generated command to attach from your terminal. Stop the server
+              when done to free resources.
             </span>
           </div>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleSpawn}
-            disabled={spawnMutation.isPending}
-            className="gap-2"
-          >
-            {spawnMutation.isPending ? (
-              <RefreshCwIcon className="size-3.5 animate-spin" />
-            ) : (
-              <PlusIcon className="size-3.5" />
-            )}
-            {spawnMutation.isPending ? "Spawning..." : "Spawn Session"}
-          </Button>
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleSpawn}
+              disabled={spawnMutation.isPending || !!spawnMutation.data}
+              className="gap-2"
+            >
+              {spawnMutation.isPending ? (
+                <RefreshCwIcon className="size-3.5 animate-spin" />
+              ) : (
+                <PlusIcon className="size-3.5" />
+              )}
+              {spawnMutation.isPending ? "Spawning..." : "Spawn Session"}
+            </Button>
+            {spawnMutation.data ? (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleStop}
+                disabled={stopMutation.isPending}
+                className="gap-2"
+              >
+                {stopMutation.isPending ? (
+                  <RefreshCwIcon className="size-3.5 animate-spin" />
+                ) : (
+                  <StopCircleIcon className="size-3.5" />
+                )}
+                {stopMutation.isPending ? "Stopping..." : "Stop Server"}
+              </Button>
+            ) : null}
+          </div>
         </SectionCardHeader>
         <SectionCardContent>
           {spawnMutation.data ? (

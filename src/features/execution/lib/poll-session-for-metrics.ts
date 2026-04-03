@@ -1,16 +1,18 @@
+import type { OpencodeClient } from "@opencode-ai/sdk"
+import type pino from "pino"
 import { updateAgentRunMetrics } from "@/features/agent-runs/lib/update-agent-run-metrics"
 import { logger as rootLogger } from "@/lib/logger"
-import { getOpencodeClient } from "@/lib/opencode/get-opencode-client"
 
 type PollSessionForMetricsParams = {
   sessionId: string
   agentRunId: string
+  client: OpencodeClient
   intervalMs?: number
   timeoutMs?: number
 }
 
 const DEFAULT_INTERVAL_MS = 2000
-const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
+const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000
 
 type SessionStatus =
   | { type: "idle" }
@@ -20,6 +22,7 @@ type SessionStatus =
 export const pollSessionForMetrics = async ({
   sessionId,
   agentRunId,
+  client,
   intervalMs = DEFAULT_INTERVAL_MS,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 }: PollSessionForMetricsParams) => {
@@ -30,14 +33,12 @@ export const pollSessionForMetrics = async ({
   const startTime = Date.now()
 
   const poll = async (): Promise<void> => {
-    // Check if we've exceeded timeout
     if (Date.now() - startTime > timeoutMs) {
       log.warn("Polling timed out waiting for session to become idle")
       return
     }
 
     try {
-      const client = await getOpencodeClient()
       const statusResult = await client.session.status()
 
       if (!statusResult.data) {
@@ -55,7 +56,7 @@ export const pollSessionForMetrics = async ({
 
       if (sessionStatus.type === "idle") {
         log.info("Session is idle, fetching messages for metrics")
-        await fetchAndUpdateMetrics(sessionId, agentRunId, log)
+        await fetchAndUpdateMetrics({ agentRunId, client, log, sessionId })
         return
       }
 
@@ -66,7 +67,6 @@ export const pollSessionForMetrics = async ({
         )
       }
 
-      // Session is busy, wait and poll again
       setTimeout(poll, intervalMs)
     } catch (error) {
       log.error(
@@ -76,23 +76,25 @@ export const pollSessionForMetrics = async ({
         },
         "Error polling session status",
       )
-      // Continue polling despite errors
       setTimeout(poll, intervalMs)
     }
   }
 
-  // Start polling
   setTimeout(poll, intervalMs)
 }
 
-async function fetchAndUpdateMetrics(
-  sessionId: string,
-  agentRunId: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  log: any,
-) {
+async function fetchAndUpdateMetrics({
+  agentRunId,
+  client,
+  log,
+  sessionId,
+}: {
+  agentRunId: string
+  client: OpencodeClient
+  log: pino.Logger
+  sessionId: string
+}) {
   try {
-    const client = await getOpencodeClient()
     const messagesResult = await client.session.messages({
       path: { id: sessionId },
     })
@@ -102,7 +104,6 @@ async function fetchAndUpdateMetrics(
       return
     }
 
-    // Filter assistant messages and aggregate metrics
     const assistantMessages = messagesResult.data.filter(
       (msg) => msg.info.role === "assistant",
     )
@@ -112,7 +113,6 @@ async function fetchAndUpdateMetrics(
       return
     }
 
-    // Aggregate cost and tokens from all assistant messages
     let totalCost = 0
     let totalInputTokens = 0
     let totalOutputTokens = 0
@@ -130,7 +130,6 @@ async function fetchAndUpdateMetrics(
       totalOutputTokens += assistantMsg.tokens?.output ?? 0
     }
 
-    // Calculate latency from first to last assistant message
     const firstMsg = assistantMessages[0]
     const lastMsg = assistantMessages[assistantMessages.length - 1]
 
@@ -144,12 +143,10 @@ async function fetchAndUpdateMetrics(
       latencyMs = lastTime - firstTime
     }
 
-    // Count tool calls by looking for messages with tool-related parts
     let toolCallCount = 0
     for (const msg of messagesResult.data) {
       if (msg.parts) {
         for (const part of msg.parts) {
-          // MCP tool result parts have type "tool_result"
           const partType = (part as { type?: string }).type
           if (partType === "tool_result") {
             toolCallCount++

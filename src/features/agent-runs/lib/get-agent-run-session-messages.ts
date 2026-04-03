@@ -1,4 +1,4 @@
-import type { Message, Part } from "@opencode-ai/sdk"
+import type { Message, OpencodeClient, Part } from "@opencode-ai/sdk"
 import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
 import { agentRunTable } from "@/features/agent-runs/db"
@@ -7,10 +7,10 @@ import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
-import { getOpencodeClient } from "@/lib/opencode/get-opencode-client"
 
 type GetAgentRunSessionMessagesParams = {
   agentRunId: string
+  client: OpencodeClient
   organizationSlug: string
   projectSlug: string
   userId: string
@@ -387,6 +387,7 @@ const toSessionMessage = ({
 
 export const getAgentRunSessionMessages = async ({
   agentRunId,
+  client,
   organizationSlug,
   projectSlug,
   userId,
@@ -441,7 +442,6 @@ export const getAgentRunSessionMessages = async ({
   }
 
   try {
-    const client = await getOpencodeClient()
     const response = await client.session.messages({
       path: {
         id: currentRun.sessionReference,

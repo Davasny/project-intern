@@ -12,7 +12,7 @@ export const logger = pino(
     base: {
       service: "project-intern",
     },
-    level: process.env.NODE_ENV === "development" ? "debug" : "info",
+    level: process.env.NODE_ENV === "development" ? "trace" : "trace",
     redact: {
       paths: [
         "payload.token",

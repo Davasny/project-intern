@@ -1,13 +1,13 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
+import { stopInteractiveServer } from "@/features/opencode/lib/get-opencode-client"
 import { listDiskSkills } from "@/features/opencode/lib/list-disk-skills"
 import {
-  getServerUrl,
+  listSessionsOnExternalServer,
   spawnSession,
 } from "@/features/opencode/lib/spawn-session"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { getProjectSkillsDirectory } from "@/lib/config/backend"
-import { getOpencodeClient } from "@/lib/opencode/get-opencode-client"
 import { protectedProcedure, router } from "@/lib/trpc/init"
 
 const projectScopeSchema = z.object({
@@ -86,39 +86,26 @@ export const opencodeRouter = router({
       }
 
       return spawnSession({
+        organizationId: project.organizationId,
         projectId: project.id,
         title: input.title,
       })
     }),
+  stopSession: protectedProcedure
+    .input(
+      z.object({
+        serverId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      await stopInteractiveServer({
+        serverId: input.serverId,
+      })
+    }),
   listSessions: protectedProcedure
     .input(projectScopeSchema)
-    .query(async ({ ctx, input }) => {
-      const project = await ensureProjectAccess({
-        organizationSlug: input.organizationSlug,
-        projectSlug: input.projectSlug,
-        userId: ctx.session.user.id,
-      })
-
-      if (!project) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have access to this project.",
-        })
-      }
-
-      const client = await getOpencodeClient()
-      const sessionsResponse = await client.session.list()
-
-      const serverUrl = getServerUrl()
-
-      const sessions =
-        sessionsResponse.data?.map((session) => ({
-          id: session.id,
-          title: session.title ?? "Untitled session",
-          createdAt: session.time.created,
-          directory: session.directory,
-          cliCommand: `opencode attach ${serverUrl} --session ${session.id} --dir ${session.directory}`,
-        })) ?? []
+    .query(async ({ input }) => {
+      const sessions = await listSessionsOnExternalServer()
 
       return { sessions }
     }),

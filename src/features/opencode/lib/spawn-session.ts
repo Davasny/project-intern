@@ -1,28 +1,38 @@
 import fs from "node:fs/promises"
+import path from "node:path"
+import { linkProjectSkillsToWorkspace } from "@/features/execution/lib/link-project-skills-to-workspace"
+import {
+  getExternalOpencodeClient,
+  startInteractiveServer,
+} from "@/features/opencode/lib/get-opencode-client"
 import {
   backendConfig,
+  getProjectSkillsDirectory,
   getProjectWorkspaceDirectory,
 } from "@/lib/config/backend"
 import { logger } from "@/lib/logger"
-import { getOpencodeClient } from "@/lib/opencode/get-opencode-client"
 
 type SpawnSessionParams = {
+  organizationId: string
   projectId: string
   title: string
 }
 
 type SpawnSessionResult = {
-  sessionId: string
+  baseUrl: string
   cliCommand: string
   directory: string
+  port: number | null
+  serverId: string | null
+  sessionId: string
 }
 
-export const getServerUrl = () => {
+export const getServerUrl = (port?: number) => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
     return backendConfig.CRM_OPENCODE_BASE_URL
   }
 
-  return `http://${backendConfig.CRM_OPENCODE_HOST}:${String(backendConfig.CRM_OPENCODE_PORT)}`
+  return `http://${backendConfig.CRM_OPENCODE_HOST}:${String(port ?? backendConfig.CRM_OPENCODE_PORT)}`
 }
 
 const buildAttachCommand = (
@@ -32,16 +42,27 @@ const buildAttachCommand = (
 ) => `opencode attach ${serverUrl} --session ${sessionId} --dir ${directory}`
 
 export const spawnSession = async ({
+  organizationId,
   projectId,
   title,
 }: SpawnSessionParams): Promise<SpawnSessionResult> => {
   const directory = getProjectWorkspaceDirectory(projectId)
+  const skillsDirectory = getProjectSkillsDirectory(organizationId, projectId)
+  const opencodeSkillsDirectory = path.join(directory, ".opencode", "skills")
 
-  await fs.mkdir(directory, { recursive: true })
+  await Promise.all([
+    fs.mkdir(directory, { recursive: true }),
+    fs.mkdir(opencodeSkillsDirectory, { recursive: true }),
+  ])
 
-  const client = await getOpencodeClient()
+  await linkProjectSkillsToWorkspace({
+    opencodeSkillsDirectory,
+    projectSkillsDirectory: skillsDirectory,
+  })
 
-  const session = await client.session.create({
+  const started = await startInteractiveServer({ organizationId })
+
+  const session = await started.client.session.create({
     body: { title },
     query: { directory },
   })
@@ -50,20 +71,44 @@ export const spawnSession = async ({
     throw new Error("OpenCode session could not be created.")
   }
 
-  const serverUrl = getServerUrl()
+  const serverUrl = getServerUrl(started.port ?? undefined)
   const cliCommand = buildAttachCommand(serverUrl, session.data.id, directory)
 
   logger.info(
     {
       sessionId: session.data.id,
       projectId,
+      serverId: started.serverId ?? null,
     },
     "Spawned OpenCode session",
   )
 
   return {
-    sessionId: session.data.id,
+    baseUrl: started.baseUrl,
     cliCommand,
     directory,
+    port: started.port,
+    serverId: started.serverId ?? null,
+    sessionId: session.data.id,
   }
+}
+
+export const listSessionsOnExternalServer = async () => {
+  const client = getExternalOpencodeClient()
+
+  if (!client) {
+    return []
+  }
+
+  const sessionsResponse = await client.session.list()
+
+  return (
+    sessionsResponse.data?.map((session) => ({
+      id: session.id,
+      title: session.title ?? "Untitled session",
+      createdAt: session.time.created,
+      directory: session.directory,
+      cliCommand: `opencode attach ${backendConfig.CRM_OPENCODE_BASE_URL} --session ${session.id} --dir ${session.directory}`,
+    })) ?? []
+  )
 }
