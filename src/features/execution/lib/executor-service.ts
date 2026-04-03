@@ -1,7 +1,6 @@
 import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-booting"
 import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
 import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
-import { buildTaskRecordSystemPrompt } from "@/features/execution/lib/build-task-record-system-prompt"
 import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
 import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
@@ -9,13 +8,15 @@ import { getAgentRunExecutionScope } from "@/features/execution/lib/get-agent-ru
 import { hydrateRecordWorkspace } from "@/features/execution/lib/hydrate-record-workspace"
 import { linkProjectSkillsToWorkspace } from "@/features/execution/lib/link-project-skills-to-workspace"
 import { pollSessionForMetrics } from "@/features/execution/lib/poll-session-for-metrics"
-import { resolveRuntimeModel } from "@/features/execution/lib/resolve-runtime-model"
 import { writeWorkspaceManifest } from "@/features/execution/lib/write-workspace-manifest"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
 import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
 import { startTaskRecord } from "@/features/task-records/lib/start-task-record"
+import { recordWorkerAgent } from "@/lib/llm/agents"
+import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-prompt"
+import { resolveRuntimeModel } from "@/lib/llm/resolve-runtime-model"
 import { logger } from "@/lib/logger"
 
 type ExecutorServiceParams = {
@@ -329,7 +330,7 @@ export const executorService = async ({
 
         await client.session.promptAsync({
           body: {
-            agent: "record-worker",
+            agent: recordWorkerAgent.name,
             model: {
               modelID,
               providerID,

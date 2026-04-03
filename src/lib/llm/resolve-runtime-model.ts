@@ -1,6 +1,6 @@
-import { validateApprovedTaskModel } from "@/features/execution/lib/validate-approved-task-model"
-import type { RuntimeModel } from "@/features/execution/schemas/runtime-model"
 import { backendConfig } from "@/lib/config/backend"
+import type { RuntimeModel } from "@/lib/llm/validate-approved-task-model"
+import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
 
 type ResolveRuntimeModelParams = {
   taskModel: string | null

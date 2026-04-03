@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
-import { validateApprovedTaskModel } from "@/features/execution/lib/validate-approved-task-model"
 import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get-active-project-schema-version"
 import { taskTable } from "@/features/tasks/db"
 import { createProjectTask } from "@/features/tasks/lib/create-project-task"
 import type { TaskInput } from "@/features/tasks/schemas/task-input"
 import { db } from "@/lib/db"
+import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
 
 type CreateTaskParams = {
   input: TaskInput

@@ -3,6 +3,8 @@ import { runtimeModelSchema } from "@/features/execution/schemas/runtime-model"
 import { backendConfig } from "@/lib/config/backend"
 import { logger } from "@/lib/logger"
 
+export type RuntimeModel = typeof runtimeModelSchema._output
+
 type ValidateApprovedTaskModelParams = {
   model: string | null
 }

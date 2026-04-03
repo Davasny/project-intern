@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server"
 import { and, desc, eq } from "drizzle-orm"
-import { validateApprovedTaskModel } from "@/features/execution/lib/validate-approved-task-model"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import type { TaskUpdateInput } from "@/features/tasks/schemas/task-input"
 import { db } from "@/lib/db"
+import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
 import { logger } from "@/lib/logger"
 
 type UpdateTaskParams = {
