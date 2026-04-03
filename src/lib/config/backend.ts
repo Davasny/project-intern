@@ -83,3 +83,12 @@ export const getProjectSkillsDirectory = (
     projectId,
     "skills",
   )
+
+export const getProjectWorkspaceDirectory = (projectId: string) =>
+  path.join(parsedBackendConfig.CRM_WORKSPACE_ROOT, "projects", projectId)
+
+export const getProjectVenvPath = (projectId: string) =>
+  path.join(getProjectWorkspaceDirectory(projectId), ".venv")
+
+export const getProjectRequirementsPath = (projectId: string) =>
+  path.join(getProjectWorkspaceDirectory(projectId), "requirements-agent.txt")

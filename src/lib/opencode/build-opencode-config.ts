@@ -17,11 +17,11 @@ export const buildOpencodeConfig = (
         description: "Scoped CRM record worker",
         maxSteps: 12,
         permission: {
-          bash: "deny",
+          bash: "allow",
           doom_loop: "deny",
           edit: "allow",
           external_directory: "deny",
-          webfetch: "deny",
+          webfetch: "allow",
         },
         prompt:
           "You execute one scoped CRM record task at a time. Use the crm MCP server for record, relation, file, artifact, and workspace operations. Do not mutate records outside the current task scope.",
@@ -44,11 +44,11 @@ export const buildOpencodeConfig = (
     },
     model: backendConfig.CRM_DEFAULT_RUNTIME_MODEL,
     permission: {
-      bash: "deny",
+      bash: "allow",
       doom_loop: "deny",
       edit: "allow",
       external_directory: "deny",
-      webfetch: "deny",
+      webfetch: "allow",
       skill: skillPermission,
     },
     skills: {

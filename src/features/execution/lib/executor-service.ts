@@ -2,6 +2,7 @@ import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-bo
 import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
 import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
 import { buildTaskRecordSystemPrompt } from "@/features/execution/lib/build-task-record-system-prompt"
+import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
 import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
 import { getAgentRunExecutionScope } from "@/features/execution/lib/get-agent-run-execution-scope"
@@ -79,6 +80,22 @@ export const executorService = async ({
     executionLogger.info(
       { skillsDirectory: projectSkills.skillsDirectory },
       "Ensured project skills directory",
+    )
+
+    executionLogger.info("Ensuring project Python environment")
+
+    const pythonEnv = await ensureProjectPythonEnv({
+      projectId: initialScope.project.id,
+    })
+
+    executionLogger.info(
+      {
+        installCount: pythonEnv.installCount,
+        isNew: pythonEnv.isNew,
+        pythonPath: pythonEnv.pythonPath,
+        venvPath: pythonEnv.venvPath,
+      },
+      "Project Python environment ready",
     )
 
     executionLogger.info("Hydrating record workspace")
@@ -221,6 +238,7 @@ export const executorService = async ({
       execution: {
         agentRunId: initialScope.agentRun.id,
         projectId: initialScope.project.id,
+        pythonPath: pythonEnv.pythonPath,
         recordId: initialScope.record.id,
         taskId: initialScope.task.id,
         taskRecordId: initialScope.taskRecord.id,
