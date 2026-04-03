@@ -1,27 +1,12 @@
-import { readFile } from "node:fs/promises"
-import { extname } from "node:path"
-import {
-  McpServer,
-  ResourceTemplate,
-} from "@modelcontextprotocol/sdk/server/mcp.js"
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
-import { getArtifact } from "@/features/artifacts/lib/get-artifact"
-import { getArtifactById } from "@/features/artifacts/lib/get-artifact-by-id"
-import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
-import { putArtifact } from "@/features/artifacts/lib/put-artifact"
-import { resolveArtifactStoragePath } from "@/features/artifacts/lib/resolve-artifact-storage-path"
 import { completeScopedTaskRecord } from "@/features/execution/lib/complete-scoped-task-record"
 import { failScopedTaskRecord } from "@/features/execution/lib/fail-scoped-task-record"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
 import { getTaskRecordPatchSchemaVersion } from "@/features/execution/lib/get-task-record-patch-schema-version"
-import { writeWorkspaceManifest } from "@/features/execution/lib/write-workspace-manifest"
 import { executionRunScopeSchema } from "@/features/execution/schemas/execution-run-scope"
 import { patchProposalSchema } from "@/features/execution/schemas/patch-proposal"
 import { taskFailureSchema } from "@/features/execution/schemas/task-failure"
-import { fetchRecordFile } from "@/features/files/lib/fetch-record-file"
-import { getRecordFileById } from "@/features/files/lib/get-record-file-by-id"
-import { listRecordFiles } from "@/features/files/lib/list-record-files"
-import { resolveSourceFileStoragePath } from "@/features/files/lib/resolve-source-file-storage-path"
 import { createProjectSchemaVersionProposalByProjectId } from "@/features/project-schema/lib/create-project-schema-version-proposal-by-project-id"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listProjectSchemaVersionsByProjectId } from "@/features/project-schema/lib/list-project-schema-versions-by-project-id"
@@ -35,8 +20,6 @@ import { applyRecordPatch } from "@/features/records/lib/apply-record-patch"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 import { proposeRecordPatch } from "@/features/records/lib/propose-record-patch"
 import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
-import { createArtifactResourceUri } from "@/lib/mcp/create-artifact-resource-uri"
-import { createFileResourceUri } from "@/lib/mcp/create-file-resource-uri"
 import { createMcpJsonResponse } from "@/lib/mcp/create-mcp-json-response"
 import { getMcpScope } from "@/lib/mcp/mcp-scope-storage"
 
@@ -83,82 +66,10 @@ const relationDeactivateInputSchema = z.object({
   recordEdgeId: z.string().uuid(),
 })
 
-const fileFetchInputSchema = z.object({
-  execution: executionScopeInputSchema,
-  fileId: z.string().uuid(),
-})
-
-const artifactGetInputSchema = z.object({
-  artifactId: z.string().uuid(),
-  execution: executionScopeInputSchema,
-})
-
-const artifactPutInputSchema = z.object({
-  contentBase64: z.string().trim().min(1),
-  execution: executionScopeInputSchema,
-  fileId: z.string().uuid(),
-  fileName: z.string().trim().min(1),
-  idempotencyKey: z.string().trim().min(1),
-  metadata: z.record(z.string(), z.unknown()),
-  mimeType: z.string().trim().min(1),
-  stage: z.string().trim().min(1),
-})
-
 const relatedRecordInputSchema = z.object({
   execution: executionScopeInputSchema,
   recordEdgeId: z.string().uuid(),
 })
-
-const workspaceManifestInputSchema = z.object({
-  artifactIds: z.array(z.string().uuid()),
-  execution: executionScopeInputSchema,
-  fileIds: z.array(z.string().uuid()),
-})
-
-const createResourceContent = async (params: {
-  mimeType: string
-  uri: string
-  filePath: string
-}) => {
-  const buffer = await readFile(params.filePath)
-  const isTextLike =
-    params.mimeType.startsWith("text/") ||
-    params.mimeType === "application/json" ||
-    extname(params.filePath) === ".json"
-
-  if (isTextLike) {
-    return {
-      contents: [
-        {
-          mimeType: params.mimeType,
-          text: buffer.toString("utf8"),
-          uri: params.uri,
-        },
-      ],
-    }
-  }
-
-  return {
-    contents: [
-      {
-        blob: buffer.toString("base64"),
-        mimeType: params.mimeType,
-        uri: params.uri,
-      },
-    ],
-  }
-}
-
-const getResourceVariable = (
-  variable: string | string[],
-  variableName: string,
-) => {
-  if (typeof variable === "string") {
-    return variable
-  }
-
-  throw new Error(`Resource variable ${variableName} must be a single string.`)
-}
 
 export const createCrmMcpServer = () => {
   const server = new McpServer({
@@ -465,256 +376,6 @@ export const createCrmMcpServer = () => {
       return createMcpJsonResponse({
         data: relation,
         ok: true,
-      })
-    },
-  )
-
-  server.registerTool(
-    "crm_record_list_files",
-    {
-      description: "List files available for the scoped record.",
-      inputSchema: executionScopeInputSchema,
-    },
-    async (input) => {
-      const scope = await getTaskRecordExecutionScope(input)
-      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
-      const files = await listRecordFiles({
-        projectId: scope.project.id,
-        recordId: scope.record.id,
-      })
-
-      return createMcpJsonResponse({
-        data: files.map((file) => ({
-          ...file,
-          resourceUri: createFileResourceUri({
-            fileId: file.id,
-            projectId: scope.project.id,
-            recordId: scope.record.id,
-          }),
-        })),
-        ok: true,
-      })
-    },
-  )
-
-  server.registerTool(
-    "crm_record_fetch_file",
-    {
-      description: "Hydrate one scoped file into the record workspace.",
-      inputSchema: fileFetchInputSchema,
-    },
-    async (input) => {
-      const scope = await getTaskRecordExecutionScope(input.execution)
-      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
-      const fetchedFile = await fetchRecordFile({
-        fileId: input.fileId,
-        projectId: scope.project.id,
-        recordId: scope.record.id,
-      })
-
-      return createMcpJsonResponse({
-        data: {
-          ...fetchedFile,
-          resourceUri: createFileResourceUri({
-            fileId: fetchedFile.file.id,
-            projectId: scope.project.id,
-            recordId: scope.record.id,
-          }),
-        },
-        ok: true,
-      })
-    },
-  )
-
-  server.registerTool(
-    "crm_record_list_artifacts",
-    {
-      description: "List artifacts available for the scoped record.",
-      inputSchema: executionScopeInputSchema,
-    },
-    async (input) => {
-      const scope = await getTaskRecordExecutionScope(input)
-      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
-      const artifacts = await listArtifacts({
-        projectId: scope.project.id,
-        recordId: scope.record.id,
-      })
-
-      return createMcpJsonResponse({
-        data: artifacts.map((artifact) => ({
-          ...artifact,
-          resourceUri: createArtifactResourceUri({
-            artifactId: artifact.id,
-            projectId: scope.project.id,
-            recordId: scope.record.id,
-          }),
-        })),
-        ok: true,
-      })
-    },
-  )
-
-  server.registerTool(
-    "crm_record_get_artifact",
-    {
-      description: "Hydrate one artifact into the scoped record workspace.",
-      inputSchema: artifactGetInputSchema,
-    },
-    async (input) => {
-      const scope = await getTaskRecordExecutionScope(input.execution)
-      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
-      const hydratedArtifact = await getArtifact({
-        artifactId: input.artifactId,
-        projectId: scope.project.id,
-        recordId: scope.record.id,
-      })
-
-      return createMcpJsonResponse({
-        data: {
-          ...hydratedArtifact,
-          resourceUri: createArtifactResourceUri({
-            artifactId: hydratedArtifact.artifact.id,
-            projectId: scope.project.id,
-            recordId: scope.record.id,
-          }),
-        },
-        ok: true,
-      })
-    },
-  )
-
-  server.registerTool(
-    "crm_record_put_artifact",
-    {
-      description: "Persist a new artifact for the scoped record.",
-      inputSchema: artifactPutInputSchema,
-    },
-    async (input) => {
-      const scope = await getTaskRecordExecutionScope(input.execution)
-      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
-      const artifact = await putArtifact({
-        contentBase64: input.contentBase64,
-        fileId: input.fileId,
-        fileName: input.fileName,
-        idempotencyKey: input.idempotencyKey,
-        metadata: input.metadata,
-        mimeType: input.mimeType,
-        projectId: scope.project.id,
-        recordId: scope.record.id,
-        stage: input.stage,
-        userId: null,
-      })
-
-      return createMcpJsonResponse({
-        data: {
-          ...artifact,
-          resourceUri: createArtifactResourceUri({
-            artifactId: artifact.id,
-            projectId: scope.project.id,
-            recordId: scope.record.id,
-          }),
-        },
-        ok: true,
-      })
-    },
-  )
-
-  server.registerTool(
-    "crm_record_write_workspace_manifest",
-    {
-      description:
-        "Write the workspace manifest for the scoped record workspace.",
-      inputSchema: workspaceManifestInputSchema,
-    },
-    async (input) => {
-      const scope = await getTaskRecordExecutionScope(input.execution)
-      await assertMcpOrgOwnsProject({ projectId: scope.project.id })
-      const manifest = await writeWorkspaceManifest({
-        artifactIds: input.artifactIds,
-        fileIds: input.fileIds,
-        projectId: scope.project.id,
-        recordId: scope.record.id,
-        taskId: scope.task.id,
-      })
-
-      return createMcpJsonResponse({
-        data: manifest,
-        ok: true,
-      })
-    },
-  )
-
-  server.registerResource(
-    "crm-file",
-    new ResourceTemplate(
-      "crm://projects/{projectId}/records/{recordId}/files/{fileId}",
-      { list: undefined },
-    ),
-    {
-      description:
-        "Read canonical file payload bytes for a scoped record file.",
-      mimeType: "application/octet-stream",
-    },
-    async (_uri, variables) => {
-      const fileId = getResourceVariable(variables.fileId, "fileId")
-      const projectId = getResourceVariable(variables.projectId, "projectId")
-      const recordId = getResourceVariable(variables.recordId, "recordId")
-
-      await assertMcpOrgOwnsProject({ projectId })
-
-      const file = await getRecordFileById({
-        fileId,
-        projectId,
-        recordId,
-      })
-
-      return createResourceContent({
-        filePath: resolveSourceFileStoragePath({
-          storagePath: file.storagePath,
-        }),
-        mimeType: file.mimeType,
-        uri: createFileResourceUri({
-          fileId: file.id,
-          projectId,
-          recordId,
-        }),
-      })
-    },
-  )
-
-  server.registerResource(
-    "crm-artifact",
-    new ResourceTemplate(
-      "crm://projects/{projectId}/records/{recordId}/artifacts/{artifactId}",
-      { list: undefined },
-    ),
-    {
-      description: "Read artifact payload bytes for a scoped record artifact.",
-      mimeType: "application/octet-stream",
-    },
-    async (_uri, variables) => {
-      const artifactId = getResourceVariable(variables.artifactId, "artifactId")
-      const projectId = getResourceVariable(variables.projectId, "projectId")
-      const recordId = getResourceVariable(variables.recordId, "recordId")
-
-      await assertMcpOrgOwnsProject({ projectId })
-
-      const artifact = await getArtifactById({
-        artifactId,
-        projectId,
-        recordId,
-      })
-
-      return createResourceContent({
-        filePath: resolveArtifactStoragePath({
-          storagePath: artifact.storagePath,
-        }),
-        mimeType: artifact.mimeType,
-        uri: createArtifactResourceUri({
-          artifactId: artifact.id,
-          projectId,
-          recordId,
-        }),
       })
     },
   )

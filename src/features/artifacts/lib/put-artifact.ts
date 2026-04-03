@@ -6,64 +6,60 @@ import { artifactTable } from "@/features/artifacts/db"
 import { createArtifactStoragePath } from "@/features/artifacts/lib/create-artifact-storage-path"
 import { getReusableArtifact } from "@/features/artifacts/lib/get-reusable-artifact"
 import { resolveArtifactStoragePath } from "@/features/artifacts/lib/resolve-artifact-storage-path"
-import { sourceFileTable } from "@/features/files/db"
+import { projectTable } from "@/features/projects/db"
+import { recordTable } from "@/features/records/db"
 import { db } from "@/lib/db"
 
 type PutArtifactParams = {
   contentBase64: string
-  fileId: string
+  filePath: string
   fileName: string
   idempotencyKey: string
   metadata: Record<string, unknown>
   mimeType: string
   projectId: string
   recordId: string
+  sourceHash: string
   stage: string
   userId: string | null
 }
 
 export const putArtifact = async ({
   contentBase64,
-  fileId,
+  filePath,
   fileName,
   idempotencyKey,
   metadata,
   mimeType,
   projectId,
   recordId,
+  sourceHash,
   stage,
   userId,
 }: PutArtifactParams) => {
   const buffer = Buffer.from(contentBase64, "base64")
-  const sourceFile = await db
+  const scope = await db
     .select({
-      id: sourceFileTable.id,
-      organizationId: sourceFileTable.organizationId,
-      projectId: sourceFileTable.projectId,
-      recordId: sourceFileTable.recordId,
-      sha256: sourceFileTable.sha256,
+      organizationId: projectTable.organizationId,
     })
-    .from(sourceFileTable)
+    .from(recordTable)
+    .innerJoin(projectTable, eq(projectTable.id, recordTable.projectId))
     .where(
-      and(
-        eq(sourceFileTable.id, fileId),
-        eq(sourceFileTable.projectId, projectId),
-        eq(sourceFileTable.recordId, recordId),
-      ),
+      and(eq(recordTable.id, recordId), eq(recordTable.projectId, projectId)),
     )
     .then((rows) => rows[0] ?? null)
 
-  if (!sourceFile) {
+  if (!scope) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "Source file was not found for this artifact.",
+      message: "Record was not found for this artifact.",
     })
   }
 
   const existingArtifact = await getReusableArtifact({
-    fileId,
+    filePath,
     recordId,
-    sourceHash: sourceFile.sha256,
+    sourceHash,
     stage,
   })
 
@@ -77,7 +73,7 @@ export const putArtifact = async ({
   const storagePath = createArtifactStoragePath({
     artifactId,
     extension,
-    organizationId: sourceFile.organizationId,
+    organizationId: scope.organizationId,
     projectId,
     stage,
   })
@@ -92,7 +88,7 @@ export const putArtifact = async ({
     .insert(artifactTable)
     .values({
       createdByUserId: userId,
-      fileId,
+      filePath,
       fileName: sanitizedFileName,
       format,
       metadata: {
@@ -100,11 +96,11 @@ export const putArtifact = async ({
         idempotencyKey,
       },
       mimeType,
-      organizationId: sourceFile.organizationId,
+      organizationId: scope.organizationId,
       projectId,
       recordId,
       sizeBytes: buffer.byteLength,
-      sourceHash: sourceFile.sha256,
+      sourceHash,
       stage,
       state: "available",
       storagePath,

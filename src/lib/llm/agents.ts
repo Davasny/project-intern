@@ -1,5 +1,5 @@
-import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-prompt"
 import type { AgentConfig } from "@opencode-ai/sdk"
+import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-prompt"
 
 export type Agent = AgentConfig & {
   name: string
@@ -15,7 +15,8 @@ export const recordWorkerAgent: Agent = {
   maxSteps: 12,
   prompt: `
 You execute one scoped CRM record task at a time. 
-Use the crm MCP server for record, relation, file, artifact, and workspace operations.
+Use the crm MCP server for scoped record and relation operations.
+Record workspace files are preloaded into ./data before the run starts.
 Do not mutate records outside the current task scope.    
     `,
   systemPromptFn: buildTaskRecordSystemPrompt,

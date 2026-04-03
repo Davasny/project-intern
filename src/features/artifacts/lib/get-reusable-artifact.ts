@@ -3,14 +3,14 @@ import { artifactTable } from "@/features/artifacts/db"
 import { db } from "@/lib/db"
 
 type GetReusableArtifactParams = {
-  fileId: string
+  filePath: string
   recordId: string
   sourceHash: string
   stage: string
 }
 
 export const getReusableArtifact = ({
-  fileId,
+  filePath,
   recordId,
   sourceHash,
   stage,
@@ -20,7 +20,7 @@ export const getReusableArtifact = ({
     .from(artifactTable)
     .where(
       and(
-        eq(artifactTable.fileId, fileId),
+        eq(artifactTable.filePath, filePath),
         eq(artifactTable.recordId, recordId),
         eq(artifactTable.sourceHash, sourceHash),
         eq(artifactTable.stage, stage),

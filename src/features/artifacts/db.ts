@@ -11,7 +11,6 @@ import {
 } from "drizzle-orm/pg-core"
 import type { ArtifactState } from "@/features/artifacts/schemas/artifact-state"
 import { organization, user } from "@/features/auth/db"
-import { sourceFileTable } from "@/features/files/db"
 import { projectTable } from "@/features/projects/db"
 import { recordTable } from "@/features/records/db"
 
@@ -37,9 +36,7 @@ export const artifactTable = pgTable(
     recordId: uuid("record_id")
       .notNull()
       .references(() => recordTable.id, { onDelete: "cascade" }),
-    fileId: uuid("file_id")
-      .notNull()
-      .references(() => sourceFileTable.id, { onDelete: "cascade" }),
+    filePath: text("file_path").notNull(),
     createdByUserId: uuid("created_by_user_id").references(() => user.id, {
       onDelete: "set null",
     }),
@@ -58,7 +55,7 @@ export const artifactTable = pgTable(
   (table) => [
     uniqueIndex("artifact_lineage_unique_idx").on(
       table.recordId,
-      table.fileId,
+      table.filePath,
       table.stage,
       table.sourceHash,
     ),
@@ -74,10 +71,6 @@ export const artifactRelations = relations(artifactTable, ({ one }) => ({
   createdByUser: one(user, {
     fields: [artifactTable.createdByUserId],
     references: [user.id],
-  }),
-  file: one(sourceFileTable, {
-    fields: [artifactTable.fileId],
-    references: [sourceFileTable.id],
   }),
   organization: one(organization, {
     fields: [artifactTable.organizationId],

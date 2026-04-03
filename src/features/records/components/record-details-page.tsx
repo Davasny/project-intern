@@ -20,7 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { RecordArtifactPanel } from "@/features/artifacts/components/record-artifact-panel"
 import { RecordFilePanel } from "@/features/files/components/record-file-panel"
 import { RecordRelationsSection } from "@/features/record-edges/components/record-relations-section"
 import { RecordForm } from "@/features/records/components/record-form"
@@ -198,11 +197,6 @@ export const RecordDetailsPage = ({
         </SectionCardContent>
       </SectionCard>
       <RecordFilePanel
-        organizationSlug={organizationSlug}
-        projectSlug={projectSlug}
-        recordId={recordQuery.data.id}
-      />
-      <RecordArtifactPanel
         organizationSlug={organizationSlug}
         projectSlug={projectSlug}
         recordId={recordQuery.data.id}

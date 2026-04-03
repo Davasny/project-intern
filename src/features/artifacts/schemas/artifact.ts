@@ -2,7 +2,7 @@ import { z } from "zod"
 
 export const artifactSchema = z.object({
   createdAt: z.coerce.date(),
-  fileId: z.string().uuid(),
+  filePath: z.string().trim().min(1),
   fileName: z.string().trim().min(1),
   format: z.string().trim().min(1),
   id: z.string().uuid(),

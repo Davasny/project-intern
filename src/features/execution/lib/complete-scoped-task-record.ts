@@ -1,6 +1,7 @@
 import { completeAgentRun } from "@/features/agent-runs/lib/complete-agent-run"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
 import { getTaskRecordPatchSchemaVersion } from "@/features/execution/lib/get-task-record-patch-schema-version"
+import { mirrorRecordWorkspaceDataToStorage } from "@/features/execution/lib/mirror-record-workspace-data-to-storage"
 import type { PatchProposal } from "@/features/execution/schemas/patch-proposal"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { applyRecordPatch } from "@/features/records/lib/apply-record-patch"
@@ -72,6 +73,12 @@ export const completeScopedTaskRecord = async ({
     })
   }
 
+  const mirroredWorkspaceData = await mirrorRecordWorkspaceDataToStorage({
+    organizationId: scope.project.organizationId,
+    projectId: scope.project.id,
+    recordId: scope.record.id,
+  })
+
   await completeAgentRun({
     agentRunId: scope.agentRun.id,
     costUsd: null,
@@ -80,7 +87,12 @@ export const completeScopedTaskRecord = async ({
     taskRecordId: scope.taskRecord.id,
     tokenInput: null,
     tokenOutput: null,
-    toolActivitySummary,
+    toolActivitySummary: {
+      ...toolActivitySummary,
+      mirroredDataEntries: mirroredWorkspaceData.mirroredEntryCount,
+      mirroredDataFrom: mirroredWorkspaceData.dataDirectory,
+      mirroredDataTo: mirroredWorkspaceData.storageDirectory,
+    },
   })
 
   return getTaskRecordExecutionScope(executionScope)

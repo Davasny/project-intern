@@ -1,14 +1,12 @@
 import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-booting"
 import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
-import { listArtifacts } from "@/features/artifacts/lib/list-artifacts"
 import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
 import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
 import { getAgentRunExecutionScope } from "@/features/execution/lib/get-agent-run-execution-scope"
-import { hydrateRecordWorkspace } from "@/features/execution/lib/hydrate-record-workspace"
 import { linkProjectSkillsToWorkspace } from "@/features/execution/lib/link-project-skills-to-workspace"
 import { pollSessionForMetrics } from "@/features/execution/lib/poll-session-for-metrics"
-import { writeWorkspaceManifest } from "@/features/execution/lib/write-workspace-manifest"
+import { prepareRecordWorkspaceData } from "@/features/execution/lib/prepare-record-workspace-data"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
 import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
@@ -109,19 +107,21 @@ export const executorService = async ({
       "Project Python environment ready",
     )
 
-    executionLogger.info("Hydrating record workspace")
+    executionLogger.info("Preparing record workspace data")
 
-    const hydratedWorkspace = await hydrateRecordWorkspace({
+    const preparedWorkspaceData = await prepareRecordWorkspaceData({
+      organizationId: initialScope.project.organizationId,
       projectId: initialScope.project.id,
       recordId: initialScope.record.id,
     })
 
     executionLogger.info(
       {
-        hydratedArtifactCount: hydratedWorkspace.artifactCount,
-        hydratedFileCount: hydratedWorkspace.fileCount,
+        copiedEntryCount: preparedWorkspaceData.copiedEntryCount,
+        dataDirectory: preparedWorkspaceData.dataDirectory,
+        storageDirectory: preparedWorkspaceData.storageDirectory,
       },
-      "Hydrated record workspace",
+      "Prepared record workspace data",
     )
 
     executionLogger.info("Loading active project schema version")
@@ -135,18 +135,15 @@ export const executorService = async ({
       "Loaded active project schema version",
     )
 
-    executionLogger.info("Loading record relations, files, and artifacts")
+    executionLogger.info("Loading record relations and files")
 
-    const [relations, files, artifacts] = await Promise.all([
+    const [relations, files] = await Promise.all([
       listRecordRelationsByProjectId({
         projectId: initialScope.project.id,
         recordId: initialScope.record.id,
       }),
       listRecordFiles({
-        projectId: initialScope.project.id,
-        recordId: initialScope.record.id,
-      }),
-      listArtifacts({
+        organizationId: initialScope.project.organizationId,
         projectId: initialScope.project.id,
         recordId: initialScope.record.id,
       }),
@@ -154,24 +151,11 @@ export const executorService = async ({
 
     executionLogger.info(
       {
-        artifactCount: artifacts.length,
         fileCount: files.length,
         relationCount: relations.summary.activeCount,
       },
-      "Loaded record relations, files, and artifacts",
+      "Loaded record relations and files",
     )
-
-    executionLogger.info("Writing workspace manifest")
-
-    await writeWorkspaceManifest({
-      artifactIds: artifacts.map((artifact) => artifact.id),
-      fileIds: files.map((file) => file.id),
-      projectId: initialScope.project.id,
-      recordId: initialScope.record.id,
-      taskId: initialScope.task.id,
-    })
-
-    executionLogger.info("Wrote workspace manifest")
 
     return await withOpencodeForOrg({
       fn: async ({ client }) => {
@@ -230,9 +214,7 @@ export const executorService = async ({
           sessionReference: session.data.id,
           toolActivitySummary: {
             filesAvailable: files.length,
-            artifactsAvailable: artifacts.length,
-            hydratedArtifactCount: hydratedWorkspace.artifactCount,
-            hydratedFileCount: hydratedWorkspace.fileCount,
+            preloadedDataEntries: preparedWorkspaceData.copiedEntryCount,
             relationCount: relations.summary.activeCount,
           },
         })
@@ -243,7 +225,6 @@ export const executorService = async ({
         )
 
         const promptPayload = {
-          artifacts,
           execution: {
             agentRunId: initialScope.agentRun.id,
             projectId: initialScope.project.id,
@@ -251,6 +232,7 @@ export const executorService = async ({
             recordId: initialScope.record.id,
             taskId: initialScope.task.id,
             taskRecordId: initialScope.taskRecord.id,
+            workspaceDataDirectory: workspace.dataDirectory,
           },
           files,
           record: initialScope.record,
@@ -367,7 +349,6 @@ export const executorService = async ({
 
         return {
           agentRunId: initialScope.agentRun.id,
-          artifacts,
           files,
           model: runtimeModel,
           projectId: initialScope.project.id,

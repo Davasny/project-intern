@@ -1,6 +1,7 @@
 import { completeAgentRun } from "@/features/agent-runs/lib/complete-agent-run"
 import { failAgentRun } from "@/features/agent-runs/lib/fail-agent-run"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
+import { mirrorRecordWorkspaceDataToStorage } from "@/features/execution/lib/mirror-record-workspace-data-to-storage"
 import type { TaskFailure } from "@/features/execution/schemas/task-failure"
 
 const shouldTreatFailureAsAlreadyMigratedSuccess = ({
@@ -48,6 +49,12 @@ export const failScopedTaskRecord = async ({
       taskTargetSchemaVersionId: scope.task.targetSchemaVersionId,
     })
   ) {
+    const mirroredWorkspaceData = await mirrorRecordWorkspaceDataToStorage({
+      organizationId: scope.project.organizationId,
+      projectId: scope.project.id,
+      recordId: scope.record.id,
+    })
+
     await completeAgentRun({
       agentRunId: scope.agentRun.id,
       costUsd: null,
@@ -62,11 +69,20 @@ export const failScopedTaskRecord = async ({
       toolActivitySummary: {
         ...toolActivitySummary,
         completionSource: "already-migrated",
+        mirroredDataEntries: mirroredWorkspaceData.mirroredEntryCount,
+        mirroredDataFrom: mirroredWorkspaceData.dataDirectory,
+        mirroredDataTo: mirroredWorkspaceData.storageDirectory,
       },
     })
 
     return getTaskRecordExecutionScope(executionScope)
   }
+
+  const mirroredWorkspaceData = await mirrorRecordWorkspaceDataToStorage({
+    organizationId: scope.project.organizationId,
+    projectId: scope.project.id,
+    recordId: scope.record.id,
+  })
 
   await failAgentRun({
     agentRunId: scope.agentRun.id,
@@ -77,7 +93,12 @@ export const failScopedTaskRecord = async ({
     taskRecordId: scope.taskRecord.id,
     tokenInput: null,
     tokenOutput: null,
-    toolActivitySummary,
+    toolActivitySummary: {
+      ...toolActivitySummary,
+      mirroredDataEntries: mirroredWorkspaceData.mirroredEntryCount,
+      mirroredDataFrom: mirroredWorkspaceData.dataDirectory,
+      mirroredDataTo: mirroredWorkspaceData.storageDirectory,
+    },
   })
 
   return getTaskRecordExecutionScope(executionScope)
