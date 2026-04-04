@@ -77,11 +77,33 @@ export const claimTaskRecordForManualTrigger = async ({
       return null
     }
 
-    await taskRecordActor.send("claim", {
-      agentRunId,
-      errorCode: null,
-      lastTransitionAt: new Date(),
-    })
+    if (candidate.state === "skipped") {
+      await taskRecordActor.send("retry", {
+        agentRunId: null,
+        errorCode: null,
+        lastTransitionAt: new Date(),
+      })
+
+      const refreshedActor = await taskRecordMachine.getActor(
+        candidate.taskRecordId,
+      )
+
+      if (!refreshedActor) {
+        return null
+      }
+
+      await refreshedActor.send("claim", {
+        agentRunId,
+        errorCode: null,
+        lastTransitionAt: new Date(),
+      })
+    } else {
+      await taskRecordActor.send("claim", {
+        agentRunId,
+        errorCode: null,
+        lastTransitionAt: new Date(),
+      })
+    }
 
     return {
       agentRunId,

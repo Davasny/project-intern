@@ -50,6 +50,18 @@ export const ExecutionMonitorRow = ({
     }),
   )
 
+  const handleTrigger = async () => {
+    try {
+      await triggerMutation.mutateAsync({
+        organizationSlug,
+        projectSlug,
+        taskRecordId: taskRecord.taskRecordId,
+      })
+    } catch {
+      // Error displayed via triggerMutation.error in render.
+    }
+  }
+
   return (
     <TableRow>
       <TableCell className="font-medium text-foreground">
@@ -85,21 +97,22 @@ export const ExecutionMonitorRow = ({
       <TableCell>
         {debugControlsEnabled &&
         !isAutopickEnabled &&
-        taskRecord.state === "waiting" ? (
-          <Button
-            disabled={triggerMutation.isPending}
-            onClick={() =>
-              triggerMutation.mutate({
-                organizationSlug,
-                projectSlug,
-                taskRecordId: taskRecord.taskRecordId,
-              })
-            }
-            type="button"
-            variant="secondary"
-          >
-            {triggerMutation.isPending ? "Triggering..." : "Trigger"}
-          </Button>
+        (taskRecord.state === "waiting" || taskRecord.state === "skipped") ? (
+          <div className="flex flex-col gap-1">
+            <Button
+              disabled={triggerMutation.isPending}
+              onClick={handleTrigger}
+              type="button"
+              variant="secondary"
+            >
+              {triggerMutation.isPending ? "Triggering..." : "Trigger"}
+            </Button>
+            {triggerMutation.error ? (
+              <span className="text-xs text-destructive">
+                {triggerMutation.error.message ?? "Failed to trigger task record execution."}
+              </span>
+            ) : null}
+          </div>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         )}

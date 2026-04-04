@@ -25,6 +25,11 @@ const terminalTaskRecordStates = [
 
 type ClaimTaskRecordCandidateDatabase = Pick<typeof db, "select">
 
+const manualTriggerTaskRecordStates: Array<TaskRecordState> = [
+  "waiting",
+  "skipped",
+]
+
 type ClaimTaskRecordCandidateParams =
   | {
       database: ClaimTaskRecordCandidateDatabase
@@ -44,6 +49,7 @@ type ClaimTaskRecordCandidate = {
   projectId: string
   projectDefaultModel: string
   recordId: string
+  state: TaskRecordState
   taskId: string
   taskRecordId: string
 }
@@ -78,6 +84,7 @@ export const claimTaskRecordCandidate = async (
       projectId: taskTable.projectId,
       projectDefaultModel: projectTable.defaultModel,
       recordId: taskRecordTable.recordId,
+      state: taskRecordTable.state,
       taskId: taskRecordTable.taskId,
       taskRecordId: taskRecordTable.id,
     })
@@ -90,7 +97,9 @@ export const claimTaskRecordCandidate = async (
     )
     .where(
       and(
-        eq(taskRecordTable.state, "waiting"),
+        params.mode === "manual"
+          ? inArray(taskRecordTable.state, manualTriggerTaskRecordStates)
+          : eq(taskRecordTable.state, "waiting"),
         notExists(
           database
             .select({ id: earlierTaskRecordTable.id })
@@ -176,6 +185,7 @@ export const claimTaskRecordCandidate = async (
     projectId: candidate.projectId,
     projectDefaultModel: candidate.projectDefaultModel,
     recordId: candidate.recordId,
+    state: candidate.state,
     taskId: candidate.taskId,
     taskRecordId: candidate.taskRecordId,
   } satisfies ClaimTaskRecordCandidate

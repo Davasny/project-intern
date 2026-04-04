@@ -31,6 +31,7 @@ export const claimNextTaskRecord = async () => {
       if (!agentRunId) {
         return null
       }
+
       await agentRunMachine.createActor(agentRunId, {
         attemptNumber: candidate.attemptNumber,
         costUsd: null,
@@ -112,9 +113,12 @@ export const claimNextTaskRecord = async () => {
 
     return claimedTaskRecord
   } catch (error) {
-    const databaseError = error as { code?: string }
-
-    if (databaseError.code === "23505") {
+    if (
+      error !== null &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "23505"
+    ) {
       logger.warn({ error }, "Skipped conflicting task record claim")
       return null
     }

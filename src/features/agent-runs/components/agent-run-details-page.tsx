@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { AgentRunMessages } from "@/features/agent-runs/components/agent-run-messages"
+import { isAgentRunStateActive } from "@/features/agent-runs/schemas/agent-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -32,13 +33,35 @@ export const AgentRunDetailsPage = ({
 }: AgentRunDetailsPageProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
+  const queryClient = useQueryClient()
   const runQuery = useQuery({
     ...trpc.agentRuns.getById.queryOptions({
       agentRunId,
       organizationSlug,
       projectSlug,
     }),
+    refetchInterval: (query) => {
+      const data = query.state.data
+      return data &&
+        (data.state === "running" || data.state === "booting")
+        ? 3000
+        : false
+    },
   })
+
+  const abortMutation = useMutation(
+    trpc.agentRuns.abort.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.agentRuns.getById.queryFilter({
+            agentRunId,
+            organizationSlug,
+            projectSlug,
+          }),
+        )
+      },
+    }),
+  )
 
   if (runQuery.isLoading) {
     return <LoadingState label="Loading agent run..." />
@@ -123,6 +146,27 @@ export const AgentRunDetailsPage = ({
     ],
   ]
 
+  const handleKill = async () => {
+    try {
+      await abortMutation.mutateAsync({
+        agentRunId,
+        organizationSlug,
+        projectSlug,
+      })
+    } catch {
+      // error handled via mutation state
+    }
+  }
+
+  const isAbortable = isAgentRunStateActive(run.state)
+
+  const hasToolActivity =
+    run.taskActivitySummary !== null &&
+    Object.keys(run.taskActivitySummary).length > 0
+
+  const hasToolSummary =
+    run.toolSummary !== null && Object.keys(run.toolSummary).length > 0
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader>
@@ -140,6 +184,16 @@ export const AgentRunDetailsPage = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {isAbortable ? (
+              <Button
+                disabled={abortMutation.isPending}
+                onClick={handleKill}
+                type="button"
+                variant="destructive"
+              >
+                {abortMutation.isPending ? "Stopping..." : "Kill"}
+              </Button>
+            ) : null}
             <Button asChild variant="secondary">
               <Link
                 href={`/app/${organizationSlug}/${projectSlug}/execution/runs`}
@@ -151,20 +205,19 @@ export const AgentRunDetailsPage = ({
         </div>
       </PageHeader>
       <StatsBar stats={stats} details={details} />
-      {run.taskActivitySummary &&
-        Object.keys(run.taskActivitySummary).length > 0 && (
-          <SectionCard>
-            <SectionCardHeader>
-              <h2 className="text-lg font-semibold text-foreground">
-                Tool Activity Summary
-              </h2>
-            </SectionCardHeader>
-            <SectionCardContent>
-              <JsonViewer value={run.taskActivitySummary} />
-            </SectionCardContent>
-          </SectionCard>
-        )}
-      {run.toolSummary && Object.keys(run.toolSummary).length > 0 && (
+      {hasToolActivity ? (
+        <SectionCard>
+          <SectionCardHeader>
+            <h2 className="text-lg font-semibold text-foreground">
+              Tool Activity Summary
+            </h2>
+          </SectionCardHeader>
+          <SectionCardContent>
+            <JsonViewer value={run.taskActivitySummary} />
+          </SectionCardContent>
+        </SectionCard>
+      ) : null}
+      {hasToolSummary ? (
         <SectionCard>
           <SectionCardHeader>
             <h2 className="text-lg font-semibold text-foreground">
@@ -175,8 +228,8 @@ export const AgentRunDetailsPage = ({
             <JsonViewer value={run.toolSummary} />
           </SectionCardContent>
         </SectionCard>
-      )}
-      {run.resultPayload && (
+      ) : null}
+      {run.resultPayload ? (
         <SectionCard>
           <SectionCardHeader>
             <h2 className="text-lg font-semibold text-foreground">
@@ -187,8 +240,8 @@ export const AgentRunDetailsPage = ({
             <JsonViewer value={run.resultPayload} />
           </SectionCardContent>
         </SectionCard>
-      )}
-      {run.failurePayload && (
+      ) : null}
+      {run.failurePayload ? (
         <SectionCard>
           <SectionCardHeader>
             <h2 className="text-lg font-semibold text-foreground">
@@ -200,8 +253,8 @@ export const AgentRunDetailsPage = ({
             <JsonViewer value={run.failurePayload} />
           </SectionCardContent>
         </SectionCard>
-      )}
-      {run.siblingRuns.length > 1 && (
+      ) : null}
+      {run.siblingRuns.length > 1 ? (
         <SectionCard>
           <SectionCardHeader>
             <h2 className="text-lg font-semibold text-foreground">
@@ -239,7 +292,7 @@ export const AgentRunDetailsPage = ({
             </DataTable>
           </SectionCardContent>
         </SectionCard>
-      )}
+      ) : null}
       <AgentRunMessages agentRunId={agentRunId} />
     </div>
   )

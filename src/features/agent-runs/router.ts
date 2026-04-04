@@ -1,8 +1,10 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
+import { abortAgentRun } from "@/features/agent-runs/lib/abort-agent-run"
 import { getAgentRunById } from "@/features/agent-runs/lib/get-agent-run-by-id"
 import { getAgentRunSessionMessages } from "@/features/agent-runs/lib/get-agent-run-session-messages"
 import { listAgentRuns } from "@/features/agent-runs/lib/list-agent-runs"
+import { isAgentRunStateActive } from "@/features/agent-runs/schemas/agent-run-state"
 import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { protectedProcedure, router } from "@/lib/trpc/init"
@@ -67,5 +69,48 @@ export const agentRunsRouter = router({
           }),
         organizationId: project.organizationId,
       })
+    }),
+  abort: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        agentRunId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      const run = await getAgentRunById({
+        agentRunId: input.agentRunId,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!isAgentRunStateActive(run.state)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Agent run is in "${run.state}" state and cannot be aborted.`,
+        })
+      }
+
+      await abortAgentRun({
+        agentRunId: input.agentRunId,
+        failurePayload: { stoppedByUser: true },
+        taskRecordId: run.taskRecordId,
+        toolActivitySummary: run.taskActivitySummary ?? {},
+      })
+
+      return { success: true }
     }),
 })

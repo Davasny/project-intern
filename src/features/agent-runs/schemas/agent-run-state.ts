@@ -17,4 +17,7 @@ export const activeAgentRunStates = [
   "booting",
   "running",
   "persisting_outputs",
-] satisfies Array<AgentRunState>
+] as const
+
+export const isAgentRunStateActive = (state: AgentRunState): boolean =>
+  activeAgentRunStates.includes(state as (typeof activeAgentRunStates)[number])
