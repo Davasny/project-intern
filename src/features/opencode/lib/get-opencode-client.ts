@@ -156,7 +156,7 @@ export const withOpencodeForOrg = async <T>({
   fn,
   organizationId,
 }: {
-  fn: (params: { client: OpencodeClient }) => Promise<T>
+  fn: (params: { client: OpencodeClient; mcpToken: string }) => Promise<T>
   organizationId: string
 }): Promise<T> => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
@@ -172,7 +172,7 @@ export const withOpencodeForOrg = async <T>({
       baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
     })
 
-    return fn({ client })
+    return fn({ client, mcpToken: "" })
   }
 
   const server = await startEmbeddedServer({ organizationId })
@@ -191,7 +191,7 @@ export const withOpencodeForOrg = async <T>({
   const insertedRow = dbRow[0]
 
   try {
-    return await fn({ client: server.client })
+    return await fn({ client: server.client, mcpToken: server.apiKey })
   } finally {
     await shutdownEmbeddedServer({
       instance: server.instance,
@@ -228,6 +228,7 @@ export const startInteractiveServer = async ({
     })
 
     return {
+      apiKey: "",
       baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
       client,
       port: null,
@@ -257,6 +258,7 @@ export const startInteractiveServer = async ({
   })
 
   return {
+    apiKey: server.apiKey,
     baseUrl: `http://${backendConfig.CRM_OPENCODE_HOST}:${String(server.port)}`,
     client: server.client,
     port: server.port,

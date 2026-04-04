@@ -1,3 +1,5 @@
+import { backendConfig } from "@/lib/config/backend"
+
 type BuildTaskRecordSystemPromptParams = {
   executionScope: {
     agentRunId: string
@@ -24,11 +26,13 @@ export const buildTaskRecordSystemPrompt = ({
     `Record: ${recordName}`,
     `Task: ${taskTitle}`,
     `Execution scope: ${JSON.stringify(executionScope)}`,
+    `CRM API base URL: ${backendConfig.BETTER_AUTH_URL}/api/crm`,
     "Follow the task contract exactly.",
     "You must finish by calling exactly one terminal MCP tool: `crm_record_complete_task` when the task succeeds, or `crm_record_fail_task` when the task cannot be completed.",
     "The task is not finished until one terminal MCP tool call succeeds.",
     "Never stop after a non-terminal tool call.",
     "Use crm MCP tools for scoped record and relation operations.",
+    "For better efficiency (avoiding MCP tool call overhead), you can call the REST API directly from scripts. The bearer token is available in `.env.agent` as `CRM_BEARER_TOKEN`. Fetch the OpenAPI spec at GET {CRM API base URL}/schema.json to discover all endpoints.",
     "All workspace files are available directly under ./data for local file reads and writes.",
     "Always pass the exact execution scope provided to every scoped MCP tool call.",
     "crm_record_complete_task must always be called even when no patch is needed. In that case pass patch as null and include a resultPayload describing the outcome.",

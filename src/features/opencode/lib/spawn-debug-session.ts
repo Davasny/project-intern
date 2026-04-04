@@ -292,7 +292,10 @@ export const spawnDebugSession = async ({
   debugLogger.info("Creating OpenCode session via withOpencodeForOrg")
 
   return await withOpencodeForOrg({
-    fn: async ({ client }) => {
+    fn: async ({ client, mcpToken }) => {
+      const envAgentPath = path.join(workspace.workspaceDirectory, ".env.agent")
+      await fs.writeFile(envAgentPath, `CRM_BEARER_TOKEN=${mcpToken}\n`)
+      debugLogger.info({ envAgentPath }, "Wrote .env.agent")
       const sessionTitle = title || `${task.title} · ${record.name}`
 
       debugLogger.info(
@@ -363,6 +366,9 @@ When calling MCP tools, use these IDs:
 - projectId: \`${projectId}\`
 - recordId: \`${recordId}\`
 - taskId: \`${taskId}\`
+
+## CRM REST API
+For better efficiency (avoiding MCP tool call overhead), you can call the REST API directly from scripts. The bearer token is available in \`.env.agent\` as \`CRM_BEARER_TOKEN\`. CRM API base URL: \`${backendConfig.BETTER_AUTH_URL}/api/crm\`. Fetch the OpenAPI spec at \`GET {CRM API base URL}/schema.json\` to discover all endpoints. All REST endpoints mirror MCP tools with the same request/response shape.
 
 ## Execution Context
 \`\`\`json

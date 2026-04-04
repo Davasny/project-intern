@@ -62,6 +62,10 @@ export const spawnSession = async ({
 
   const started = await startInteractiveServer({ organizationId })
 
+  const envAgentPath = path.join(directory, ".env.agent")
+  await fs.writeFile(envAgentPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)
+  logger.info({ envAgentPath }, "Wrote .env.agent")
+
   const session = await started.client.session.create({
     body: { title },
     query: { directory },

@@ -10,15 +10,17 @@ import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
 type CreateRecordForMcpParams = {
   context: RecordInput["context"]
   name: RecordInput["name"]
+  organizationId: string
   projectId: string
 }
 
 export const createRecordForMcp = async ({
   context,
   name,
+  organizationId,
   projectId,
 }: CreateRecordForMcpParams) => {
-  await assertMcpOrgOwnsProject({ projectId })
+  await assertMcpOrgOwnsProject({ organizationId, projectId })
 
   const initialSchemaVersion = await getProjectSchemaVersionByProjectId({
     projectId,

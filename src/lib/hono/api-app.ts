@@ -1,6 +1,7 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch"
 import { Hono } from "hono"
 import { auth } from "@/features/auth/lib/auth"
+import { crmApiApp } from "@/lib/hono/crm-api-app"
 import { sessionGuard } from "@/lib/hono/middleware/session-guard"
 import { uploadRecordFilesHandler } from "@/lib/hono/routes/upload"
 import { logger } from "@/lib/logger"
@@ -38,3 +39,4 @@ apiApp.on(["GET", "POST"], "/trpc/*", (context) =>
 apiApp.post("/upload/record/:recordId", sessionGuard, uploadRecordFilesHandler)
 
 apiApp.route("/mcp", mcpApp)
+apiApp.route("/crm", crmApiApp)
