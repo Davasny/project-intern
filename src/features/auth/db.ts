@@ -1,19 +1,17 @@
-import { relations, sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm"
 import {
+  boolean,
+  index,
+  integer,
   pgTable,
   text,
   timestamp,
-  boolean,
-  integer,
-  uuid,
-  index,
   uniqueIndex,
-} from "drizzle-orm/pg-core";
+  uuid,
+} from "drizzle-orm/pg-core"
 
 export const user = pgTable("user", {
-  id: uuid("id")
-    .default(sql`pg_catalog.gen_random_uuid()`)
-    .primaryKey(),
+  id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
@@ -24,14 +22,12 @@ export const user = pgTable("user", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   isAnonymous: boolean("is_anonymous"),
-});
+})
 
 export const session = pgTable(
   "session",
   {
-    id: uuid("id")
-      .default(sql`pg_catalog.gen_random_uuid()`)
-      .primaryKey(),
+    id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
     expiresAt: timestamp("expires_at").notNull(),
     token: text("token").notNull().unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -46,14 +42,12 @@ export const session = pgTable(
     activeOrganizationId: text("active_organization_id"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
-);
+)
 
 export const account = pgTable(
   "account",
   {
-    id: uuid("id")
-      .default(sql`pg_catalog.gen_random_uuid()`)
-      .primaryKey(),
+    id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: uuid("user_id")
@@ -72,14 +66,12 @@ export const account = pgTable(
       .notNull(),
   },
   (table) => [index("account_userId_idx").on(table.userId)],
-);
+)
 
 export const verification = pgTable(
   "verification",
   {
-    id: uuid("id")
-      .default(sql`pg_catalog.gen_random_uuid()`)
-      .primaryKey(),
+    id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
     expiresAt: timestamp("expires_at").notNull(),
@@ -90,14 +82,12 @@ export const verification = pgTable(
       .notNull(),
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
-);
+)
 
 export const organization = pgTable(
   "organization",
   {
-    id: uuid("id")
-      .default(sql`pg_catalog.gen_random_uuid()`)
-      .primaryKey(),
+    id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     logo: text("logo"),
@@ -105,14 +95,12 @@ export const organization = pgTable(
     metadata: text("metadata"),
   },
   (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)],
-);
+)
 
 export const organizationMembership = pgTable(
   "organization_membership",
   {
-    id: uuid("id")
-      .default(sql`pg_catalog.gen_random_uuid()`)
-      .primaryKey(),
+    id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
@@ -126,14 +114,12 @@ export const organizationMembership = pgTable(
     index("organizationMembership_organizationId_idx").on(table.organizationId),
     index("organizationMembership_userId_idx").on(table.userId),
   ],
-);
+)
 
 export const invitation = pgTable(
   "invitation",
   {
-    id: uuid("id")
-      .default(sql`pg_catalog.gen_random_uuid()`)
-      .primaryKey(),
+    id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
@@ -150,14 +136,12 @@ export const invitation = pgTable(
     index("invitation_organizationId_idx").on(table.organizationId),
     index("invitation_email_idx").on(table.email),
   ],
-);
+)
 
 export const apikey = pgTable(
   "apikey",
   {
-    id: uuid("id")
-      .default(sql`pg_catalog.gen_random_uuid()`)
-      .primaryKey(),
+    id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
     configId: text("config_id").default("default").notNull(),
     name: text("name"),
     start: text("start"),
@@ -185,33 +169,33 @@ export const apikey = pgTable(
     index("apikey_referenceId_idx").on(table.referenceId),
     index("apikey_key_idx").on(table.key),
   ],
-);
+)
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   organizationMemberships: many(organizationMembership),
   invitations: many(invitation),
-}));
+}))
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
     references: [user.id],
   }),
-}));
+}))
 
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
     references: [user.id],
   }),
-}));
+}))
 
 export const organizationRelations = relations(organization, ({ many }) => ({
   organizationMemberships: many(organizationMembership),
   invitations: many(invitation),
-}));
+}))
 
 export const organizationMembershipRelations = relations(
   organizationMembership,
@@ -225,7 +209,7 @@ export const organizationMembershipRelations = relations(
       references: [user.id],
     }),
   }),
-);
+)
 
 export const invitationRelations = relations(invitation, ({ one }) => ({
   organization: one(organization, {
@@ -236,4 +220,4 @@ export const invitationRelations = relations(invitation, ({ one }) => ({
     fields: [invitation.inviterId],
     references: [user.id],
   }),
-}));
+}))

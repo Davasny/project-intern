@@ -73,7 +73,6 @@ export const createRecordEdge = async ({
 
   await createRecordEdgeMachineRow({
     createdByTaskId: null,
-    database: db,
     direction: input.direction,
     fromProjectId: sourceProject.id,
     fromRecordId: sourceRecord.id,

@@ -8,9 +8,7 @@ const taskRetryScanQueuePayloadSchema = z.object({
   limit: z.number().int().min(1).max(100).default(10),
 })
 
-type TaskRetryScanQueuePayload = z.infer<
-  typeof taskRetryScanQueuePayloadSchema
->
+type TaskRetryScanQueuePayload = z.infer<typeof taskRetryScanQueuePayloadSchema>
 
 export const taskRetryScanQueue = new Queue<TaskRetryScanQueuePayload>({
   name: taskRetryScanQueueName,

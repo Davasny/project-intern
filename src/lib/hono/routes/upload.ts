@@ -8,8 +8,6 @@ import { requireSession } from "@/lib/hono/middleware/session-guard"
 import { validateUploadAccess } from "@/lib/hono/utils/validate-upload-access"
 import { resolvePathInsideDirectory } from "@/lib/storage/resolve-path-inside-directory"
 
-const CHUNK_SIZE = 64 * 1024 // 64KB chunks
-
 const getRecordDataDirectory = ({
   organizationId,
   projectId,

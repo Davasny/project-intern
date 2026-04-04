@@ -1,9 +1,8 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
-import { withDrizzlePg } from "machin/drizzle/pg"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
-import { projectSchemaVersionMachineDefinition } from "@/features/project-schema/lib/project-schema-version-machine"
+import { projectSchemaVersionMachine } from "@/features/project-schema/lib/project-schema-version-machine"
 import type { db } from "@/lib/db"
 
 type DatabaseClient = Pick<typeof db, "insert" | "select" | "update">
@@ -52,13 +51,6 @@ export const rejectProjectSchemaVersionProposal = async ({
     })
   }
 
-  const projectSchemaVersionMachine = withDrizzlePg(
-    projectSchemaVersionMachineDefinition,
-    {
-      db: database,
-      table: projectSchemaVersionTable,
-    },
-  )
   const actor = await projectSchemaVersionMachine.getActor(schemaVersionId)
 
   if (!actor) {

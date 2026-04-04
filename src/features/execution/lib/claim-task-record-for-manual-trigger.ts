@@ -1,11 +1,8 @@
 import { sql } from "drizzle-orm"
-import { withDrizzlePg } from "machin/drizzle/pg"
-import { agentRunTable } from "@/features/agent-runs/db"
-import { agentRunMachineDefinition } from "@/features/agent-runs/lib/agent-run-machine"
+import { agentRunMachine } from "@/features/agent-runs/lib/agent-run-machine"
 import { claimTaskRecordCandidate } from "@/features/execution/lib/claim-task-record-candidate"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
-import { taskRecordTable } from "@/features/task-records/db"
-import { taskRecordMachineDefinition } from "@/features/task-records/lib/task-record-machine"
+import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
 import { db } from "@/lib/db"
 import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
 import { logger } from "@/lib/logger"
@@ -44,22 +41,7 @@ export const claimTaskRecordForManualTrigger = async ({
       return null
     }
 
-    const transactionAgentRunMachine = withDrizzlePg(
-      agentRunMachineDefinition,
-      {
-        db: tx,
-        table: agentRunTable,
-      },
-    )
-    const transactionTaskRecordMachine = withDrizzlePg(
-      taskRecordMachineDefinition,
-      {
-        db: tx,
-        table: taskRecordTable,
-      },
-    )
-
-    await transactionAgentRunMachine.createActor(agentRunId, {
+    await agentRunMachine.createActor(agentRunId, {
       attemptNumber: candidate.attemptNumber,
       costUsd: null,
       directory: null,
@@ -87,7 +69,7 @@ export const claimTaskRecordForManualTrigger = async ({
       toolSummary: {},
     })
 
-    const taskRecordActor = await transactionTaskRecordMachine.getActor(
+    const taskRecordActor = await taskRecordMachine.getActor(
       candidate.taskRecordId,
     )
 

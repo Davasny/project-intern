@@ -6,7 +6,6 @@ import {
   createRelationEdge,
   crmProjectListInputSchema,
   crmProjectSchemaProposeVersionInputSchema,
-  crmRecordApplyPatchInputSchema,
   crmRecordCompleteTaskInputSchema,
   crmRecordCreateInputSchema,
   crmRecordCreateRelationEdgeInputSchema,
@@ -15,6 +14,7 @@ import {
   crmRecordGetRelatedInputSchema,
   crmRecordGetRelatedRecordsInputSchema,
   crmRecordListRelationsInputSchema,
+  crmRecordPatchInputSchema,
   crmRecordProposePatchInputSchema,
   crmRecordReadInputSchema,
   deactivateRelationEdge,
@@ -112,7 +112,7 @@ export const createCrmMcpServer = () => {
     {
       description:
         "Apply a validated structured patch to the scoped record. Patches edit record values only, not schemaVersion. Use the current record version as baseVersion. Valid patch targets are name and schema-backed context fields.",
-      inputSchema: crmRecordApplyPatchInputSchema,
+      inputSchema: crmRecordPatchInputSchema,
     },
     async (input) => {
       const scope = getMcpScope()

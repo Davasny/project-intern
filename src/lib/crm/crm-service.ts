@@ -73,7 +73,7 @@ export const crmRecordProposePatchInputSchema = z.object({
   patch: patchProposalSchema,
 })
 
-const crmRecordPatchInputSchema = z.object({
+export const crmRecordPatchInputSchema = z.object({
   execution: executionScopeInputSchema,
   patch: patchProposalSchema,
 })

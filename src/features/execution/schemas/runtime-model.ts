@@ -8,5 +8,3 @@ export const runtimeModelSchema = z
     /^[^/\s]+\/[^/\s]+$/,
     "Runtime model must use provider/model-id format.",
   )
-
-type RuntimeModel = z.infer<typeof runtimeModelSchema>

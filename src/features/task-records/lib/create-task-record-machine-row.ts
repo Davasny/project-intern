@@ -1,13 +1,7 @@
-import { withDrizzlePg } from "machin/drizzle/pg"
-import { taskRecordTable } from "@/features/task-records/db"
 import { createTaskRecordMachineContext } from "@/features/task-records/lib/create-task-record-machine-context"
-import { taskRecordMachineDefinition } from "@/features/task-records/lib/task-record-machine"
-import type { db } from "@/lib/db"
-
-type DatabaseClient = Pick<typeof db, "insert" | "select" | "update">
+import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
 
 type CreateTaskRecordMachineRowParams = {
-  database: DatabaseClient
   id: string
   recordId: string
   taskId: string
@@ -22,16 +16,10 @@ const isDatabaseConflictError = (error: unknown) => {
 }
 
 export const createTaskRecordMachineRow = async ({
-  database,
   id,
   recordId,
   taskId,
 }: CreateTaskRecordMachineRowParams) => {
-  const taskRecordMachine = withDrizzlePg(taskRecordMachineDefinition, {
-    db: database,
-    table: taskRecordTable,
-  })
-
   try {
     return await taskRecordMachine.createActor(
       id,

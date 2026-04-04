@@ -67,7 +67,6 @@ export const fanOutTaskRecordsForTask = async ({
   const createdTaskRecords = await Promise.all(
     missingRecords.map((record, index) =>
       createTaskRecordMachineRow({
-        database,
         id: ids[index],
         recordId: record.id,
         taskId,

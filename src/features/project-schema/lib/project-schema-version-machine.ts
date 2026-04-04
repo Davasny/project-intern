@@ -20,7 +20,7 @@ type ProjectSchemaVersionTransitionEvent = {
   version: number
 }
 
-export const projectSchemaVersionMachineDefinition =
+const projectSchemaVersionMachineDefinition =
   machine<ProjectSchemaVersionMachineContext>().define({
     initial: "created",
     states: {
@@ -61,7 +61,7 @@ export const projectSchemaVersionMachineDefinition =
     },
   })
 
-const projectSchemaVersionMachine = withDrizzlePg(
+export const projectSchemaVersionMachine = withDrizzlePg(
   projectSchemaVersionMachineDefinition,
   {
     db,

@@ -72,7 +72,6 @@ export const backfillTaskRecordsForRecord = async ({
   const createdTaskRecords = await Promise.all(
     missingTasks.map((task, index) =>
       createTaskRecordMachineRow({
-        database: db,
         id: ids[index],
         recordId,
         taskId: task.id,

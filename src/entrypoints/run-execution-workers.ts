@@ -5,10 +5,10 @@ import {
   workspaceMaintenanceWorker,
 } from "@/features/execution/queues/schedule-task-executor"
 import { taskExecutorWorker } from "@/features/execution/queues/task-executor-worker"
-import { logger } from "@/lib/logger"
-import { taskSchedulerTickQueue } from "@/features/execution/queues/task-scheduler-tick-queue"
 import { taskRetryScanQueue } from "@/features/execution/queues/task-retry-scan-queue"
+import { taskSchedulerTickQueue } from "@/features/execution/queues/task-scheduler-tick-queue"
 import { workspaceMaintenanceQueue } from "@/features/execution/queues/workspace-maintenance-queue"
+import { logger } from "@/lib/logger"
 
 const executionWorkers = [
   {

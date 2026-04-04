@@ -6,7 +6,6 @@ import {
   createRelationEdge,
   crmProjectListInputSchema,
   crmProjectSchemaProposeVersionInputSchema,
-  crmRecordApplyPatchInputSchema,
   crmRecordCompleteTaskInputSchema,
   crmRecordCreateInputSchema,
   crmRecordCreateRelationEdgeInputSchema,
@@ -15,6 +14,7 @@ import {
   crmRecordGetRelatedInputSchema,
   crmRecordGetRelatedRecordsInputSchema,
   crmRecordListRelationsInputSchema,
+  crmRecordPatchInputSchema,
   crmRecordProposePatchInputSchema,
   crmRecordReadInputSchema,
   deactivateRelationEdge,
@@ -202,7 +202,7 @@ crmApiApp.openapi(
       body: {
         content: {
           "application/json": {
-            schema: crmRecordApplyPatchInputSchema,
+            schema: crmRecordPatchInputSchema,
           },
         },
       },

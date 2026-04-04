@@ -1,14 +1,12 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq, sql } from "drizzle-orm"
-import { withDrizzlePg } from "machin/drizzle/pg"
-import { agentRunTable } from "@/features/agent-runs/db"
-import { agentRunMachineDefinition } from "@/features/agent-runs/lib/agent-run-machine"
+import { agentRunMachine } from "@/features/agent-runs/lib/agent-run-machine"
 import { claimTaskRecordCandidate } from "@/features/execution/lib/claim-task-record-candidate"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
 import { taskRecordTable } from "@/features/task-records/db"
-import { taskRecordMachineDefinition } from "@/features/task-records/lib/task-record-machine"
+import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
 import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
@@ -77,28 +75,14 @@ export const triggerTaskRecordForRecord = async ({
     const agentRunIdResult = await tx.execute<GeneratedIdRow>(sql`
       select uuidv7() as id
     `)
+
     const agentRunId = agentRunIdResult.rows[0]?.id ?? null
 
     if (!agentRunId) {
       return null
     }
 
-    const transactionAgentRunMachine = withDrizzlePg(
-      agentRunMachineDefinition,
-      {
-        db: tx,
-        table: agentRunTable,
-      },
-    )
-    const transactionTaskRecordMachine = withDrizzlePg(
-      taskRecordMachineDefinition,
-      {
-        db: tx,
-        table: taskRecordTable,
-      },
-    )
-
-    await transactionAgentRunMachine.createActor(agentRunId, {
+    await agentRunMachine.createActor(agentRunId, {
       attemptNumber: candidate.attemptNumber,
       costUsd: null,
       directory: null,
@@ -126,7 +110,7 @@ export const triggerTaskRecordForRecord = async ({
       toolSummary: {},
     })
 
-    const taskRecordActor = await transactionTaskRecordMachine.getActor(
+    const taskRecordActor = await taskRecordMachine.getActor(
       candidate.taskRecordId,
     )
 

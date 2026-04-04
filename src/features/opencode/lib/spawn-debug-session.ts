@@ -1,10 +1,9 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import { and, eq, sql } from "drizzle-orm"
-import { withDrizzlePg } from "machin/drizzle/pg"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { abortAgentRun } from "@/features/agent-runs/lib/abort-agent-run"
-import { agentRunMachineDefinition } from "@/features/agent-runs/lib/agent-run-machine"
+import { agentRunMachine } from "@/features/agent-runs/lib/agent-run-machine"
 import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-booting"
 import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
 import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
@@ -21,7 +20,7 @@ import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
 import { createTaskRecordMachineContext } from "@/features/task-records/lib/create-task-record-machine-context"
 import { getTaskRecordActor } from "@/features/task-records/lib/get-task-record-actor"
-import { taskRecordMachineDefinition } from "@/features/task-records/lib/task-record-machine"
+import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
 import { taskTable } from "@/features/tasks/db"
 import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
@@ -82,11 +81,6 @@ const getOrCreateTaskRecord = async ({
     throw new Error("Could not generate UUID for task record")
   }
 
-  const taskRecordMachine = withDrizzlePg(taskRecordMachineDefinition, {
-    db,
-    table: taskRecordTable,
-  })
-
   await taskRecordMachine.createActor(
     id,
     createTaskRecordMachineContext({ recordId, taskId }),
@@ -116,11 +110,6 @@ const createAgentRun = async ({
     .then((rows) => rows[0]?.maxAttempt ?? 0)
 
   const attemptNumber = existingAttempts + 1
-
-  const agentRunMachine = withDrizzlePg(agentRunMachineDefinition, {
-    db,
-    table: agentRunTable,
-  })
 
   await agentRunMachine.createActor(id, {
     attemptNumber,
@@ -335,23 +324,6 @@ export const spawnDebugSession = async ({
           recordId,
         }),
       ])
-
-      const executionContext = {
-        execution: {
-          agentRunId,
-          projectId,
-          pythonPath: pythonEnv.pythonPath,
-          recordId,
-          taskId,
-          taskRecordId,
-          workspaceDataDirectory: preparedWorkspaceData.dataDirectory,
-        },
-        files,
-        record,
-        relations,
-        schema,
-        task,
-      }
 
       const agentsMdPath = path.join(workspace.workspaceDirectory, "AGENTS.md")
       const agentsMd = `# Agent Debug Session

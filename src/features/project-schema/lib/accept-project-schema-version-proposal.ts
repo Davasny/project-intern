@@ -1,10 +1,9 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq, sql } from "drizzle-orm"
-import { withDrizzlePg } from "machin/drizzle/pg"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { buildSchemaMigrationTaskDescription } from "@/features/project-schema/lib/build-schema-migration-task-description"
-import { projectSchemaVersionMachineDefinition } from "@/features/project-schema/lib/project-schema-version-machine"
+import { projectSchemaVersionMachine } from "@/features/project-schema/lib/project-schema-version-machine"
 import { projectTable } from "@/features/projects/db"
 import { recordTable } from "@/features/records/db"
 import { createProjectTask } from "@/features/tasks/lib/create-project-task"
@@ -106,13 +105,6 @@ export const acceptProjectSchemaVersionProposal = async ({
         })
       : null
 
-  const projectSchemaVersionMachine = withDrizzlePg(
-    projectSchemaVersionMachineDefinition,
-    {
-      db: database,
-      table: projectSchemaVersionTable,
-    },
-  )
   const actor = await projectSchemaVersionMachine.getActor(schemaVersionId)
 
   if (!actor) {

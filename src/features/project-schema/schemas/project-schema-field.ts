@@ -42,7 +42,3 @@ export const projectSchemaCustomFieldSchema =
   })
 
 export type ProjectSchemaField = z.infer<typeof projectSchemaFieldSchema>
-type ProjectSchemaCustomField = z.infer<
-  typeof projectSchemaCustomFieldSchema
->
-type ProjectSchemaFieldType = (typeof schemaFieldTypeValues)[number]

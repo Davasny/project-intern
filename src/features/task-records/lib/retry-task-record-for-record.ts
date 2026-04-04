@@ -1,8 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq, sql } from "drizzle-orm"
 import { withDrizzlePg } from "machin/drizzle/pg"
-import { agentRunTable } from "@/features/agent-runs/db"
-import { agentRunMachineDefinition } from "@/features/agent-runs/lib/agent-run-machine"
+import { agentRunMachine } from "@/features/agent-runs/lib/agent-run-machine"
 import { claimTaskRecordCandidate } from "@/features/execution/lib/claim-task-record-candidate"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
@@ -107,15 +106,7 @@ export const retryTaskRecordForRecord = async ({
       return null
     }
 
-    const transactionAgentRunMachine = withDrizzlePg(
-      agentRunMachineDefinition,
-      {
-        db: tx,
-        table: agentRunTable,
-      },
-    )
-
-    await transactionAgentRunMachine.createActor(agentRunId, {
+    await agentRunMachine.createActor(agentRunId, {
       attemptNumber: candidate.attemptNumber,
       costUsd: null,
       directory: null,

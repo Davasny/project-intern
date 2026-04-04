@@ -1,8 +1,8 @@
+import type { Job } from "pg-bosser"
 import { failAgentRun } from "@/features/agent-runs/lib/fail-agent-run"
 import { createTaskFailureFromError } from "@/features/execution/lib/create-task-failure-from-error"
 import { taskExecutorQueuePayloadSchema } from "@/features/execution/queues/task-executor-queue"
 import { logger } from "@/lib/logger"
-import type { Job } from "pg-bosser"
 
 type HandleTaskExecutorWorkerErrorParams = {
   error: unknown

@@ -1,8 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { desc, eq } from "drizzle-orm"
-import { withDrizzlePg } from "machin/drizzle/pg"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
-import { projectSchemaVersionMachineDefinition } from "@/features/project-schema/lib/project-schema-version-machine"
+import { projectSchemaVersionMachine } from "@/features/project-schema/lib/project-schema-version-machine"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
 import { projectTable } from "@/features/projects/db"
 import type { db } from "@/lib/db"
@@ -54,14 +53,6 @@ export const createProjectSchemaVersionProposal = async ({
       message: "Schema proposal id could not be generated.",
     })
   }
-
-  const projectSchemaVersionMachine = withDrizzlePg(
-    projectSchemaVersionMachineDefinition,
-    {
-      db: database,
-      table: projectSchemaVersionTable,
-    },
-  )
 
   await projectSchemaVersionMachine.createActor(schemaVersionId, {
     parentVersionId: project?.activeSchemaVersionId ?? null,

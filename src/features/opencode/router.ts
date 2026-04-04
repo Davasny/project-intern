@@ -91,14 +91,12 @@ export const opencodeRouter = router({
         })
       }
 
-      const hasTaskAndRecord = input.taskId && input.recordId
-
-      if (hasTaskAndRecord) {
+      if (input.taskId && input.recordId) {
         return spawnDebugSession({
           organizationId: project.organizationId,
           projectId: project.id,
-          taskId: input.taskId!,
-          recordId: input.recordId!,
+          taskId: input.taskId,
+          recordId: input.recordId,
           title: input.title,
         })
       }
@@ -139,11 +137,9 @@ export const opencodeRouter = router({
           "Either serverId or (agentRunId and taskRecordId) must be provided.",
       })
     }),
-  listSessions: protectedProcedure
-    .input(projectScopeSchema)
-    .query(async ({ input }) => {
-      const sessions = await listSessionsOnExternalServer()
+  listSessions: protectedProcedure.input(projectScopeSchema).query(async () => {
+    const sessions = await listSessionsOnExternalServer()
 
-      return { sessions }
-    }),
+    return { sessions }
+  }),
 })
