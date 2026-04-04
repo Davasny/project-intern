@@ -3,6 +3,10 @@ import { z } from "zod"
 import { stopInteractiveServer } from "@/features/opencode/lib/get-opencode-client"
 import { listDiskSkills } from "@/features/opencode/lib/list-disk-skills"
 import {
+  spawnDebugSession,
+  stopDebugSession,
+} from "@/features/opencode/lib/spawn-debug-session"
+import {
   listSessionsOnExternalServer,
   spawnSession,
 } from "@/features/opencode/lib/spawn-session"
@@ -69,6 +73,8 @@ export const opencodeRouter = router({
     .input(
       projectScopeSchema.extend({
         title: z.string().trim().min(1).default("Interactive session"),
+        taskId: z.string().uuid().optional(),
+        recordId: z.string().uuid().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -85,6 +91,18 @@ export const opencodeRouter = router({
         })
       }
 
+      const hasTaskAndRecord = input.taskId && input.recordId
+
+      if (hasTaskAndRecord) {
+        return spawnDebugSession({
+          organizationId: project.organizationId,
+          projectId: project.id,
+          taskId: input.taskId!,
+          recordId: input.recordId!,
+          title: input.title,
+        })
+      }
+
       return spawnSession({
         organizationId: project.organizationId,
         projectId: project.id,
@@ -94,12 +112,31 @@ export const opencodeRouter = router({
   stopSession: protectedProcedure
     .input(
       z.object({
-        serverId: z.string().uuid(),
+        serverId: z.string().uuid().optional(),
+        agentRunId: z.string().uuid().optional(),
+        taskRecordId: z.string().uuid().optional(),
       }),
     )
     .mutation(async ({ input }) => {
-      await stopInteractiveServer({
-        serverId: input.serverId,
+      if (input.agentRunId && input.taskRecordId) {
+        await stopDebugSession({
+          agentRunId: input.agentRunId,
+          taskRecordId: input.taskRecordId,
+        })
+        return
+      }
+
+      if (input.serverId) {
+        await stopInteractiveServer({
+          serverId: input.serverId,
+        })
+        return
+      }
+
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          "Either serverId or (agentRunId and taskRecordId) must be provided.",
       })
     }),
   listSessions: protectedProcedure

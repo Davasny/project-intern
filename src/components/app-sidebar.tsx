@@ -3,12 +3,15 @@
 import {
   ActivityIcon,
   BotIcon,
+  BrainCircuitIcon,
+  BrainIcon,
   ClipboardClockIcon,
   DatabaseIcon,
   FolderIcon,
   LayoutDashboardIcon,
   ListTodoIcon,
   SettingsIcon,
+  SquareTerminalIcon,
 } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
@@ -109,9 +112,7 @@ export const AppSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>
-            {currentProject?.displayName ?? "Project"}
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Project</SidebarGroupLabel>
           <SidebarProjectSelect />
         </SidebarGroup>
 
@@ -138,8 +139,8 @@ export const AppSidebar = () => {
                 <Link
                   href={`/app/${organizationSlug}/${projectSlug}/opencode/sessions`}
                 >
-                  <BotIcon />
-                  <span>Sessions</span>
+                  <SquareTerminalIcon />
+                  <span>Debug session</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -148,8 +149,8 @@ export const AppSidebar = () => {
                 <Link
                   href={`/app/${organizationSlug}/${projectSlug}/opencode/skills`}
                 >
-                  <BotIcon />
-                  <span>Skills</span>
+                  <BrainIcon />
+                  <span>Project skills</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

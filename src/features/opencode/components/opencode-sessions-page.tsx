@@ -1,6 +1,6 @@
 "use client"
 
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import {
   CheckIcon,
   CopyIcon,
@@ -14,6 +14,15 @@ import { PageHeader } from "@/components/ui/page-header/page-header"
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -21,30 +30,58 @@ export const OpencodeSessionsPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const [copied, setCopied] = useState(false)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>()
+  const [selectedRecordId, setSelectedRecordId] = useState<string | undefined>()
+
+  const tasksQuery = useQuery(
+    trpc.tasks.list.queryOptions({ organizationSlug, projectSlug }),
+  )
+  const recordsQuery = useQuery(
+    trpc.records.list.queryOptions({ organizationSlug, projectSlug }),
+  )
 
   const spawnMutation = useMutation(
     trpc.opencode.spawnSession.mutationOptions(),
   )
 
-  const stopMutation = useMutation(trpc.opencode.stopSession.mutationOptions())
+  const stopMutation = useMutation(
+    trpc.opencode.stopSession.mutationOptions({
+      onSuccess: () => {
+        spawnMutation.reset()
+      },
+    }),
+  )
 
   const handleSpawn = () => {
     spawnMutation.mutate({
       organizationSlug,
       projectSlug,
+      taskId: selectedTaskId,
+      recordId: selectedRecordId,
     })
   }
 
   const handleStop = () => {
-    if (!spawnMutation.data?.serverId) return
-    stopMutation.mutate(
-      { serverId: spawnMutation.data.serverId },
-      {
-        onSuccess: () => {
-          spawnMutation.reset()
-        },
-      },
-    )
+    const data = spawnMutation.data
+    if (!data) return
+
+    if (
+      "agentRunId" in data &&
+      "taskRecordId" in data &&
+      typeof data.agentRunId === "string" &&
+      typeof data.taskRecordId === "string"
+    ) {
+      stopMutation.mutate({
+        agentRunId: data.agentRunId,
+        taskRecordId: data.taskRecordId,
+      })
+    } else if (
+      "serverId" in data &&
+      typeof data.serverId === "string" &&
+      data.serverId.length > 0
+    ) {
+      stopMutation.mutate({ serverId: data.serverId })
+    }
   }
 
   const handleCopyCommand = async () => {
@@ -53,6 +90,8 @@ export const OpencodeSessionsPage = () => {
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  const isLoading = tasksQuery.isLoading || recordsQuery.isLoading
 
   return (
     <div className="flex flex-col gap-6">
@@ -84,7 +123,9 @@ export const OpencodeSessionsPage = () => {
               variant="default"
               size="sm"
               onClick={handleSpawn}
-              disabled={spawnMutation.isPending || !!spawnMutation.data}
+              disabled={
+                spawnMutation.isPending || !!spawnMutation.data || isLoading
+              }
               className="gap-2"
             >
               {spawnMutation.isPending ? (
@@ -112,32 +153,96 @@ export const OpencodeSessionsPage = () => {
             ) : null}
           </div>
         </SectionCardHeader>
+
         <SectionCardContent>
-          {spawnMutation.data ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <code className="text-xs bg-muted px-2 py-1 rounded font-mono text-foreground">
-                  {spawnMutation.data.sessionId.slice(0, 12)}…
-                </code>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyCommand}
-                  className="gap-2"
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-row gap-4">
+              <div className="flex flex-col gap-1.5 min-w-48">
+                <label
+                  htmlFor="task-select"
+                  className="text-xs text-muted-foreground"
                 >
-                  {copied ? (
-                    <CheckIcon className="size-3.5" />
-                  ) : (
-                    <CopyIcon className="size-3.5" />
-                  )}
-                  {copied ? "Copied" : "Copy command"}
-                </Button>
+                  Task (optional)
+                </label>
+
+                <Select
+                  value={selectedTaskId}
+                  onValueChange={setSelectedTaskId}
+                >
+                  <SelectTrigger id="task-select" size="sm">
+                    <SelectValue placeholder="Select task" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Tasks</SelectLabel>
+                      {tasksQuery.data?.map((task) => (
+                        <SelectItem key={task.id} value={task.id}>
+                          {task.title}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
-              <pre className="text-xs text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto font-mono">
-                {spawnMutation.data.cliCommand}
-              </pre>
+
+              <div className="flex flex-col gap-1.5 min-w-48">
+                <label
+                  htmlFor="record-select"
+                  className="text-xs text-muted-foreground"
+                >
+                  Record (optional)
+                </label>
+
+                <Select
+                  value={selectedRecordId}
+                  onValueChange={setSelectedRecordId}
+                >
+                  <SelectTrigger id="record-select" size="sm">
+                    <SelectValue placeholder="Select record..." />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Record</SelectLabel>
+
+                      {recordsQuery.data?.map((record) => (
+                        <SelectItem key={record.id} value={record.id}>
+                          {record.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          ) : null}
+
+            {spawnMutation.data ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <code className="text-xs bg-muted px-2 py-1 rounded font-mono text-foreground">
+                    {spawnMutation.data.sessionId.slice(0, 12)}…
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyCommand}
+                    className="gap-2"
+                  >
+                    {copied ? (
+                      <CheckIcon className="size-3.5" />
+                    ) : (
+                      <CopyIcon className="size-3.5" />
+                    )}
+                    {copied ? "Copied" : "Copy command"}
+                  </Button>
+                </div>
+                <pre className="text-xs text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto font-mono">
+                  {spawnMutation.data.cliCommand}
+                </pre>
+              </div>
+            ) : null}
+          </div>
         </SectionCardContent>
       </SectionCard>
     </div>

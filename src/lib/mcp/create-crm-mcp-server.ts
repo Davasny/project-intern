@@ -11,12 +11,14 @@ import { createProjectSchemaVersionProposalByProjectId } from "@/features/projec
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listProjectSchemaVersionsByProjectId } from "@/features/project-schema/lib/list-project-schema-versions-by-project-id"
 import { projectSchemaDefinitionSchema } from "@/features/project-schema/schemas/project-schema-version"
+import { listOrganizationProjectsById } from "@/features/projects/lib/list-organization-projects-by-id"
 import { createRecordEdgeById } from "@/features/record-edges/lib/create-record-edge-by-id"
 import { deactivateRecordEdgeById } from "@/features/record-edges/lib/deactivate-record-edge-by-id"
 import { getRelatedRecordByEdgeId } from "@/features/record-edges/lib/get-related-record-by-edge-id"
 import { getRelatedRecordsByProjectId } from "@/features/record-edges/lib/get-related-records-by-project-id"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
 import { applyRecordPatch } from "@/features/records/lib/apply-record-patch"
+import { createRecordForMcp } from "@/features/records/lib/create-record-for-mcp"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 import { proposeRecordPatch } from "@/features/records/lib/propose-record-patch"
 import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
@@ -69,6 +71,12 @@ const relationDeactivateInputSchema = z.object({
 const relatedRecordInputSchema = z.object({
   execution: executionScopeInputSchema,
   recordEdgeId: z.string().uuid(),
+})
+
+const recordCreateInputSchema = z.object({
+  context: z.record(z.string(), z.unknown()),
+  name: z.string().trim().min(1, "Record name is required."),
+  projectId: z.string().uuid(),
 })
 
 export const createCrmMcpServer = () => {
@@ -125,7 +133,7 @@ export const createCrmMcpServer = () => {
   )
 
   server.registerTool(
-    "crm_schema_propose_version",
+    "crm_project_schema_propose_version",
     {
       description:
         "Create a new schema proposal in created state for the project. The proposal must include the full schema definition with canonical system fields.",
@@ -375,6 +383,46 @@ export const createCrmMcpServer = () => {
 
       return createMcpJsonResponse({
         data: relation,
+        ok: true,
+      })
+    },
+  )
+
+  server.registerTool(
+    "crm_record_create",
+    {
+      description:
+        "Create a new record in the specified project. Validates name and context against the project's initial schema version.",
+      inputSchema: recordCreateInputSchema,
+    },
+    async (input) => {
+      await assertMcpOrgOwnsProject({ projectId: input.projectId })
+      const record = await createRecordForMcp({
+        context: input.context,
+        name: input.name,
+        projectId: input.projectId,
+      })
+
+      return createMcpJsonResponse({
+        data: record,
+        ok: true,
+      })
+    },
+  )
+
+  server.registerTool(
+    "crm_project_list",
+    {
+      description:
+        "List all projects in the organization that issued the API key.",
+      inputSchema: z.object({}),
+    },
+    async () => {
+      const scope = getMcpScope()
+      const projects = await listOrganizationProjectsById(scope.organizationId)
+
+      return createMcpJsonResponse({
+        data: projects,
         ok: true,
       })
     },
