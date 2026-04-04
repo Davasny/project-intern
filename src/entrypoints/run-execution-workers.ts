@@ -1,7 +1,6 @@
 import { handleTaskExecutorWorkerError } from "@/features/execution/lib/handle-task-executor-worker-error"
 import {
   scheduleTaskExecutor,
-  taskRetryScanWorker,
   taskSchedulerWorker,
   workspaceMaintenanceWorker,
 } from "@/features/execution/queues/schedule-task-executor"
@@ -26,10 +25,6 @@ const stoppableWorkers = [
   {
     name: "taskSchedulerWorker",
     worker: taskSchedulerWorker,
-  },
-  {
-    name: "taskRetryScanWorker",
-    worker: taskRetryScanWorker,
   },
   {
     name: "workspaceMaintenanceWorker",

@@ -1,11 +1,6 @@
 import { Worker } from "pg-bosser"
-import { runTaskRetryScan } from "@/features/execution/lib/run-task-retry-scan"
 import { runTaskSchedulerTick } from "@/features/execution/lib/run-task-scheduler-tick"
 import { runWorkspaceMaintenance } from "@/features/execution/lib/run-workspace-maintenance"
-import {
-  taskRetryScanQueue,
-  taskRetryScanQueuePayloadSchema,
-} from "@/features/execution/queues/task-retry-scan-queue"
 import {
   taskSchedulerTickQueue,
   taskSchedulerTickQueuePayloadSchema,
@@ -36,26 +31,6 @@ export const taskSchedulerWorker = new Worker(
   },
 )
 
-export const taskRetryScanWorker = new Worker(
-  taskRetryScanQueue,
-  async (job) => {
-    const payload = taskRetryScanQueuePayloadSchema.parse(job.data)
-    const childLogger = logger.child({
-      worker: "taskRetryScanWorker",
-      queue: taskRetryScanQueue.queueName,
-      jobId: job.id,
-      jobName: job.name,
-      limit: payload.limit,
-    })
-
-    childLogger.info("processing task retry scan job")
-
-    await runTaskRetryScan({ limit: payload.limit })
-
-    childLogger.info("completed task retry scan job")
-  },
-)
-
 export const workspaceMaintenanceWorker = new Worker(
   workspaceMaintenanceQueue,
   async (job) => {
@@ -79,7 +54,6 @@ export const workspaceMaintenanceWorker = new Worker(
 export const scheduleTaskExecutor = async () => {
   await Promise.all([
     taskSchedulerWorker.work(),
-    taskRetryScanWorker.work(),
     workspaceMaintenanceWorker.work(),
   ])
 }
