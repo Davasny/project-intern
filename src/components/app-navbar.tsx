@@ -14,7 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { cn } from "@/lib/utils"
-import { CustomSidebarTrigger } from "../../components/custom-sidebar-trigger"
+import { CustomSidebarTrigger } from "./custom-sidebar-trigger"
 
 const segmentLabels: Record<string, string> = {
   tasks: "Tasks",

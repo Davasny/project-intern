@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import type { NavUserProps } from "@/components/nav-user"
-import { AppShell } from "../../../../components/app-shell"
+import { AppShell } from "../../../components/app-shell"
 import { ProjectScopeProvider } from "../context/project-scope-provider"
 
 type ProjectScopeShellProps = {
