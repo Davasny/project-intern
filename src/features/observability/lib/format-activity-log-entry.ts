@@ -43,6 +43,13 @@ export const formatActivityLogEntry = ({
     }
   }
 
+  if (eventType === "schema.history_merged_to_v1") {
+    return {
+      description: `Schema history merged into single v1. Removed ${String(payload.previousVersionCount ?? 0)} versions.`,
+      label: "Schema history merged",
+    }
+  }
+
   if (eventType === "schema.migration_finalized") {
     return {
       description: `${getStringValue(payload.title) ?? taskTitle ?? "Migration task"} finished for all records.`,

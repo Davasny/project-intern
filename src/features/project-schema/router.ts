@@ -3,6 +3,7 @@ import { and, eq, inArray } from "drizzle-orm"
 import { z } from "zod"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { acceptProjectSchemaVersionProposalById } from "@/features/project-schema/lib/accept-project-schema-version-proposal-by-id"
+import { collapseProjectSchemaHistory } from "@/features/project-schema/lib/collapse-project-schema-history"
 import { createProjectSchemaVersion } from "@/features/project-schema/lib/create-project-schema-version"
 import { createProjectSchemaVersionDraft } from "@/features/project-schema/lib/create-project-schema-version-draft"
 import { diffProjectSchemaVersions } from "@/features/project-schema/lib/diff-project-schema-versions"
@@ -207,6 +208,15 @@ export const projectSchemaRouter = router({
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
         schemaVersionId: input.schemaVersionId,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  collapseToSingleVersion: protectedProcedure
+    .input(projectScopeSchema)
+    .mutation(({ ctx, input }) =>
+      collapseProjectSchemaHistory({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
         userId: ctx.session.user.id,
       }),
     ),

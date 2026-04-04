@@ -12,6 +12,7 @@ import { SectionCardContent } from "@/components/ui/section-card/section-card-co
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { StatsBar } from "@/components/ui/stats-bar/stats-bar"
 import { formatActivityLogEntry } from "@/features/observability/lib/format-activity-log-entry"
+import { CollapseSchemaHistoryButton } from "@/features/project-schema/components/collapse-schema-history-button"
 import { CreateSchemaVersionModal } from "@/features/project-schema/components/create-schema-version-modal"
 import { SchemaDiffModal } from "@/features/project-schema/components/schema-diff-modal"
 import { SchemaVersionFieldItem } from "@/features/project-schema/components/schema-version-field-item"
@@ -128,10 +129,16 @@ export const SchemaVersionBrowser = () => {
                 record context.
               </p>
             </div>
-            <CreateSchemaVersionModal
-              initialSchemaDefinition={activeVersion.schemaDefinition}
-              totalRecordCount={settingsQuery.data.totalRecordCount}
-            />
+            <div className="flex flex-row gap-2">
+              <CollapseSchemaHistoryButton
+                totalRecordCount={settingsQuery.data.totalRecordCount}
+                versionCount={settingsQuery.data.versions.length}
+              />
+              <CreateSchemaVersionModal
+                initialSchemaDefinition={activeVersion.schemaDefinition}
+                totalRecordCount={settingsQuery.data.totalRecordCount}
+              />
+            </div>
           </div>
         </SectionCardHeader>
         <SectionCardContent className="flex flex-col gap-2">
