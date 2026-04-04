@@ -66,8 +66,9 @@ export const SchemaVersionBrowser = () => {
             Schema settings
           </h1>
           <p className="text-sm text-muted-foreground">
-            Active schema version {activeVersion.version} governs all record
-            validation and migration status.
+            {settingsQuery.data.totalRecordCount === 0
+              ? `Schema v${activeVersion.version} is editable in place. Changes apply immediately—no versioning needed while the project is empty.`
+              : `Active schema version ${activeVersion.version} governs all record validation and migration status.`}
           </p>
         </div>
       </PageHeader>
@@ -129,6 +130,7 @@ export const SchemaVersionBrowser = () => {
             </div>
             <CreateSchemaVersionModal
               initialSchemaDefinition={activeVersion.schemaDefinition}
+              totalRecordCount={settingsQuery.data.totalRecordCount}
             />
           </div>
         </SectionCardHeader>

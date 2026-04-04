@@ -22,6 +22,13 @@ export const formatActivityLogEntry = ({
     }
   }
 
+  if (eventType === "schema.version_edited_in_place") {
+    return {
+      description: `Schema v${String(payload.version ?? "")} updated in place`,
+      label: "Schema edited in place",
+    }
+  }
+
   if (eventType === "schema.version_proposed") {
     return {
       description: `Schema proposal ${String(payload.version ?? "")}`,

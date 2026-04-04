@@ -62,6 +62,9 @@ export const RecordsPage = () => {
             <p className="text-sm text-muted-foreground">
               New records always start at schema version{" "}
               {initialSchemaQuery.data.version}.
+              {initialSchemaQuery.data.version === 1
+                ? " Once records exist, schema changes will create new versions."
+                : " Records are migrated to new schema versions automatically."}
             </p>
           </div>
           <PageHeaderActions>

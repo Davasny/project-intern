@@ -16,10 +16,12 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 
 type CreateSchemaVersionModalProps = {
   initialSchemaDefinition: ProjectSchemaDefinition
+  totalRecordCount: number
 }
 
 export const CreateSchemaVersionModal = ({
   initialSchemaDefinition,
+  totalRecordCount,
 }: CreateSchemaVersionModalProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -27,21 +29,25 @@ export const CreateSchemaVersionModal = ({
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="secondary">
-          Create new version
+          {totalRecordCount > 0 ? "Create new version" : "Edit schema"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create schema change</DialogTitle>
+          <DialogTitle>
+            {totalRecordCount > 0 ? "Create schema version" : "Edit schema"}
+          </DialogTitle>
           <DialogDescription>
-            Save as draft for review, or create and accept a new schema version
-            immediately.
+            {totalRecordCount > 0
+              ? "Save as draft for review, or create and accept a new schema version immediately."
+              : "Save changes as draft for review, or apply them immediately to the active schema."}
           </DialogDescription>
         </DialogHeader>
         <SchemaVersionForm
           initialSchemaDefinition={initialSchemaDefinition}
           key={initialSchemaDefinition.fields.map((f) => f.key).join(",")}
           onSuccess={() => setIsOpen(false)}
+          totalRecordCount={totalRecordCount}
         />
       </DialogContent>
     </Dialog>

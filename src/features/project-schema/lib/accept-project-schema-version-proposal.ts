@@ -1,11 +1,12 @@
 import { TRPCError } from "@trpc/server"
-import { and, eq } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 import { withDrizzlePg } from "machin/drizzle/pg"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { buildSchemaMigrationTaskDescription } from "@/features/project-schema/lib/build-schema-migration-task-description"
 import { projectSchemaVersionMachineDefinition } from "@/features/project-schema/lib/project-schema-version-machine"
 import { projectTable } from "@/features/projects/db"
+import { recordTable } from "@/features/records/db"
 import { createProjectTask } from "@/features/tasks/lib/create-project-task"
 import type { db } from "@/lib/db"
 
@@ -79,25 +80,31 @@ export const acceptProjectSchemaVersionProposal = async ({
     .set({ activeSchemaVersionId: proposal.id })
     .where(eq(projectTable.id, projectId))
 
-  const migrationTask = previousVersion
-    ? await createProjectTask({
-        createdByUserId: acceptedByUserId,
-        database,
-        descriptionMarkdown: buildSchemaMigrationTaskDescription({
-          nextSchemaDefinition: proposal.schemaDefinition,
-          nextVersion: proposal.version,
-          previousSchemaDefinition: previousVersion.schemaDefinition,
-          previousVersion: previousVersion.version,
-        }),
-        model: null,
-        organizationId,
-        projectId,
-        schemaVersion: proposal.version,
-        sourceSchemaVersionId: previousVersion.id,
-        targetSchemaVersionId: proposal.id,
-        title: `Adopt schema v${proposal.version}`,
-      })
-    : null
+  const [{ recordCount }] = await database
+    .select({ recordCount: sql<number>`count(*)::int` })
+    .from(recordTable)
+    .where(eq(recordTable.projectId, projectId))
+
+  const migrationTask =
+    previousVersion && recordCount > 0
+      ? await createProjectTask({
+          createdByUserId: acceptedByUserId,
+          database,
+          descriptionMarkdown: buildSchemaMigrationTaskDescription({
+            nextSchemaDefinition: proposal.schemaDefinition,
+            nextVersion: proposal.version,
+            previousSchemaDefinition: previousVersion.schemaDefinition,
+            previousVersion: previousVersion.version,
+          }),
+          model: null,
+          organizationId,
+          projectId,
+          schemaVersion: proposal.version,
+          sourceSchemaVersionId: previousVersion.id,
+          targetSchemaVersionId: proposal.id,
+          title: `Adopt schema v${proposal.version}`,
+        })
+      : null
 
   const projectSchemaVersionMachine = withDrizzlePg(
     projectSchemaVersionMachineDefinition,

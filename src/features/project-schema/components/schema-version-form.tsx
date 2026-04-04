@@ -47,6 +47,7 @@ const schemaVersionFormSchema = z.object({
 type SchemaVersionFormProps = {
   initialSchemaDefinition: ProjectSchemaDefinition
   onSuccess?: () => void
+  totalRecordCount: number
 }
 
 const parseNumberValue = (value: string) => {
@@ -112,6 +113,7 @@ const getInitialFormValues = (
 export const SchemaVersionForm = ({
   initialSchemaDefinition,
   onSuccess,
+  totalRecordCount,
 }: SchemaVersionFormProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
@@ -271,13 +273,21 @@ export const SchemaVersionForm = ({
             variant="outline"
           >
             {createDraftMutation.isPending
-              ? "Creating draft..."
-              : "Create draft"}
+              ? totalRecordCount === 0
+                ? "Saving draft..."
+                : "Creating draft..."
+              : totalRecordCount === 0
+                ? "Save draft"
+                : "Create draft"}
           </Button>
           <Button disabled={isSubmitting} type="submit">
             {createVersionMutation.isPending
-              ? "Creating schema version..."
-              : "Create schema version"}
+              ? totalRecordCount === 0
+                ? "Applying changes..."
+                : "Creating schema version..."
+              : totalRecordCount === 0
+                ? "Apply changes"
+                : "Create schema version"}
           </Button>
         </div>
       </form>
