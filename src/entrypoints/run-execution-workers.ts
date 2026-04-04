@@ -1,4 +1,3 @@
-import { executionScheduleService } from "@/features/execution/lib/execution-schedule-service"
 import { handleTaskExecutorWorkerError } from "@/features/execution/lib/handle-task-executor-worker-error"
 import {
   scheduleTaskExecutor,
@@ -8,6 +7,9 @@ import {
 } from "@/features/execution/queues/schedule-task-executor"
 import { taskExecutorWorker } from "@/features/execution/queues/task-executor-worker"
 import { logger } from "@/lib/logger"
+import { taskSchedulerTickQueue } from "@/features/execution/queues/task-scheduler-tick-queue"
+import { taskRetryScanQueue } from "@/features/execution/queues/task-retry-scan-queue"
+import { workspaceMaintenanceQueue } from "@/features/execution/queues/workspace-maintenance-queue"
 
 const executionWorkers = [
   {
@@ -124,7 +126,17 @@ const runExecutionWorkers = async () => {
       "starting execution workers",
     )
 
-    await executionScheduleService.registerSchedules()
+    await taskSchedulerTickQueue.schedule("*/1 * * * *", {
+      limit: 10,
+    })
+
+    await taskRetryScanQueue.schedule("*/5 * * * *", {
+      limit: 10,
+    })
+
+    await workspaceMaintenanceQueue.schedule("0 */6 * * *", {
+      projectId: null,
+    })
 
     await Promise.all(
       executionWorkers.map(async (worker) => {
