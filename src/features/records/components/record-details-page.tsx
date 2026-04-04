@@ -152,8 +152,6 @@ export const RecordDetailsPage = ({
             initialName={recordQuery.data.name}
             key={`${recordQuery.data.id}-${recordQuery.data.version}`}
             onSubmitted={() => {}}
-            organizationSlug={organizationSlug}
-            projectSlug={projectSlug}
             recordId={recordQuery.data.id}
             recordVersion={recordQuery.data.version}
             schemaDefinition={recordSchemaQuery.data.schemaDefinition}
@@ -186,8 +184,6 @@ export const RecordDetailsPage = ({
                   <RecordLinkedTaskRow
                     key={task.taskRecordId}
                     nextWaitingSortOrder={nextWaitingSortOrder}
-                    organizationSlug={organizationSlug}
-                    projectSlug={projectSlug}
                     recordId={recordQuery.data.id}
                     task={task}
                   />

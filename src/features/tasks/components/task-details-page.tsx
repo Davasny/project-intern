@@ -171,12 +171,7 @@ export const TaskDetailsPage = ({
               </TableHead>
               <TableBody>
                 {taskQuery.data.taskRecords.map((taskRecord) => (
-                  <TaskRecordRow
-                    key={taskRecord.id}
-                    organizationSlug={organizationSlug}
-                    projectSlug={projectSlug}
-                    taskRecord={taskRecord}
-                  />
+                  <TaskRecordRow key={taskRecord.id} taskRecord={taskRecord} />
                 ))}
               </TableBody>
             </DataTable>
@@ -214,8 +209,6 @@ export const TaskDetailsPage = ({
             initialSchemaVersion={taskQuery.data.schemaVersion}
             initialTitle={taskQuery.data.title}
             onSubmitted={() => setIsEditOpen(false)}
-            organizationSlug={organizationSlug}
-            projectSlug={projectSlug}
             schemaVersionOptions={
               schemaVersionOptions.length > 0
                 ? schemaVersionOptions

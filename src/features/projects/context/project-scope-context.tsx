@@ -15,7 +15,7 @@ type Project = {
   slug: string
 }
 
-type ProjectScope = {
+export type ProjectScope = {
   organizationSlug: string
   projectSlug: string
   currentOrganization: Organization | null

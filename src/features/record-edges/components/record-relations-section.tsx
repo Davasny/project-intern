@@ -100,8 +100,6 @@ export const RecordRelationsSection = ({
               {relationsQuery.data.relations.map((relation) => (
                 <RecordRelationListItem
                   key={relation.id}
-                  organizationSlug={organizationSlug}
-                  projectSlug={projectSlug}
                   recordId={recordId}
                   relation={relation}
                 />
@@ -133,8 +131,6 @@ export const RecordRelationsSection = ({
             mode="create"
             onOpenChange={setIsCreateOpen}
             onSubmitted={() => setIsCreateOpen(false)}
-            organizationSlug={organizationSlug}
-            projectSlug={projectSlug}
             recordId={recordId}
           />
         </SectionCardContent>

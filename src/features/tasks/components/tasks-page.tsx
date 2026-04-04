@@ -130,7 +130,6 @@ export const TasksPage = () => {
           <TaskForm
             initialDescriptionMarkdown=""
             initialModel={null}
-            initialPipelineVersion={null}
             initialSchemaVersion={latestSchemaVersion}
             initialTitle=""
             onSubmitted={() => setIsCreateOpen(false)}
