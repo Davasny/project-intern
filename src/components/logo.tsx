@@ -7,7 +7,7 @@ export const LogoIcon = (props: React.ComponentProps<"svg">) => (
 	</svg>
 );
 
-export const Logo = (props: React.ComponentProps<"svg">) => (
+const Logo = (props: React.ComponentProps<"svg">) => (
 	<svg
 		fill="currentColor"
 		viewBox="0 0 114 24"

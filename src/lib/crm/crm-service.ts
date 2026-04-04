@@ -31,20 +31,18 @@ const executionScopeInputSchema = z.object({
 
 export const crmRecordReadInputSchema = executionScopeInputSchema
 
-export type CrmRecordReadInput = z.infer<typeof crmRecordReadInputSchema>
+type CrmRecordReadInput = z.infer<typeof crmRecordReadInputSchema>
 
-export const crmProjectReadSchemaInputSchema = executionScopeInputSchema
+const crmProjectReadSchemaInputSchema = executionScopeInputSchema
 
-export type CrmProjectReadSchemaInput = z.infer<
-  typeof crmProjectReadSchemaInputSchema
->
+type CrmProjectReadSchemaInput = z.infer<typeof crmProjectReadSchemaInputSchema>
 
 export const crmProjectSchemaProposeVersionInputSchema = z.object({
   projectId: z.string().uuid(),
   schemaDefinition: projectSchemaDefinitionSchema,
 })
 
-export type CrmProjectSchemaProposeVersionInput = z.infer<
+type CrmProjectSchemaProposeVersionInput = z.infer<
   typeof crmProjectSchemaProposeVersionInputSchema
 >
 
@@ -75,15 +73,13 @@ export const crmRecordProposePatchInputSchema = z.object({
   patch: patchProposalSchema,
 })
 
-export type CrmRecordProposePatchInput = z.infer<
-  typeof crmRecordProposePatchInputSchema
->
+const crmRecordPatchInputSchema = z.object({
+  execution: executionScopeInputSchema,
+  patch: patchProposalSchema,
+})
 
-export const crmRecordApplyPatchInputSchema = crmRecordProposePatchInputSchema
-
-export type CrmRecordApplyPatchInput = z.infer<
-  typeof crmRecordApplyPatchInputSchema
->
+type CrmRecordProposePatchInput = z.infer<typeof crmRecordPatchInputSchema>
+type CrmRecordApplyPatchInput = z.infer<typeof crmRecordPatchInputSchema>
 
 export const crmRecordCompleteTaskInputSchema = z.object({
   execution: executionScopeInputSchema,
@@ -91,7 +87,7 @@ export const crmRecordCompleteTaskInputSchema = z.object({
   resultPayload: z.record(z.string(), z.unknown()).nullable(),
 })
 
-export type CrmRecordCompleteTaskInput = z.infer<
+type CrmRecordCompleteTaskInput = z.infer<
   typeof crmRecordCompleteTaskInputSchema
 >
 
@@ -100,13 +96,11 @@ export const crmRecordFailTaskInputSchema = z.object({
   failure: taskFailureSchema,
 })
 
-export type CrmRecordFailTaskInput = z.infer<
-  typeof crmRecordFailTaskInputSchema
->
+type CrmRecordFailTaskInput = z.infer<typeof crmRecordFailTaskInputSchema>
 
 export const crmRecordListRelationsInputSchema = executionScopeInputSchema
 
-export type CrmRecordListRelationsInput = z.infer<
+type CrmRecordListRelationsInput = z.infer<
   typeof crmRecordListRelationsInputSchema
 >
 
@@ -115,13 +109,11 @@ export const crmRecordGetRelatedInputSchema = z.object({
   recordEdgeId: z.string().uuid(),
 })
 
-export type CrmRecordGetRelatedInput = z.infer<
-  typeof crmRecordGetRelatedInputSchema
->
+type CrmRecordGetRelatedInput = z.infer<typeof crmRecordGetRelatedInputSchema>
 
 export const crmRecordGetRelatedRecordsInputSchema = executionScopeInputSchema
 
-export type CrmRecordGetRelatedRecordsInput = z.infer<
+type CrmRecordGetRelatedRecordsInput = z.infer<
   typeof crmRecordGetRelatedRecordsInputSchema
 >
 
@@ -140,7 +132,7 @@ export const crmRecordCreateRelationEdgeInputSchema = z.object({
   targetRecordId: z.string().uuid(),
 })
 
-export type CrmRecordCreateRelationEdgeInput = z.infer<
+type CrmRecordCreateRelationEdgeInput = z.infer<
   typeof crmRecordCreateRelationEdgeInputSchema
 >
 
@@ -149,7 +141,7 @@ export const crmRecordDeactivateRelationEdgeInputSchema = z.object({
   recordEdgeId: z.string().uuid(),
 })
 
-export type CrmRecordDeactivateRelationEdgeInput = z.infer<
+type CrmRecordDeactivateRelationEdgeInput = z.infer<
   typeof crmRecordDeactivateRelationEdgeInputSchema
 >
 
@@ -159,11 +151,11 @@ export const crmRecordCreateInputSchema = z.object({
   projectId: z.string().uuid(),
 })
 
-export type CrmRecordCreateInput = z.infer<typeof crmRecordCreateInputSchema>
+type CrmRecordCreateInput = z.infer<typeof crmRecordCreateInputSchema>
 
 export const crmProjectListInputSchema = z.object({})
 
-export type CrmProjectListInput = z.infer<typeof crmProjectListInputSchema>
+type CrmProjectListInput = z.infer<typeof crmProjectListInputSchema>
 
 export const readRecord = async (
   input: CrmRecordReadInput,

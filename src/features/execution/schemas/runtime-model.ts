@@ -9,4 +9,4 @@ export const runtimeModelSchema = z
     "Runtime model must use provider/model-id format.",
   )
 
-export type RuntimeModel = z.infer<typeof runtimeModelSchema>
+type RuntimeModel = z.infer<typeof runtimeModelSchema>

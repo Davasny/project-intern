@@ -37,7 +37,7 @@ type ClaimTaskRecordCandidateParams =
       taskRecordId: string
     }
 
-export type ClaimTaskRecordCandidate = {
+type ClaimTaskRecordCandidate = {
   attemptNumber: number
   model: string | null
   organizationId: string

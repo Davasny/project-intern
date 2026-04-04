@@ -2,7 +2,7 @@ import { readdir } from "node:fs/promises"
 import path from "node:path"
 import { getProjectSkillsDirectory } from "@/lib/config/backend"
 
-export type DiskSkill = {
+type DiskSkill = {
   name: string
   description: string
   directoryName: string

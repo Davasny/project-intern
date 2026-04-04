@@ -6,7 +6,7 @@ import { recordTable } from "@/features/records/db"
 import { db } from "@/lib/db"
 import type { SessionVariables } from "@/lib/hono/middleware/session-guard"
 
-export type UploadAccessContext = {
+type UploadAccessContext = {
   organizationId: string
   organizationSlug: string
   projectId: string

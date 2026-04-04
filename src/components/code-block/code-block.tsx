@@ -105,7 +105,7 @@ const CodeBlockContent = ({
 
 export {
   CodeBlock,
-  CodeBlockContent,
+  
   CodeBlockGroup,
   CodeBlockHeader,
   CodeBlockIcon,

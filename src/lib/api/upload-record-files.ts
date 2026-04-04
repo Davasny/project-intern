@@ -1,17 +1,17 @@
 import { frontendConfig } from "@/lib/config/frontend"
 
-export type UploadResult = {
+type UploadResult = {
   name: string
   path: string
   size: number
 }
 
-export type UploadError = {
+type UploadError = {
   name: string
   message: string
 }
 
-export type UploadResponse = {
+type UploadResponse = {
   uploaded: UploadResult[]
   errors: UploadError[]
 }

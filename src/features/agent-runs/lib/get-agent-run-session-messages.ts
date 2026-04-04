@@ -125,7 +125,7 @@ export type AgentRunSessionMessage = {
   tokens: AgentRunSessionTokens | null
 }
 
-export type AgentRunSessionMessagesResult = {
+type AgentRunSessionMessagesResult = {
   directory: string | null
   messages: Array<AgentRunSessionMessage>
   sessionReference: string | null

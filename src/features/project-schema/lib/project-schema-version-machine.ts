@@ -61,7 +61,7 @@ export const projectSchemaVersionMachineDefinition =
     },
   })
 
-export const projectSchemaVersionMachine = withDrizzlePg(
+const projectSchemaVersionMachine = withDrizzlePg(
   projectSchemaVersionMachineDefinition,
   {
     db,

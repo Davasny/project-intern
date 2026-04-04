@@ -41,7 +41,7 @@ export const sessionGuard: MiddlewareHandler<{
   await next()
 }
 
-export const getSession = (context: Context<{ Variables: SessionVariables }>) =>
+const getSession = (context: Context<{ Variables: SessionVariables }>) =>
   context.get("session")
 
 export const requireSession = (

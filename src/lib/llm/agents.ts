@@ -1,7 +1,7 @@
 import type { AgentConfig } from "@opencode-ai/sdk"
 import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-prompt"
 
-export type Agent = AgentConfig & {
+type Agent = AgentConfig & {
   name: string
   description: string
   maxSteps: number

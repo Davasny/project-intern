@@ -27,7 +27,7 @@ type SpawnSessionResult = {
   sessionId: string
 }
 
-export const getServerUrl = (port?: number) => {
+const getServerUrl = (port?: number) => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
     return backendConfig.CRM_OPENCODE_BASE_URL
   }
