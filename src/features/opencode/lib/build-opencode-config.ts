@@ -24,5 +24,6 @@ export const buildOpencodeConfig = (params: { mcpToken: string }): Config => ({
   model: backendConfig.CRM_DEFAULT_RUNTIME_MODEL,
   tools: {
     "*": false,
+    "crm_*": true,
   },
 })
