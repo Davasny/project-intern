@@ -53,6 +53,7 @@ export const executorService = async ({
     )
 
     const runtimeModel = resolveRuntimeModel({
+      projectDefaultModel: initialScope.project.defaultModel,
       taskModel: initialScope.task.model,
     })
 

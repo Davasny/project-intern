@@ -70,6 +70,11 @@ export const AppSidebar = () => {
       icon: iconMap["Schema settings"],
     },
     {
+      href: `/app/${organizationSlug}/${projectSlug}/settings`,
+      label: "Project settings",
+      icon: iconMap["Schema settings"],
+    },
+    {
       href: `/app/${organizationSlug}/${projectSlug}/activity`,
       label: "Activity log",
       icon: iconMap["Activity log"],

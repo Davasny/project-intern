@@ -15,6 +15,7 @@ import { prepareRecordWorkspaceData } from "@/features/execution/lib/prepare-rec
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
 import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
+import { projectTable } from "@/features/projects/db"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
 import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
@@ -24,6 +25,7 @@ import { taskRecordMachineDefinition } from "@/features/task-records/lib/task-re
 import { taskTable } from "@/features/tasks/db"
 import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
+import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
 import { logger } from "@/lib/logger"
 
 type SpawnDebugSessionParams = {
@@ -218,8 +220,10 @@ export const spawnDebugSession = async ({
         id: taskTable.id,
         title: taskTable.title,
         model: taskTable.model,
+        projectDefaultModel: projectTable.defaultModel,
       })
       .from(taskTable)
+      .innerJoin(projectTable, eq(projectTable.id, taskTable.projectId))
       .where(eq(taskTable.id, taskId))
       .then((rows) => rows[0]),
     db
@@ -240,8 +244,16 @@ export const spawnDebugSession = async ({
   const { id: taskRecordId } = await getOrCreateTaskRecord({ taskId, recordId })
   debugLogger = debugLogger.child({ taskRecordId })
 
+  const resolvedModel = resolveEffectiveModel({
+    projectDefaultModel: task.projectDefaultModel,
+    taskModel: task.model,
+  })
+
   debugLogger.info("Creating agent run for debug session")
-  const agentRunId = await createAgentRun({ taskRecordId, model: task.model })
+  const agentRunId = await createAgentRun({
+    taskRecordId,
+    model: resolvedModel,
+  })
   debugLogger = debugLogger.child({ agentRunId })
 
   debugLogger.info("Ensuring record workspace")
@@ -306,7 +318,7 @@ export const spawnDebugSession = async ({
         agentRunId,
         taskRecordId,
         directory: workspace.workspaceDirectory,
-        model: task.model,
+        model: resolvedModel,
       })
 
       debugLogger.info("Loading schema and relations for debug context")

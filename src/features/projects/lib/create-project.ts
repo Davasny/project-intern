@@ -4,6 +4,7 @@ import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { validateProjectSchemaDefinition } from "@/features/project-schema/lib/validate-project-schema-definition"
 import { projectTable } from "@/features/projects/db"
 import { ensureOrganizationAccess } from "@/features/projects/lib/ensure-organization-access"
+import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
 import { createSlug } from "@/utils/create-slug"
 
@@ -64,6 +65,7 @@ export const createProject = async ({
     const [project] = await transaction
       .insert(projectTable)
       .values({
+        defaultModel: backendConfig.CRM_DEFAULT_RUNTIME_MODEL,
         displayName,
         organizationId: organization.id,
         slug: projectSlug,

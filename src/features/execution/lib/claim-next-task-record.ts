@@ -7,6 +7,7 @@ import { createActivityLogEvent } from "@/features/observability/lib/create-acti
 import { taskRecordTable } from "@/features/task-records/db"
 import { taskRecordMachineDefinition } from "@/features/task-records/lib/task-record-machine"
 import { db } from "@/lib/db"
+import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
 import { logger } from "@/lib/logger"
 
 type GeneratedIdRow = {
@@ -63,7 +64,10 @@ export const claimNextTaskRecord = async () => {
         provider: null,
         resultPayload: null,
         selectedAgent: "record-worker",
-        selectedModel: candidate.model,
+        selectedModel: resolveEffectiveModel({
+          projectDefaultModel: candidate.projectDefaultModel,
+          taskModel: candidate.model,
+        }),
         sessionReference: null,
         startedAt: null,
         taskRecordId: candidate.taskRecordId,

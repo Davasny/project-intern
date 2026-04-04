@@ -27,6 +27,7 @@ export const projectTable = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     slug: text("slug").notNull(),
     displayName: text("display_name").notNull(),
+    defaultModel: text("default_model").notNull(),
     activeSchemaVersionId: uuid("active_schema_version_id"),
     isAutopickEnabled: boolean("is_autopick_enabled").notNull().default(true),
     createdAt: createdAtColumn(),

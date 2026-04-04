@@ -42,6 +42,7 @@ export type ClaimTaskRecordCandidate = {
   model: string | null
   organizationId: string
   projectId: string
+  projectDefaultModel: string
   recordId: string
   taskId: string
   taskRecordId: string
@@ -75,6 +76,7 @@ export const claimTaskRecordCandidate = async (
       model: taskTable.model,
       organizationId: projectTable.organizationId,
       projectId: taskTable.projectId,
+      projectDefaultModel: projectTable.defaultModel,
       recordId: taskRecordTable.recordId,
       taskId: taskRecordTable.taskId,
       taskRecordId: taskRecordTable.id,
@@ -172,6 +174,7 @@ export const claimTaskRecordCandidate = async (
     model: candidate.model,
     organizationId: candidate.organizationId,
     projectId: candidate.projectId,
+    projectDefaultModel: candidate.projectDefaultModel,
     recordId: candidate.recordId,
     taskId: candidate.taskId,
     taskRecordId: candidate.taskRecordId,

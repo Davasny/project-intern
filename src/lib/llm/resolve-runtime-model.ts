@@ -4,13 +4,17 @@ import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-mode
 
 type ResolveRuntimeModelParams = {
   taskModel: string | null
+  projectDefaultModel?: string
 }
 
 export const resolveRuntimeModel = ({
   taskModel,
+  projectDefaultModel,
 }: ResolveRuntimeModelParams): RuntimeModel => {
+  const fallback =
+    projectDefaultModel ?? backendConfig.CRM_DEFAULT_RUNTIME_MODEL
   const runtimeModel = validateApprovedTaskModel({
-    model: taskModel ?? backendConfig.CRM_DEFAULT_RUNTIME_MODEL,
+    model: taskModel ?? fallback,
   })
 
   if (runtimeModel === null) {

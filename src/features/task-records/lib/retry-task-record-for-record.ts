@@ -11,6 +11,7 @@ import { taskRecordTable } from "@/features/task-records/db"
 import { taskRecordMachineDefinition } from "@/features/task-records/lib/task-record-machine"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
+import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
 
 type GeneratedIdRow = {
   id: string
@@ -128,7 +129,10 @@ export const retryTaskRecordForRecord = async ({
       provider: null,
       resultPayload: null,
       selectedAgent: "record-worker",
-      selectedModel: candidate.model,
+      selectedModel: resolveEffectiveModel({
+        projectDefaultModel: candidate.projectDefaultModel,
+        taskModel: candidate.model,
+      }),
       sessionReference: null,
       startedAt: null,
       taskRecordId: candidate.taskRecordId,

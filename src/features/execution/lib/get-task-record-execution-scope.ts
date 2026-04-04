@@ -29,6 +29,7 @@ export const getTaskRecordExecutionScope = async ({
       projectId: projectTable.id,
       projectOrganizationId: projectTable.organizationId,
       projectSlug: projectTable.slug,
+      projectDefaultModel: projectTable.defaultModel,
       recordContext: recordTable.context,
       recordCreatedAt: recordTable.createdAt,
       recordId: recordTable.id,
@@ -83,6 +84,7 @@ export const getTaskRecordExecutionScope = async ({
       state: executionScope.agentRunState,
     },
     project: {
+      defaultModel: executionScope.projectDefaultModel,
       displayName: executionScope.projectDisplayName,
       id: executionScope.projectId,
       organizationId: executionScope.projectOrganizationId,

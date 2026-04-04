@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { and, asc, desc, eq } from "drizzle-orm"
 import { listTaskRecordExecutionReadModels } from "@/features/execution/lib/list-task-record-execution-read-models"
+import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
@@ -34,9 +35,10 @@ export const getTaskById = async ({
     })
   }
 
-  const task = await db
+  const taskWithProject = await db
     .select({
       createdAt: taskTable.createdAt,
+      defaultModel: projectTable.defaultModel,
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
@@ -48,15 +50,18 @@ export const getTaskById = async ({
       updatedAt: taskTable.updatedAt,
     })
     .from(taskTable)
+    .innerJoin(projectTable, eq(taskTable.projectId, projectTable.id))
     .where(and(eq(taskTable.id, taskId), eq(taskTable.projectId, project.id)))
     .then((rows) => rows[0] ?? null)
 
-  if (!task) {
+  if (!taskWithProject) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Task was not found.",
     })
   }
+
+  const { defaultModel: projectDefaultModel, ...task } = taskWithProject
 
   const revisions = await db
     .select({
@@ -100,6 +105,7 @@ export const getTaskById = async ({
 
   return {
     ...task,
+    effectiveModel: task.model ?? projectDefaultModel,
     progress: {
       completedCount: taskRecordStates.filter((state) => state === "completed")
         .length,

@@ -135,7 +135,11 @@ export const TaskDetailsPage = ({
             <MetadataList>
               <MetadataListItem
                 label="Model override"
-                value={taskQuery.data.model ?? "Default project models"}
+                value={taskQuery.data.model ?? "Use project default"}
+              />
+              <MetadataListItem
+                label="Effective model"
+                value={taskQuery.data.effectiveModel}
               />
               <MetadataListItem
                 label="Created"
