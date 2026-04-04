@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { createRecord } from "@/features/records/lib/create-record"
+import { deleteRecord } from "@/features/records/lib/delete-record"
 import { getRecordById } from "@/features/records/lib/get-record-by-id"
 import { listRecords } from "@/features/records/lib/list-records"
 import { updateRecord } from "@/features/records/lib/update-record"
@@ -114,4 +115,14 @@ export const recordsRouter = router({
         taskRecordId: input.taskRecordId,
       })
     }),
+  remove: protectedProcedure
+    .input(projectScopeSchema.extend({ recordId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) =>
+      deleteRecord({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        recordId: input.recordId,
+        userId: ctx.session.user.id,
+      }),
+    ),
 })

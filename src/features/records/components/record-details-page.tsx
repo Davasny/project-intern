@@ -1,7 +1,19 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { MetadataList } from "@/components/ui/metadata-list/metadata-list"
@@ -38,6 +50,10 @@ export const RecordDetailsPage = ({
   recordId,
 }: RecordDetailsPageProps) => {
   const trpc = useTRPC()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
   const recordQuery = useQuery({
     ...trpc.records.getById.queryOptions({
       organizationSlug,
@@ -58,6 +74,25 @@ export const RecordDetailsPage = ({
     enabled: recordQuery.data !== undefined,
   })
 
+  const deleteMutation = useMutation(
+    trpc.records.remove.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
+        )
+        router.push(`/app/${organizationSlug}/${projectSlug}/records`)
+      },
+    }),
+  )
+
+  const handleDelete = async () => {
+    await deleteMutation.mutateAsync({
+      organizationSlug,
+      projectSlug,
+      recordId,
+    })
+  }
+
   const nextWaitingSortOrder =
     recordQuery.data?.linkedTasks
       .filter((t) => t.state === "waiting")
@@ -71,6 +106,8 @@ export const RecordDetailsPage = ({
   if (!recordQuery.data || !recordSchemaQuery.data) {
     return <LoadingState label="Record details could not be loaded." />
   }
+
+  const hasActiveTasks = recordQuery.data.progress.inProgressCount > 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -202,6 +239,45 @@ export const RecordDetailsPage = ({
         projectSlug={projectSlug}
         recordId={recordQuery.data.id}
       />
+      <div className="flex justify-end pt-4">
+        <Button
+          disabled={hasActiveTasks || deleteMutation.isPending}
+          onClick={() => setShowDeleteDialog(true)}
+          type="button"
+          variant="destructive"
+        >
+          {deleteMutation.isPending
+            ? "Deleting record..."
+            : "Delete this record"}
+        </Button>
+      </div>
+      <Dialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete record</DialogTitle>
+            <DialogDescription>
+              This will permanently delete &quot;{recordQuery.data.name}&quot;
+              and all linked task records, relations, artifacts, and activity
+              logs. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              disabled={deleteMutation.isPending}
+              onClick={handleDelete}
+              type="button"
+              variant="destructive"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
