@@ -14,11 +14,6 @@ type PollSessionForMetricsParams = {
 const DEFAULT_INTERVAL_MS = 2000
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000
 
-type SessionStatus =
-  | { type: "idle" }
-  | { type: "busy" }
-  | { type: "retry"; attempt: number; message: string; next: number }
-
 export const pollSessionForMetrics = async ({
   sessionId,
   agentRunId,
@@ -31,80 +26,84 @@ export const pollSessionForMetrics = async ({
   log.info("Starting session metrics polling")
 
   const startTime = Date.now()
+  const sleep = (ms: number) =>
+    new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-  const poll = async (): Promise<void> => {
-    if (Date.now() - startTime > timeoutMs) {
-      log.warn("Polling timed out waiting for session to become idle")
-      return
-    }
-
+  while (Date.now() - startTime <= timeoutMs) {
     try {
-      const statusResult = await client.session.status()
+      const messagesResult = await client.session.messages({
+        path: { id: sessionId },
+      })
 
-      if (!statusResult.data) {
-        log.warn("session.status() returned no data")
-        return
+      if (!messagesResult.data || messagesResult.data.length === 0) {
+        log.debug("No messages yet, continuing to poll")
+        await sleep(intervalMs)
+        continue
       }
 
-      const sessionStatus: SessionStatus | undefined =
-        statusResult.data[sessionId]
+      const assistantMessages = messagesResult.data.filter(
+        (msg) => msg.info.role === "assistant",
+      )
 
-      if (!sessionStatus) {
-        log.warn("Session not found in status response, will retry")
-        return
+      const lastAssistantMsg = assistantMessages[assistantMessages.length - 1]
+
+      if (lastAssistantMsg) {
+        const finish = (lastAssistantMsg.info as { finish?: string | null })
+          .finish
+
+        if (finish) {
+          log.info(
+            { finish, assistantMessageCount: assistantMessages.length },
+            "Session finished, fetching messages for metrics",
+          )
+          await fetchAndUpdateMetrics({
+            agentRunId,
+            client,
+            log,
+            messages: messagesResult.data,
+            sessionId,
+          })
+          return
+        }
       }
 
-      if (sessionStatus.type === "idle") {
-        log.info("Session is idle, fetching messages for metrics")
-        await fetchAndUpdateMetrics({ agentRunId, client, log, sessionId })
-        return
-      }
-
-      if (sessionStatus.type === "retry") {
-        log.info(
-          { attempt: sessionStatus.attempt, message: sessionStatus.message },
-          "Session is retrying, will continue polling",
-        )
-      }
-
-      setTimeout(poll, intervalMs)
+      log.debug("Session still in progress, continuing to poll")
+      await sleep(intervalMs)
     } catch (error) {
       log.error(
         {
           error,
           message: error instanceof Error ? error.message : "Unknown error",
         },
-        "Error polling session status",
+        "Error polling session messages",
       )
-      setTimeout(poll, intervalMs)
+      await sleep(intervalMs)
     }
   }
 
-  setTimeout(poll, intervalMs)
+  log.warn("Polling timed out waiting for session to finish")
 }
 
 async function fetchAndUpdateMetrics({
   agentRunId,
   client,
   log,
+  messages,
   sessionId,
 }: {
   agentRunId: string
   client: OpencodeClient
   log: pino.Logger
+  messages: Awaited<ReturnType<typeof client.session.messages>>["data"]
   sessionId: string
 }) {
   try {
-    const messagesResult = await client.session.messages({
-      path: { id: sessionId },
-    })
-
-    if (!messagesResult.data) {
+    if (!messages) {
       log.warn("session.messages() returned no data")
       return
     }
 
-    const assistantMessages = messagesResult.data.filter(
+    const assistantMessages = messages.filter(
       (msg) => msg.info.role === "assistant",
     )
 
@@ -144,7 +143,7 @@ async function fetchAndUpdateMetrics({
     }
 
     let toolCallCount = 0
-    for (const msg of messagesResult.data) {
+    for (const msg of messages) {
       if (msg.parts) {
         for (const part of msg.parts) {
           const partType = (part as { type?: string }).type

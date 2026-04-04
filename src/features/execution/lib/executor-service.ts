@@ -5,7 +5,7 @@ import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-proje
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
 import { getAgentRunExecutionScope } from "@/features/execution/lib/get-agent-run-execution-scope"
 import { linkProjectSkillsToWorkspace } from "@/features/execution/lib/link-project-skills-to-workspace"
-import { pollSessionForMetrics } from "@/features/execution/lib/poll-session-for-metrics"
+import { pollSessionForMetrics } from "@/features/opencode/lib/poll-session-for-metrics"
 import { prepareRecordWorkspaceData } from "@/features/execution/lib/prepare-record-workspace-data"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
 import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
