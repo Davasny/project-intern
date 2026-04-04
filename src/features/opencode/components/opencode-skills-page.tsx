@@ -89,25 +89,6 @@ export const OpencodeSkillsPage = () => {
         <SectionCardHeader>
           <div className="flex flex-col gap-1">
             <span className="text-sm font-medium text-foreground">
-              Expected structure
-            </span>
-          </div>
-        </SectionCardHeader>
-        <SectionCardContent>
-          <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
-            {`📁 <skillsDirectory>/
-└── 📁 <skill-name>/
-    └── 📄 SKILL.md    # required — name & description in frontmatter
-    └── 📁 scripts/   # optional — auxiliary scripts (e.g. Python)
-    └── 📁 templates/ # optional — prompt templates`}
-          </pre>
-        </SectionCardContent>
-      </SectionCard>
-
-      <SectionCard>
-        <SectionCardHeader>
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-foreground">
               Available skills
             </span>
             <span className="text-xs text-muted-foreground">
