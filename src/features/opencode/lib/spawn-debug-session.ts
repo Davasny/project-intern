@@ -165,14 +165,11 @@ const transitionToRunning = async ({
 
   const taskRecordActor = await getTaskRecordActor(taskRecordId)
   await taskRecordActor.send("claim", {
-    agentRunId,
-    errorCode: null,
     lastTransitionAt: new Date(),
   })
 
   await taskRecordActor.send("start", {
     agentRunId,
-    errorCode: null,
     lastTransitionAt: new Date(),
   })
 
@@ -230,7 +227,10 @@ export const spawnDebugSession = async ({
     throw new Error(`Record ${recordId} not found`)
   }
 
-  const { id: taskRecordId } = await getOrCreateTaskRecord({ taskId, recordId })
+  const { id: taskRecordId } = await getOrCreateTaskRecord({
+    taskId,
+    recordId,
+  })
   debugLogger = debugLogger.child({ taskRecordId })
 
   const resolvedModel = resolveEffectiveModel({

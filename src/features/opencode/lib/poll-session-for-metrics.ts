@@ -61,7 +61,6 @@ export const pollSessionForMetrics = async ({
             client,
             log,
             messages: messagesResult.data,
-            sessionId,
           })
           return
         }
@@ -89,13 +88,11 @@ async function fetchAndUpdateMetrics({
   client,
   log,
   messages,
-  sessionId,
 }: {
   agentRunId: string
   client: OpencodeClient
   log: pino.Logger
   messages: Awaited<ReturnType<typeof client.session.messages>>["data"]
-  sessionId: string
 }) {
   try {
     if (!messages) {

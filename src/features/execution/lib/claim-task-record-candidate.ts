@@ -16,14 +16,12 @@ import { taskRecordTable } from "@/features/task-records/db"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import { activeTaskRecordStates } from "@/features/task-records/schemas/task-record-state"
 import { taskTable } from "@/features/tasks/db"
-import type { db } from "@/lib/db"
+import { db } from "@/lib/db"
 
 const terminalTaskRecordStates = [
   "completed",
   "skipped",
 ] satisfies Array<TaskRecordState>
-
-type ClaimTaskRecordCandidateDatabase = Pick<typeof db, "select">
 
 const manualTriggerTaskRecordStates: Array<TaskRecordState> = [
   "waiting",
@@ -32,11 +30,9 @@ const manualTriggerTaskRecordStates: Array<TaskRecordState> = [
 
 type ClaimTaskRecordCandidateParams =
   | {
-      database: ClaimTaskRecordCandidateDatabase
       mode: "autopick"
     }
   | {
-      database: ClaimTaskRecordCandidateDatabase
       mode: "manual"
       projectId: string
       taskRecordId: string
@@ -57,7 +53,6 @@ type ClaimTaskRecordCandidate = {
 export const claimTaskRecordCandidate = async (
   params: ClaimTaskRecordCandidateParams,
 ) => {
-  const database = params.database
   const earlierTaskRecordTable = alias(taskRecordTable, "earlier_task_record")
   const earlierTaskTable = alias(taskTable, "earlier_task")
   const activeTaskRecordTable = alias(taskRecordTable, "active_task_record")
@@ -65,7 +60,7 @@ export const claimTaskRecordCandidate = async (
     taskRecordTable,
     "active_agent_run_task_record",
   )
-  const maxAttemptNumberByTaskRecord = database
+  const maxAttemptNumberByTaskRecord = db
     .select({
       maxAttemptNumber: sql<number>`max(${agentRunTable.attemptNumber})`.as(
         "maxAttemptNumber",
@@ -76,7 +71,7 @@ export const claimTaskRecordCandidate = async (
     .groupBy(agentRunTable.taskRecordId)
     .as("max_attempt_number_by_task_record")
 
-  const baseQuery = database
+  const baseQuery = db
     .select({
       maxAttemptNumber: maxAttemptNumberByTaskRecord.maxAttemptNumber,
       model: taskTable.model,
@@ -101,7 +96,7 @@ export const claimTaskRecordCandidate = async (
           ? inArray(taskRecordTable.state, manualTriggerTaskRecordStates)
           : eq(taskRecordTable.state, "waiting"),
         notExists(
-          database
+          db
             .select({ id: earlierTaskRecordTable.id })
             .from(earlierTaskRecordTable)
             .innerJoin(
@@ -121,7 +116,7 @@ export const claimTaskRecordCandidate = async (
             ),
         ),
         notExists(
-          database
+          db
             .select({ id: activeTaskRecordTable.id })
             .from(activeTaskRecordTable)
             .where(
@@ -132,7 +127,7 @@ export const claimTaskRecordCandidate = async (
             ),
         ),
         notExists(
-          database
+          db
             .select({ id: agentRunTable.id })
             .from(agentRunTable)
             .innerJoin(

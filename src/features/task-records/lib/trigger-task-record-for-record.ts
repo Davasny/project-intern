@@ -1,19 +1,12 @@
 import { TRPCError } from "@trpc/server"
-import { and, eq, sql } from "drizzle-orm"
-import { agentRunMachine } from "@/features/agent-runs/lib/agent-run-machine"
-import { claimTaskRecordCandidate } from "@/features/execution/lib/claim-task-record-candidate"
+import { and, eq } from "drizzle-orm"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
 import { taskRecordTable } from "@/features/task-records/db"
-import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
+import { launchTaskRecordExecution } from "@/features/task-records/lib/launch-task-record-execution"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
-import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
-
-type GeneratedIdRow = {
-  id: string
-}
 
 type TriggerTaskRecordForRecordParams = {
   actorId: string
@@ -30,108 +23,39 @@ export const triggerTaskRecordForRecord = async ({
   recordId,
   taskRecordId,
 }: TriggerTaskRecordForRecordParams) => {
-  const claimedTaskRecord = await db.transaction(async (tx) => {
-    const taskRecord = await tx
-      .select({
-        id: taskRecordTable.id,
-        state: taskRecordTable.state,
-      })
-      .from(taskRecordTable)
-      .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
-      .where(
-        and(
-          eq(taskRecordTable.id, taskRecordId),
-          eq(taskRecordTable.recordId, recordId),
-          eq(taskTable.projectId, projectId),
-        ),
-      )
-      .then((rows) => rows[0] ?? null)
-
-    if (!taskRecord) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Task record was not found.",
-      })
-    }
-
-    if (taskRecord.state !== "waiting") {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Only waiting task records can be triggered.",
-      })
-    }
-
-    const candidate = await claimTaskRecordCandidate({
-      database: tx,
-      mode: "manual",
-      projectId,
-      taskRecordId: taskRecord.id,
+  const taskRecord = await db
+    .select({
+      id: taskRecordTable.id,
+      state: taskRecordTable.state,
     })
-
-    if (!candidate) {
-      return null
-    }
-
-    const agentRunIdResult = await tx.execute<GeneratedIdRow>(sql`
-      select uuidv7() as id
-    `)
-
-    const agentRunId = agentRunIdResult.rows[0]?.id ?? null
-
-    if (!agentRunId) {
-      return null
-    }
-
-    await agentRunMachine.createActor(agentRunId, {
-      attemptNumber: candidate.attemptNumber,
-      costUsd: null,
-      directory: null,
-      estimatedCostUsd: null,
-      failurePayload: null,
-      finishedAt: null,
-      inputTokens: null,
-      latencyMs: null,
-      model: null,
-      outputTokens: null,
-      provider: null,
-      resultPayload: null,
-      selectedAgent: "record-worker",
-      selectedModel: resolveEffectiveModel({
-        projectDefaultModel: candidate.projectDefaultModel,
-        taskModel: candidate.model,
-      }),
-      sessionReference: null,
-      startedAt: null,
-      taskRecordId: candidate.taskRecordId,
-      tokenInput: null,
-      tokenOutput: null,
-      toolActivitySummary: {},
-      toolCallCount: 0,
-      toolSummary: {},
-    })
-
-    const taskRecordActor = await taskRecordMachine.getActor(
-      candidate.taskRecordId,
+    .from(taskRecordTable)
+    .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
+    .where(
+      and(
+        eq(taskRecordTable.id, taskRecordId),
+        eq(taskRecordTable.recordId, recordId),
+        eq(taskTable.projectId, projectId),
+      ),
     )
+    .then((rows) => rows[0] ?? null)
 
-    if (!taskRecordActor) {
-      return null
-    }
-
-    await taskRecordActor.send("claim", {
-      agentRunId,
-      errorCode: null,
-      lastTransitionAt: new Date(),
+  if (!taskRecord) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Task record was not found.",
     })
+  }
 
-    return {
-      agentRunId,
-      organizationId: candidate.organizationId,
-      projectId: candidate.projectId,
-      recordId: candidate.recordId,
-      taskId: candidate.taskId,
-      taskRecordId: candidate.taskRecordId,
-    }
+  if (taskRecord.state !== "waiting") {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Only waiting task records can be triggered.",
+    })
+  }
+
+  const claimedTaskRecord = await launchTaskRecordExecution({
+    projectId,
+    taskRecordId: taskRecord.id,
   })
 
   if (!claimedTaskRecord) {

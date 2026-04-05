@@ -1,11 +1,14 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
-import { claimTaskRecordForManualTrigger } from "@/features/execution/lib/claim-task-record-for-manual-trigger"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { getExecutionMonitorReadModel } from "@/features/execution/lib/get-execution-monitor-read-model"
 import { updateProjectAutopick } from "@/features/execution/lib/update-project-autopick"
+import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import { launchTaskRecordExecution } from "@/features/task-records/lib/launch-task-record-execution"
 import { backendConfig } from "@/lib/config/backend"
+import { db } from "@/lib/db"
+import { logger } from "@/lib/logger"
 import { protectedProcedure, router } from "@/lib/trpc/init"
 
 const projectScopeSchema = z.object({
@@ -73,7 +76,7 @@ export const executionRouter = router({
         })
       }
 
-      const claimedTaskRecord = await claimTaskRecordForManualTrigger({
+      const claimedTaskRecord = await launchTaskRecordExecution({
         projectId: project.id,
         taskRecordId: input.taskRecordId,
       })
@@ -84,6 +87,30 @@ export const executionRouter = router({
           message: "Task record is not eligible for manual triggering.",
         })
       }
+
+      await createActivityLogEvent({
+        actorId: claimedTaskRecord.agentRunId,
+        actorType: "executor",
+        agentRunId: claimedTaskRecord.agentRunId,
+        database: db,
+        entityId: claimedTaskRecord.taskRecordId,
+        entityType: "taskRecord",
+        eventType: "taskRecord.claimed",
+        organizationId: claimedTaskRecord.organizationId,
+        payload: {
+          manualTrigger: true,
+          recordId: claimedTaskRecord.recordId,
+          taskId: claimedTaskRecord.taskId,
+        },
+        projectId: claimedTaskRecord.projectId,
+        recordId: claimedTaskRecord.recordId,
+        relatedProjectId: null,
+        relatedRecordId: null,
+        taskId: claimedTaskRecord.taskId,
+        taskRecordId: claimedTaskRecord.taskRecordId,
+      })
+
+      logger.info(claimedTaskRecord, "Claimed task record for manual trigger")
 
       const jobId = await executionQueueService.enqueueTaskRecordExecution({
         agentRunId: claimedTaskRecord.agentRunId,

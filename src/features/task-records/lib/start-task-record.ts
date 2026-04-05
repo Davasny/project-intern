@@ -12,7 +12,6 @@ export const startTaskRecord = async ({
   const actor = await getTaskRecordActor(taskRecordId)
   return actor.send("start", {
     agentRunId,
-    errorCode: null,
     lastTransitionAt: new Date(),
   })
 }

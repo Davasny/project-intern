@@ -37,6 +37,7 @@ export const ExecutionMonitorRow = ({
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
+
   const triggerMutation = useMutation(
     trpc.execution.triggerTaskRecord.mutationOptions({
       onSuccess: async () => {

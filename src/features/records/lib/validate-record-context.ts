@@ -1,10 +1,9 @@
 import { TRPCError } from "@trpc/server"
+import { z } from "zod"
 import { applyProjectSchemaDefaults } from "@/features/project-schema/lib/apply-project-schema-defaults"
 import { buildContextSchema } from "@/features/project-schema/lib/build-context-schema"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
 import { logger } from "@/lib/logger"
-
-import { z } from "zod"
 
 type ValidateRecordContextParams = {
   context: Record<string, unknown>
