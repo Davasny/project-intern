@@ -1,13 +1,13 @@
 import { TRPCError } from "@trpc/server"
-import { and, eq } from "drizzle-orm"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
-import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { acceptProjectSchemaVersionProposal } from "@/features/project-schema/lib/accept-project-schema-version-proposal"
 import { createProjectSchemaVersionProposal } from "@/features/project-schema/lib/create-project-schema-version-proposal"
+import { getProjectSchemaVersionActor } from "@/features/project-schema/lib/project-schema-version-machine"
 import { getSchemaWriteMode } from "@/features/project-schema/lib/get-schema-write-mode"
 import { validateProjectSchemaDefinition } from "@/features/project-schema/lib/validate-project-schema-definition"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { db } from "@/lib/db"
+import { generateUuidV7Values } from "@/lib/db/generate-uuid-v7-values"
 
 type CreateProjectSchemaVersionParams = {
   customFields: unknown[]
@@ -51,58 +51,54 @@ export const createProjectSchemaVersion = async ({
     }
 
     if (writeMode.mode === "in_place") {
-      const [updated] = await tx
-        .update(projectSchemaVersionTable)
-        .set({ schemaDefinition })
-        .where(
-          and(
-            eq(projectSchemaVersionTable.id, writeMode.activeVersion.id),
-            eq(projectSchemaVersionTable.state, "accepted"),
-          ),
-        )
-        .returning({
-          id: projectSchemaVersionTable.id,
-          projectId: projectSchemaVersionTable.projectId,
-          schemaDefinition: projectSchemaVersionTable.schemaDefinition,
-          state: projectSchemaVersionTable.state,
-          version: projectSchemaVersionTable.version,
-        })
+      const actor = await getProjectSchemaVersionActor(
+        writeMode.activeVersion.id,
+      )
 
-      if (!updated) {
+      const updatedActor = await actor.send("update", {
+        actorId: userId,
+        organizationId: project.organizationId,
+        schemaDefinition,
+        schemaVersionId: writeMode.activeVersion.id,
+      })
+
+      if (updatedActor.state !== "accepted") {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Schema version could not be updated.",
         })
       }
 
-      await createActivityLogEvent({
-        actorId: userId,
-        actorType: "user",
-        agentRunId: null,
-        database: tx,
-        entityId: updated.id,
-        entityType: "projectSchemaVersion",
-        eventType: "schema.version_edited_in_place",
-        organizationId: project.organizationId,
-        payload: {
-          version: updated.version,
-        },
+      return {
+        id: writeMode.activeVersion.id,
         projectId: project.id,
-        recordId: null,
-        relatedProjectId: null,
-        relatedRecordId: null,
-        taskId: null,
-        taskRecordId: null,
-      })
+        schemaDefinition,
+        state: updatedActor.state,
+        version: writeMode.activeVersion.version,
+      }
+    }
 
-      return updated
+    const generatedIds = await generateUuidV7Values({
+      count: 1,
+      database: tx,
+    })
+    const schemaVersionId = generatedIds[0]
+
+    if (!schemaVersionId) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Schema version id could not be generated.",
+      })
     }
 
     const createdProposal = await createProjectSchemaVersionProposal({
       database: tx,
+      id: schemaVersionId,
+      parentVersionId: writeMode.activeVersion.id,
       projectId: project.id,
       proposedBy: userId,
       schemaDefinition,
+      version: writeMode.activeVersion.version + 1,
     })
 
     if (!createdProposal) {

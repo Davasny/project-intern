@@ -1,11 +1,10 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
-import { projectSchemaVersionMachine } from "@/features/project-schema/lib/project-schema-version-machine"
+import { getProjectSchemaVersionActor } from "@/features/project-schema/lib/project-schema-version-machine"
 import type { db } from "@/lib/db"
 
-type DatabaseClient = Pick<typeof db, "insert" | "select" | "update">
+type DatabaseClient = Pick<typeof db, "select">
 
 type RejectProjectSchemaVersionProposalParams = {
   database: DatabaseClient
@@ -51,16 +50,13 @@ export const rejectProjectSchemaVersionProposal = async ({
     })
   }
 
-  const actor = await projectSchemaVersionMachine.getActor(schemaVersionId)
+  const actor = await getProjectSchemaVersionActor(schemaVersionId)
 
-  if (!actor) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Schema proposal actor was not found.",
-    })
-  }
-
-  const rejectedActor = await actor.send("reject", actor.context)
+  const rejectedActor = await actor.send("reject", {
+    organizationId,
+    rejectedByUserId,
+    schemaVersionId,
+  })
 
   if (rejectedActor.state !== "rejected") {
     throw new TRPCError({
@@ -68,26 +64,6 @@ export const rejectProjectSchemaVersionProposal = async ({
       message: "Schema proposal could not be rejected from its current state.",
     })
   }
-
-  await createActivityLogEvent({
-    actorId: rejectedByUserId,
-    actorType: "user",
-    agentRunId: null,
-    database,
-    entityId: proposal.id,
-    entityType: "projectSchemaVersion",
-    eventType: "schema.version_rejected",
-    organizationId,
-    payload: {
-      version: proposal.version,
-    },
-    projectId,
-    recordId: null,
-    relatedProjectId: null,
-    relatedRecordId: null,
-    taskId: null,
-    taskRecordId: null,
-  })
 
   return {
     id: proposal.id,
