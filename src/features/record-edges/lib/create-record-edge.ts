@@ -2,11 +2,11 @@ import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordEdgeTable } from "@/features/record-edges/db"
-import { assertRelationCardinality } from "@/features/record-edges/lib/assert-relation-cardinality"
-import { buildRecordEdgeMetadata } from "@/features/record-edges/lib/build-record-edge-metadata"
-import { createActivityLog } from "@/features/record-edges/lib/create-activity-log"
-import { createRecordEdgeMachineRow } from "@/features/record-edges/lib/create-record-edge-machine-row"
 import { ensureRecordInProject } from "@/features/record-edges/lib/ensure-record-in-project"
+import {
+  createRecordEdgeActor,
+  getRecordEdgeActor,
+} from "@/features/record-edges/lib/record-edge-machine"
 import type { RelationCreateInput } from "@/features/record-edges/schemas/relation-input"
 import { db } from "@/lib/db"
 import { generateUuidV7Values } from "@/lib/db/generate-uuid-v7-values"
@@ -51,36 +51,35 @@ export const createRecordEdge = async ({
     recordId: input.targetRecordId,
   })
 
-  if (
-    sourceProject.id === targetProject.id &&
-    sourceRecord.id === targetRecord.id
-  ) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "A record cannot relate to itself.",
-    })
-  }
-
-  await assertRelationCardinality({
-    excludeRecordEdgeId: null,
-    fromRecordId: sourceRecord.id,
-    relationType: input.relationType,
-    toRecordId: targetRecord.id,
-  })
-
-  const metadata = buildRecordEdgeMetadata(input.metadata)
   const [recordEdgeId] = await generateUuidV7Values({ count: 1, database: db })
 
-  await createRecordEdgeMachineRow({
+  await createRecordEdgeActor(recordEdgeId, {
     createdByTaskId: null,
     direction: input.direction,
     fromProjectId: sourceProject.id,
     fromRecordId: sourceRecord.id,
-    id: recordEdgeId,
-    metadata,
+    metadata: {},
     relationType: input.relationType,
     toProjectId: targetProject.id,
     toRecordId: targetRecord.id,
+  })
+
+  const actor = await getRecordEdgeActor(recordEdgeId)
+
+  await actor.send("activate", {
+    byAgentRunId: null,
+    byUserId: userId,
+    direction: input.direction,
+    fromProjectId: sourceProject.id,
+    fromRecordId: sourceRecord.id,
+    fromRecordName: sourceRecord.name,
+    metadata: input.metadata,
+    relationType: input.relationType,
+    toProjectDisplayName: targetProject.displayName,
+    toProjectId: targetProject.id,
+    toProjectSlug: targetProject.slug,
+    toRecordId: targetRecord.id,
+    toRecordName: targetRecord.name,
   })
 
   const recordEdge = await db
@@ -107,25 +106,6 @@ export const createRecordEdge = async ({
       message: "Relation was not found after creation.",
     })
   }
-
-  await createActivityLog({
-    actorId: userId,
-    actorType: "user",
-    entityId: recordEdge.id,
-    eventType: "recordEdge.created",
-    payload: {
-      direction: recordEdge.direction,
-      relatedProjectDisplayName: targetProject.displayName,
-      relatedProjectSlug: targetProject.slug,
-      relatedRecordName: targetRecord.name,
-      relationType: recordEdge.relationType,
-      sourceRecordName: sourceRecord.name,
-    },
-    projectId: sourceProject.id,
-    recordId: sourceRecord.id,
-    relatedProjectId: targetProject.id,
-    relatedRecordId: targetRecord.id,
-  })
 
   return recordEdge
 }

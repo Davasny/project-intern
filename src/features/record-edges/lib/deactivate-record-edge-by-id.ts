@@ -1,9 +1,8 @@
 import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { recordEdgeTable } from "@/features/record-edges/db"
-import { createActivityLog } from "@/features/record-edges/lib/create-activity-log"
-import { getRecordEdgeActor } from "@/features/record-edges/lib/get-record-edge-actor"
 import { getScopedRecordEdge } from "@/features/record-edges/lib/get-scoped-record-edge"
+import { getRecordEdgeActor } from "@/features/record-edges/lib/record-edge-machine"
 import { db } from "@/lib/db"
 
 type DeactivateRecordEdgeByIdParams = {
@@ -33,35 +32,11 @@ export const deactivateRecordEdgeById = async ({
   }
 
   const actor = await getRecordEdgeActor(recordEdge.id)
-  const nextMetadata = {
-    ...recordEdge.metadata,
-    deactivatedByAgentRunId: agentRunId,
-    deactivatedFromRecordId: recordId,
-  }
-  await actor.send("deactivate", {
-    createdByTaskId: recordEdge.createdByTaskId,
-    direction: recordEdge.direction,
-    fromProjectId: recordEdge.fromProjectId,
-    fromRecordId: recordEdge.fromRecordId,
-    metadata: nextMetadata,
-    relationType: recordEdge.relationType,
-    toProjectId: recordEdge.toProjectId,
-    toRecordId: recordEdge.toRecordId,
-  })
 
-  await createActivityLog({
-    actorId: agentRunId,
-    actorType: "executor",
-    entityId: recordEdge.id,
-    eventType: "recordEdge.deactivated",
-    payload: {
-      direction: recordEdge.direction,
-      relationType: recordEdge.relationType,
-    },
-    projectId: recordEdge.fromProjectId,
-    recordId: recordEdge.fromRecordId,
-    relatedProjectId: recordEdge.toProjectId,
-    relatedRecordId: recordEdge.toRecordId,
+  await actor.send("deactivate", {
+    byAgentRunId: agentRunId,
+    byUserId: null,
+    fromRecordId: recordId,
   })
 
   return db

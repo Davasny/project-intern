@@ -2,10 +2,8 @@ import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordEdgeTable } from "@/features/record-edges/db"
-import { createActivityLog } from "@/features/record-edges/lib/create-activity-log"
-import { ensureRecordInProject } from "@/features/record-edges/lib/ensure-record-in-project"
-import { getRecordEdgeActor } from "@/features/record-edges/lib/get-record-edge-actor"
 import { getScopedRecordEdge } from "@/features/record-edges/lib/get-scoped-record-edge"
+import { getRecordEdgeActor } from "@/features/record-edges/lib/record-edge-machine"
 import type { RelationDeactivateInput } from "@/features/record-edges/schemas/relation-input"
 import { db } from "@/lib/db"
 
@@ -49,47 +47,11 @@ export const deactivateRecordEdge = async ({
   }
 
   const actor = await getRecordEdgeActor(recordEdge.id)
-  const nextMetadata = {
-    ...recordEdge.metadata,
-    deactivatedByUserId: userId,
-    deactivatedFromRecordId: input.recordId,
-  }
+
   await actor.send("deactivate", {
-    createdByTaskId: recordEdge.createdByTaskId,
-    direction: recordEdge.direction,
-    fromProjectId: recordEdge.fromProjectId,
-    fromRecordId: recordEdge.fromRecordId,
-    metadata: nextMetadata,
-    relationType: recordEdge.relationType,
-    toProjectId: recordEdge.toProjectId,
-    toRecordId: recordEdge.toRecordId,
-  })
-
-  const sourceRecord = await ensureRecordInProject({
-    projectId: recordEdge.fromProjectId,
-    recordId: recordEdge.fromRecordId,
-  })
-  const targetRecord = await ensureRecordInProject({
-    projectId: recordEdge.toProjectId,
-    recordId: recordEdge.toRecordId,
-  })
-
-  await createActivityLog({
-    actorId: userId,
-    actorType: "user",
-    entityId: recordEdge.id,
-    eventType: "recordEdge.deactivated",
-    payload: {
-      direction: recordEdge.direction,
-      relatedProjectId: recordEdge.toProjectId,
-      relatedRecordName: targetRecord.name,
-      relationType: recordEdge.relationType,
-      sourceRecordName: sourceRecord.name,
-    },
-    projectId: recordEdge.fromProjectId,
-    recordId: recordEdge.fromRecordId,
-    relatedProjectId: recordEdge.toProjectId,
-    relatedRecordId: recordEdge.toRecordId,
+    byAgentRunId: null,
+    byUserId: userId,
+    fromRecordId: input.recordId,
   })
 
   return db

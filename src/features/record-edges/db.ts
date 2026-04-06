@@ -8,8 +8,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core"
 import { projectTable } from "@/features/projects/db"
+import type { RecordEdgeState } from "@/features/record-edges/lib/record-edge-machine"
+import type { RelationType } from "@/features/record-edges/lib/relation-type-rules"
 import type { RecordEdgeDirection } from "@/features/record-edges/schemas/record-edge-direction"
-import type { RecordEdgeState } from "@/features/record-edges/schemas/record-edge-state"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
 
@@ -38,7 +39,7 @@ export const recordEdgeTable = pgTable(
     toRecordId: uuid("to_record_id")
       .notNull()
       .references(() => recordTable.id, { onDelete: "cascade" }),
-    relationType: text("relation_type").notNull(),
+    relationType: text("relation_type").$type<RelationType>().notNull(),
     direction: text("direction").$type<RecordEdgeDirection>().notNull(),
     state: text("state").$type<RecordEdgeState>().notNull(),
     metadata: jsonb("metadata")

@@ -14,6 +14,7 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 import { RelationEditorPanel } from "@/features/record-edges/components/relation-editor-panel"
 import type { RelationType } from "@/features/record-edges/lib/relation-type-rules"
 import { useTRPC } from "@/lib/trpc/client"
+import { RecordEdgeState } from "@/features/record-edges/lib/record-edge-machine";
 
 type RecordRelationListItemProps = {
   recordId: string
@@ -36,7 +37,7 @@ type RecordRelationListItemProps = {
     }
     relationType: string
     relationTypeLabel: string
-    state: "active" | "inactive"
+    state: RecordEdgeState
     updatedAt: Date
   }
 }
