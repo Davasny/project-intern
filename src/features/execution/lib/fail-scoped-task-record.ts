@@ -1,5 +1,7 @@
-import { completeAgentRun } from "@/features/agent-runs/lib/complete-agent-run"
-import { failAgentRun } from "@/features/agent-runs/lib/fail-agent-run"
+import {
+  completeAgentRunCommand,
+  failAgentRunCommand,
+} from "@/features/agent-runs/lib/agent-run-commands"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
 import { mirrorRecordWorkspaceDataToStorage } from "@/features/execution/lib/mirror-record-workspace-data-to-storage"
 import type { TaskFailure } from "@/features/execution/schemas/task-failure"
@@ -55,7 +57,7 @@ export const failScopedTaskRecord = async ({
       recordId: scope.record.id,
     })
 
-    await completeAgentRun({
+    await completeAgentRunCommand({
       agentRunId: scope.agentRun.id,
       costUsd: null,
       latencyMs: null,
@@ -84,7 +86,7 @@ export const failScopedTaskRecord = async ({
     recordId: scope.record.id,
   })
 
-  await failAgentRun({
+  await failAgentRunCommand({
     agentRunId: scope.agentRun.id,
     costUsd: null,
     errorCode: failure.code,

@@ -1,5 +1,7 @@
-import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-booting"
-import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
+import {
+  bootAgentRunCommand,
+  runAgentRunCommand,
+} from "@/features/agent-runs/lib/agent-run-commands"
 import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
 import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
@@ -207,7 +209,7 @@ export const executorService = async ({
           "Marking agent run booting",
         )
 
-        await markAgentRunBooting({
+        await bootAgentRunCommand({
           agentRunId: initialScope.agentRun.id,
           directory: workspace.workspaceDirectory,
           model: modelID,
@@ -286,7 +288,7 @@ export const executorService = async ({
           "Marking agent run running",
         )
 
-        await markAgentRunRunning({
+        await runAgentRunCommand({
           agentRunId: initialScope.agentRun.id,
           model: modelID,
           latencyMs: null,

@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
-import { abortAgentRun } from "@/features/agent-runs/lib/abort-agent-run"
+import { abortAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
 import { getAgentRunById } from "@/features/agent-runs/lib/get-agent-run-by-id"
 import { getAgentRunSessionMessages } from "@/features/agent-runs/lib/get-agent-run-session-messages"
 import { listAgentRuns } from "@/features/agent-runs/lib/list-agent-runs"
@@ -104,7 +104,7 @@ export const agentRunsRouter = router({
         })
       }
 
-      await abortAgentRun({
+      await abortAgentRunCommand({
         agentRunId: input.agentRunId,
         failurePayload: { stoppedByUser: true },
         taskRecordId: run.taskRecordId,

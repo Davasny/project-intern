@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm"
 import { machine } from "machin"
 import { withDrizzlePg } from "machin/drizzle/pg"
 import { agentRunTable } from "@/features/agent-runs/db"
-import { createAgentRun } from "@/features/agent-runs/lib/create-agent-run"
+import { createAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
 import { claimTaskRecordCandidate } from "@/features/execution/lib/claim-task-record-candidate"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
@@ -136,7 +136,7 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
           )
         }
 
-        const agentRunResult = await createAgentRun({
+        const agentRunResult = await createAgentRunCommand({
           attemptNumber: candidate.attemptNumber,
           model: candidate.model,
           projectDefaultModel: candidate.projectDefaultModel,

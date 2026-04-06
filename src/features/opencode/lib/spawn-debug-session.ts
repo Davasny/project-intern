@@ -2,10 +2,12 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import { and, eq, sql } from "drizzle-orm"
 import { agentRunTable } from "@/features/agent-runs/db"
-import { abortAgentRun } from "@/features/agent-runs/lib/abort-agent-run"
-import { agentRunMachine } from "@/features/agent-runs/lib/agent-run-machine"
-import { markAgentRunBooting } from "@/features/agent-runs/lib/mark-agent-run-booting"
-import { markAgentRunRunning } from "@/features/agent-runs/lib/mark-agent-run-running"
+import {
+  abortAgentRunCommand,
+  bootAgentRunCommand,
+  createAgentRunCommand,
+  runAgentRunCommand,
+} from "@/features/agent-runs/lib/agent-run-commands"
 import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
 import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
@@ -89,56 +91,6 @@ const getOrCreateTaskRecord = async ({
   return { id, state: "waiting" as const }
 }
 
-const createAgentRun = async ({
-  taskRecordId,
-  model,
-}: {
-  taskRecordId: string
-  model: string | null
-}) => {
-  const idResult = await db.execute<{ id: string }>(sql`select uuidv7() as id`)
-  const id = idResult.rows[0]?.id
-
-  if (!id) {
-    throw new Error("Could not generate UUID for agent run")
-  }
-
-  const existingAttempts = await db
-    .select({ maxAttempt: sql<number>`max(${agentRunTable.attemptNumber})` })
-    .from(agentRunTable)
-    .where(eq(agentRunTable.taskRecordId, taskRecordId))
-    .then((rows) => rows[0]?.maxAttempt ?? 0)
-
-  const attemptNumber = existingAttempts + 1
-
-  await agentRunMachine.createActor(id, {
-    attemptNumber,
-    costUsd: null,
-    directory: null,
-    estimatedCostUsd: null,
-    failurePayload: null,
-    finishedAt: null,
-    inputTokens: null,
-    latencyMs: null,
-    model: null,
-    outputTokens: null,
-    provider: null,
-    resultPayload: null,
-    selectedAgent: "record-worker",
-    selectedModel: model,
-    sessionReference: null,
-    startedAt: null,
-    taskRecordId,
-    tokenInput: null,
-    tokenOutput: null,
-    toolActivitySummary: {},
-    toolCallCount: 0,
-    toolSummary: {},
-  })
-
-  return id
-}
-
 const transitionToRunning = async ({
   agentRunId,
   taskRecordId,
@@ -154,7 +106,7 @@ const transitionToRunning = async ({
     model ?? "anthropic/claude-sonnet-4-5-20250514"
   ).split("/")
 
-  await markAgentRunBooting({
+  await bootAgentRunCommand({
     agentRunId,
     directory,
     model: modelID,
@@ -173,7 +125,7 @@ const transitionToRunning = async ({
     lastTransitionAt: new Date(),
   })
 
-  await markAgentRunRunning({
+  await runAgentRunCommand({
     agentRunId,
     latencyMs: null,
     model: modelID,
@@ -238,11 +190,25 @@ export const spawnDebugSession = async ({
     taskModel: task.model,
   })
 
+  const existingAttempts = await db
+    .select({ maxAttempt: sql<number>`max(${agentRunTable.attemptNumber})` })
+    .from(agentRunTable)
+    .where(eq(agentRunTable.taskRecordId, taskRecordId))
+    .then((rows) => rows[0]?.maxAttempt ?? 0)
+
   debugLogger.info("Creating agent run for debug session")
-  const agentRunId = await createAgentRun({
-    taskRecordId,
+  const agentRunResult = await createAgentRunCommand({
+    attemptNumber: existingAttempts + 1,
     model: resolvedModel,
+    projectDefaultModel: task.projectDefaultModel,
+    taskRecordId,
   })
+
+  if (!agentRunResult) {
+    throw new Error("Could not create agent run")
+  }
+
+  const agentRunId = agentRunResult.agentRunId
   debugLogger = debugLogger.child({ agentRunId })
 
   debugLogger.info("Ensuring record workspace")
@@ -416,7 +382,7 @@ export const stopDebugSession = async ({
   try {
     debugLogger.info("Stopping debug session, transitioning to aborted")
 
-    await abortAgentRun({
+    await abortAgentRunCommand({
       agentRunId,
       failurePayload: { stoppedByUser: true },
       taskRecordId,

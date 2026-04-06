@@ -1,5 +1,5 @@
 import type { Job } from "pg-bosser"
-import { failAgentRun } from "@/features/agent-runs/lib/fail-agent-run"
+import { failAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
 import { createTaskFailureFromError } from "@/features/execution/lib/create-task-failure-from-error"
 import { taskExecutorQueuePayloadSchema } from "@/features/execution/queues/task-executor-queue"
 import { logger } from "@/lib/logger"
@@ -31,7 +31,7 @@ export const handleTaskExecutorWorkerError = async ({
 
   const failure = createTaskFailureFromError(error)
 
-  await failAgentRun({
+  await failAgentRunCommand({
     agentRunId: payloadResult.data.agentRunId,
     costUsd: null,
     errorCode: failure.code,

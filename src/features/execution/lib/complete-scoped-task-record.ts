@@ -1,4 +1,4 @@
-import { completeAgentRun } from "@/features/agent-runs/lib/complete-agent-run"
+import { completeAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
 import { getTaskRecordPatchSchemaVersion } from "@/features/execution/lib/get-task-record-patch-schema-version"
 import { mirrorRecordWorkspaceDataToStorage } from "@/features/execution/lib/mirror-record-workspace-data-to-storage"
@@ -79,7 +79,7 @@ export const completeScopedTaskRecord = async ({
     recordId: scope.record.id,
   })
 
-  await completeAgentRun({
+  await completeAgentRunCommand({
     agentRunId: scope.agentRun.id,
     costUsd: null,
     latencyMs: null,
