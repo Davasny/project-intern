@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-timeline"
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,7 @@ import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-met
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import { TaskStatusBadge } from "@/components/ui/status-badge/task-status-badge"
 import {
   TableBody,
@@ -48,6 +49,7 @@ export const TaskDetailsPage = ({
   taskId,
 }: TaskDetailsPageProps) => {
   const trpc = useTRPC()
+  const queryClient = useQueryClient()
   const [isEditOpen, setIsEditOpen] = useState(false)
   const schemaVersionsQuery = useQuery(
     trpc.projectSchema.listVersions.queryOptions({
@@ -67,12 +69,74 @@ export const TaskDetailsPage = ({
     },
   })
 
+  const invalidateTaskQueries = async () => {
+    await queryClient.invalidateQueries(
+      trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.tasks.getById.queryFilter({ organizationSlug, projectSlug, taskId }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.projects.overview.queryFilter({ organizationSlug, projectSlug }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
+    )
+  }
+
+  const acceptDraftMutation = useMutation(
+    trpc.tasks.acceptDraft.mutationOptions({ onSuccess: invalidateTaskQueries }),
+  )
+
+  const rejectDraftMutation = useMutation(
+    trpc.tasks.rejectDraft.mutationOptions({ onSuccess: invalidateTaskQueries }),
+  )
+
+  const handleAcceptDraft = async () => {
+    await acceptDraftMutation.mutateAsync({
+      organizationSlug,
+      projectSlug,
+      taskId,
+    })
+  }
+
+  const handleRejectDraft = async () => {
+    await rejectDraftMutation.mutateAsync({
+      organizationSlug,
+      projectSlug,
+      taskId,
+    })
+  }
+
   if (schemaVersionsQuery.isLoading || taskQuery.isLoading) {
     return <LoadingState label="Loading task details..." />
   }
 
   if (!schemaVersionsQuery.data || !taskQuery.data) {
     return <LoadingState label="Task details could not be loaded." />
+  }
+
+  const draftStatusLabelMap: Record<typeof taskQuery.data.state, string> = {
+    accepted: "accepted",
+    accepting: "accepting",
+    accepting_failed: "accept failed",
+    created: "draft",
+    rejected: "rejected",
+    rejecting: "rejecting",
+    rejecting_failed: "reject failed",
+  }
+
+  const draftStatusToneMap: Record<
+    typeof taskQuery.data.state,
+    "danger" | "info" | "muted" | "success" | "warning"
+  > = {
+    accepted: "success",
+    accepting: "info",
+    accepting_failed: "danger",
+    created: "warning",
+    rejected: "danger",
+    rejecting: "info",
+    rejecting_failed: "danger",
   }
 
   const schemaVersionOptions = schemaVersionsQuery.data.map(
@@ -88,7 +152,14 @@ export const TaskDetailsPage = ({
               <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                 {taskQuery.data.title}
               </h1>
-              <TaskStatusBadge state={taskQuery.data.summaryState} />
+              {taskQuery.data.state === "accepted" ? (
+                <TaskStatusBadge state={taskQuery.data.summaryState} />
+              ) : (
+                <StatusBadge
+                  label={draftStatusLabelMap[taskQuery.data.state]}
+                  tone={draftStatusToneMap[taskQuery.data.state]}
+                />
+              )}
             </div>
             <PageHeaderMeta>
               <span>Sort order {taskQuery.data.sortOrder}</span>
@@ -99,6 +170,29 @@ export const TaskDetailsPage = ({
             </PageHeaderMeta>
           </div>
           <PageHeaderActions>
+            {taskQuery.data.state === "created" ? (
+              <>
+                <Button
+                  disabled={
+                    acceptDraftMutation.isPending || rejectDraftMutation.isPending
+                  }
+                  onClick={handleRejectDraft}
+                  type="button"
+                  variant="outline"
+                >
+                  Reject draft
+                </Button>
+                <Button
+                  disabled={
+                    acceptDraftMutation.isPending || rejectDraftMutation.isPending
+                  }
+                  onClick={handleAcceptDraft}
+                  type="button"
+                >
+                  Accept draft
+                </Button>
+              </>
+            ) : null}
             <Button onClick={() => setIsEditOpen(true)} type="button">
               Edit task
             </Button>

@@ -45,6 +45,7 @@ export const getTaskById = async ({
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,
+      state: taskTable.state,
       targetSchemaVersionId: taskTable.targetSchemaVersionId,
       title: taskTable.title,
       updatedAt: taskTable.updatedAt,

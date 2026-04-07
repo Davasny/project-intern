@@ -127,6 +127,13 @@
       "when": 1775506705958,
       "tag": "0017_perfect_skaar",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1775553420402,
+      "tag": "0018_conscious_boomer",
+      "breakpoints": true
     }
   ]
 }

@@ -1,10 +1,13 @@
 import { z } from "zod"
+import { acceptTaskDraftById } from "@/features/tasks/lib/accept-task-draft-by-id"
 import { createTask } from "@/features/tasks/lib/create-task"
 import { getTaskById } from "@/features/tasks/lib/get-task-by-id"
 import { listTasks } from "@/features/tasks/lib/list-tasks"
+import { rejectTaskDraftById } from "@/features/tasks/lib/reject-task-draft-by-id"
 import { reorderTasks } from "@/features/tasks/lib/reorder-tasks"
 import { updateTask } from "@/features/tasks/lib/update-task"
 import {
+  taskCreateIntentSchema,
   taskInputSchema,
   taskReorderInputSchema,
   taskUpdateInputSchema,
@@ -18,12 +21,28 @@ const projectScopeSchema = z.object({
 
 export const tasksRouter = router({
   create: protectedProcedure
-    .input(projectScopeSchema.extend({ input: taskInputSchema }))
+    .input(
+      projectScopeSchema.extend({
+        input: taskInputSchema,
+        intent: taskCreateIntentSchema,
+      }),
+    )
     .mutation(({ ctx, input }) =>
       createTask({
+        intent: input.intent,
         input: input.input,
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  acceptDraft: protectedProcedure
+    .input(projectScopeSchema.extend({ taskId: z.string().uuid() }))
+    .mutation(({ ctx, input }) =>
+      acceptTaskDraftById({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        taskId: input.taskId,
         userId: ctx.session.user.id,
       }),
     ),
@@ -51,6 +70,16 @@ export const tasksRouter = router({
         input: input.input,
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  rejectDraft: protectedProcedure
+    .input(projectScopeSchema.extend({ taskId: z.string().uuid() }))
+    .mutation(({ ctx, input }) =>
+      rejectTaskDraftById({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        taskId: input.taskId,
         userId: ctx.session.user.id,
       }),
     ),

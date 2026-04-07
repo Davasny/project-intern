@@ -6,6 +6,7 @@ import {
   createRelationEdge,
   crmProjectListInputSchema,
   crmProjectSchemaProposeVersionInputSchema,
+  crmProjectTaskProposeInputSchema,
   crmRecordCompleteTaskInputSchema,
   crmRecordCreateInputSchema,
   crmRecordCreateRelationEdgeInputSchema,
@@ -24,6 +25,7 @@ import {
   listProjects,
   listRecordRelations,
   proposeProjectSchemaVersion,
+  proposeProjectTaskDrafts,
   proposeRecordPatch,
   readProjectSchema,
   readRecord,
@@ -84,6 +86,24 @@ export const createCrmMcpServer = () => {
 
       return createMcpJsonResponse({
         data: proposal,
+        ok: true,
+      })
+    },
+  )
+
+  server.registerTool(
+    "crm_project_task_propose",
+    {
+      description:
+        "Create one or more new task drafts in created state for the project. Drafts must be reviewed and accepted in UI before they run.",
+      inputSchema: crmProjectTaskProposeInputSchema,
+    },
+    async (input) => {
+      const scope = getMcpScope()
+      const drafts = await proposeProjectTaskDrafts(input, scope)
+
+      return createMcpJsonResponse({
+        data: drafts,
         ok: true,
       })
     },

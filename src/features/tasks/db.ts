@@ -11,6 +11,7 @@ import {
 import { user } from "@/features/auth/db"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
+import type { TaskState } from "@/features/tasks/lib/task-machine"
 
 const createdAtColumn = () =>
   timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
@@ -29,6 +30,7 @@ export const taskTable = pgTable(
       .notNull()
       .references(() => projectTable.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
+    state: text("state").$type<TaskState>().default("accepted").notNull(),
     sortOrder: integer("sort_order").notNull(),
     model: text("model"),
     schemaVersion: integer("schema_version").notNull(),
@@ -42,10 +44,20 @@ export const taskTable = pgTable(
     ),
     idempotencyKey: text("idempotency_key").notNull(),
     descriptionMarkdown: text("description_markdown").notNull(),
+    proposedBy: uuid("proposed_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    acceptedBy: uuid("accepted_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    rejectedBy: uuid("rejected_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAtColumn(),
     updatedAt: updatedAtColumn(),
   },
   (table) => [
+    index("task_project_state_idx").on(table.projectId, table.state),
     uniqueIndex("task_project_sort_order_unique_idx").on(
       table.projectId,
       table.sortOrder,

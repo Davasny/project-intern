@@ -38,6 +38,7 @@ export const updateTask = async ({
     .select({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
+      state: taskTable.state,
     })
     .from(taskTable)
     .where(
@@ -49,6 +50,13 @@ export const updateTask = async ({
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Task was not found.",
+    })
+  }
+
+  if (existingTask.state === "rejected") {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Rejected task drafts cannot be edited.",
     })
   }
 
@@ -71,12 +79,16 @@ export const updateTask = async ({
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,
+      state: taskTable.state,
       targetSchemaVersionId: taskTable.targetSchemaVersionId,
       title: taskTable.title,
       updatedAt: taskTable.updatedAt,
     })
 
-  if (existingTask.descriptionMarkdown !== input.descriptionMarkdown) {
+  if (
+    existingTask.state === "accepted" &&
+    existingTask.descriptionMarkdown !== input.descriptionMarkdown
+  ) {
     const latestRevision = await db
       .select({ revisionNumber: taskDescriptionRevisionTable.revisionNumber })
       .from(taskDescriptionRevisionTable)

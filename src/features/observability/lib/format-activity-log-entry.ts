@@ -64,6 +64,27 @@ export const formatActivityLogEntry = ({
     }
   }
 
+  if (eventType === "task.draft_created") {
+    return {
+      description: `${getStringValue(payload.title) ?? taskTitle ?? "Task"} saved as draft.`,
+      label: "Task draft created",
+    }
+  }
+
+  if (eventType === "task.draft_accepted") {
+    return {
+      description: `${getStringValue(payload.title) ?? taskTitle ?? "Task"} draft was accepted.`,
+      label: "Task draft accepted",
+    }
+  }
+
+  if (eventType === "task.draft_rejected") {
+    return {
+      description: `${getStringValue(payload.title) ?? taskTitle ?? "Task"} draft was rejected.`,
+      label: "Task draft rejected",
+    }
+  }
+
   if (eventType === "taskRecord.claimed") {
     return {
       description: `${taskTitle ?? "Task"} started for ${recordName ?? "a record"}.`,

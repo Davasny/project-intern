@@ -99,6 +99,7 @@ export const TasksPage = () => {
                 <TableHeader>Active</TableHeader>
                 <TableHeader>Failed</TableHeader>
                 <TableHeader>Waiting</TableHeader>
+                <TableHeader>Actions</TableHeader>
               </TableRow>
             </TableHead>
             <TableBody>

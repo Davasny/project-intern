@@ -18,7 +18,9 @@ import { applyRecordPatch as applyPatch } from "@/features/records/lib/apply-rec
 import { createRecordForMcp } from "@/features/records/lib/create-record-for-mcp"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 import { proposeRecordPatch as proposePatch } from "@/features/records/lib/propose-record-patch"
+import { createTaskDraft } from "@/features/tasks/lib/create-task-draft"
 import type { CrmScope } from "@/lib/crm/types"
+import { db } from "@/lib/db"
 import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
 
 const executionScopeInputSchema = z.object({
@@ -44,6 +46,23 @@ export const crmProjectSchemaProposeVersionInputSchema = z.object({
 
 type CrmProjectSchemaProposeVersionInput = z.infer<
   typeof crmProjectSchemaProposeVersionInputSchema
+>
+
+const crmProjectTaskProposalItemInputSchema = z.object({
+  descriptionMarkdown: z
+    .string()
+    .trim()
+    .min(1, "Task description is required."),
+  title: z.string().trim().min(1, "Task title is required."),
+})
+
+export const crmProjectTaskProposeInputSchema = z.object({
+  projectId: z.string().uuid(),
+  tasks: z.array(crmProjectTaskProposalItemInputSchema).min(1),
+})
+
+type CrmProjectTaskProposeInput = z.infer<
+  typeof crmProjectTaskProposeInputSchema
 >
 
 const patchProposalSchema = z.object({
@@ -205,6 +224,39 @@ export const proposeProjectSchemaVersion = async (
     projectId: input.projectId,
     schemaDefinitionInput: input.schemaDefinition,
   })
+}
+
+export const proposeProjectTaskDrafts = async (
+  input: CrmProjectTaskProposeInput,
+  scope: CrmScope,
+) => {
+  await assertMcpOrgOwnsProject({
+    organizationId: scope.organizationId,
+    projectId: input.projectId,
+  })
+
+  const createdDrafts = await Promise.all(
+    input.tasks.map(async (taskInput) => {
+      const schema = await getActiveProjectSchemaVersionByProjectId({
+        projectId: input.projectId,
+      })
+
+      return createTaskDraft({
+        database: db,
+        input: {
+          descriptionMarkdown: taskInput.descriptionMarkdown,
+          model: null,
+          schemaVersion: schema.version,
+          title: taskInput.title,
+        },
+        organizationId: scope.organizationId,
+        projectId: input.projectId,
+        proposedByUserId: null,
+      })
+    }),
+  )
+
+  return createdDrafts.filter((draft) => draft !== null)
 }
 
 export const proposeRecordPatch = async (

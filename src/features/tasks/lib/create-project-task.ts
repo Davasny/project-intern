@@ -1,7 +1,6 @@
 import { eq, sql } from "drizzle-orm"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
-import { fanOutTaskRecordsForTask } from "@/features/task-records/lib/fan-out-task-records-for-task"
-import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
+import { taskTable } from "@/features/tasks/db"
+import { publishTask } from "@/features/tasks/lib/publish-task"
 import type { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
@@ -65,51 +64,25 @@ export const createProjectTask = async ({
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,
+      state: taskTable.state,
       targetSchemaVersionId: taskTable.targetSchemaVersionId,
       title: taskTable.title,
       updatedAt: taskTable.updatedAt,
     })
 
-  await database.insert(taskDescriptionRevisionTable).values({
+  await database
+    .update(taskTable)
+    .set({ acceptedBy: createdByUserId, proposedBy: null, state: "accepted" })
+    .where(eq(taskTable.id, task.id))
+
+  const publishedTask = await publishTask({
     createdByUserId,
-    descriptionMarkdown: task.descriptionMarkdown,
-    revisionNumber: 1,
-    taskId: task.id,
-  })
-
-  await fanOutTaskRecordsForTask({
     database,
-    projectId,
-    schemaVersion: task.schemaVersion,
-    targetSchemaVersionId: task.targetSchemaVersionId,
-    taskId: task.id,
-  })
-
-  await createActivityLogEvent({
-    actorId: createdByUserId,
-    actorType: createdByUserId === null ? "system" : "user",
-    agentRunId: null,
-    database,
-    entityId: task.id,
-    entityType: "task",
-    eventType: "task.created",
     organizationId,
-    payload: {
-      schemaVersion: task.schemaVersion,
-      sortOrder: task.sortOrder,
-      sourceSchemaVersionId: task.sourceSchemaVersionId,
-      targetSchemaVersionId: task.targetSchemaVersionId,
-      title: task.title,
-    },
-    projectId,
-    recordId: null,
-    relatedProjectId: null,
-    relatedRecordId: null,
-    taskId: task.id,
-    taskRecordId: null,
+    task,
   })
 
   logger.info({ projectId, taskId: task.id }, "Created project task")
 
-  return task
+  return publishedTask ?? task
 }

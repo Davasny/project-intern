@@ -112,19 +112,6 @@ const startEmbeddedServer = async ({
 
   const client = instance.client
 
-  logger.info({ serverUrl }, "Testing session creation")
-  try {
-    const testSession = await client.session.create({
-      body: { title: "health-check" },
-    })
-    logger.info(
-      { sessionId: testSession.data?.id, status: testSession.response?.status },
-      "Session creation test succeeded",
-    )
-  } catch (error) {
-    logger.error({ error }, "Session creation test failed")
-  }
-
   logger.info({ organizationId, port }, "OpenCode server started")
 
   return {

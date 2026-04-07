@@ -12,6 +12,11 @@ export const taskInputSchema = z.object({
   title: z.string().trim().min(1, "Task title is required."),
 })
 
+export const taskCreateIntentSchema = z.enum([
+  "create_draft",
+  "create_draft_and_accept",
+])
+
 export const taskUpdateInputSchema = taskInputSchema.extend({
   taskId: z.string().uuid(),
 })
@@ -21,5 +26,6 @@ export const taskReorderInputSchema = z.object({
 })
 
 export type TaskInput = z.infer<typeof taskInputSchema>
+export type TaskCreateIntent = z.infer<typeof taskCreateIntentSchema>
 export type TaskUpdateInput = z.infer<typeof taskUpdateInputSchema>
 export type TaskReorderInput = z.infer<typeof taskReorderInputSchema>

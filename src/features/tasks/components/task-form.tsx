@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -53,6 +54,9 @@ export const TaskForm = ({
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
+  const [createIntent, setCreateIntent] = useState<
+    "create_draft" | "create_draft_and_accept"
+  >("create_draft_and_accept")
   const form = useForm<TaskFormValues>({
     defaultValues: {
       descriptionMarkdown: initialDescriptionMarkdown,
@@ -125,6 +129,7 @@ export const TaskForm = ({
     }
 
     await createTaskMutation.mutateAsync({
+      intent: createIntent,
       input: {
         descriptionMarkdown: values.descriptionMarkdown,
         model,
@@ -141,9 +146,13 @@ export const TaskForm = ({
     ? updateTaskMutation.isPending
       ? "Saving task..."
       : "Save task"
-    : createTaskMutation.isPending
-      ? "Creating task..."
-      : "Create task"
+    : createIntent === "create_draft"
+      ? createTaskMutation.isPending
+        ? "Saving draft..."
+        : "Save as draft"
+      : createTaskMutation.isPending
+        ? "Saving task..."
+        : "Save"
 
   return (
     <Form {...form}>
@@ -222,14 +231,43 @@ export const TaskForm = ({
             )}
           />
         </div>
-        <Button
-          disabled={
-            createTaskMutation.isPending || updateTaskMutation.isPending
-          }
-          type="submit"
-        >
-          {submitLabel}
-        </Button>
+        {taskId ? (
+          <Button
+            disabled={
+              createTaskMutation.isPending || updateTaskMutation.isPending
+            }
+            type="submit"
+          >
+            {submitLabel}
+          </Button>
+        ) : (
+          <div className="flex flex-row gap-2">
+            <Button
+              disabled={
+                createTaskMutation.isPending || updateTaskMutation.isPending
+              }
+              onClick={() => setCreateIntent("create_draft")}
+              type="submit"
+              variant="outline"
+            >
+              {createTaskMutation.isPending && createIntent === "create_draft"
+                ? "Saving draft..."
+                : "Save as draft"}
+            </Button>
+            <Button
+              disabled={
+                createTaskMutation.isPending || updateTaskMutation.isPending
+              }
+              onClick={() => setCreateIntent("create_draft_and_accept")}
+              type="submit"
+            >
+              {createTaskMutation.isPending &&
+              createIntent === "create_draft_and_accept"
+                ? "Saving task..."
+                : "Save"}
+            </Button>
+          </div>
+        )}
       </form>
     </Form>
   )
