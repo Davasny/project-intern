@@ -255,7 +255,7 @@ export const executorService = async ({
           },
           projectDisplayName: initialScope.project.displayName,
           recordName: initialScope.record.name,
-          taskDescriptionMarkdown: initialScope.task.descriptionMarkdown,
+          // taskDescriptionMarkdown: initialScope.task.descriptionMarkdown,
           taskTitle: initialScope.task.title,
         })
 
