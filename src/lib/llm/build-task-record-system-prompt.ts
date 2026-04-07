@@ -7,6 +7,8 @@ type BuildTaskRecordSystemPromptParams = {
     recordId: string
     taskId: string
     taskRecordId: string
+    workspaceDataDirectory: string
+    pythonPath: string
   }
   projectDisplayName: string
   recordName: string
@@ -42,6 +44,11 @@ Record ID: ${executionScope.recordId}
 Task title: ${taskTitle}
 Task ID: ${executionScope.taskId} 
 
-Current agent run id/task record id: ${executionScope.agentRunId}
+Agent run ID: ${executionScope.agentRunId}
+
+Task record ID: ${executionScope.taskRecordId}
+
+Workspace data directory: ${executionScope.workspaceDataDirectory}
+Python executable path: ${executionScope.pythonPath}
 </context>
     `

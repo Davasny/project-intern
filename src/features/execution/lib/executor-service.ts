@@ -18,6 +18,7 @@ import { recordWorkerAgent } from "@/lib/llm/agents"
 import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-prompt"
 import { resolveRuntimeModel } from "@/lib/llm/resolve-runtime-model"
 import { logger } from "@/lib/logger"
+import { buildTaskRecordAgentPrompt } from "@/lib/llm/build-task-record-agent-prompt"
 
 type ExecutorServiceParams = {
   agentRunId: string
@@ -227,24 +228,29 @@ export const executorService = async ({
           "Marked agent run booting",
         )
 
-        const promptPayload = {
-          execution: {
-            agentRunId: initialScope.agentRun.id,
-            projectId: initialScope.project.id,
-            pythonPath: pythonEnv.pythonPath,
-            recordId: initialScope.record.id,
-            taskId: initialScope.task.id,
-            taskRecordId: initialScope.taskRecord.id,
-            workspaceDataDirectory: workspace.dataDirectory,
-          },
-          files,
-          record: initialScope.record,
-          relations,
-          schema,
-          task: initialScope.task,
-        }
+        // const promptPayload = {
+        //   // execution: {
+        //   //   agentRunId: initialScope.agentRun.id,
+        //   //   projectId: initialScope.project.id,
+        //   //   pythonPath: pythonEnv.pythonPath,
+        //   //   recordId: initialScope.record.id,
+        //   //   taskId: initialScope.task.id,
+        //   //   taskRecordId: initialScope.taskRecord.id,
+        //   //   workspaceDataDirectory: workspace.dataDirectory,
+        //   // },
+        //   // files,
+        //   // record: initialScope.record,
+        //   // relations,
+        //   // schema,
+        //   // task: initialScope.task,
+        // }
 
-        const promptText = JSON.stringify(promptPayload, null, 2)
+        const promptText = buildTaskRecordAgentPrompt({
+          taskTitle: initialScope.task.title,
+          taskDescription: initialScope.task.descriptionMarkdown,
+          recordContext: initialScope.record,
+        })
+
         const systemPrompt = buildTaskRecordSystemPrompt({
           executionScope: {
             agentRunId: initialScope.agentRun.id,
@@ -252,6 +258,8 @@ export const executorService = async ({
             recordId: initialScope.record.id,
             taskId: initialScope.task.id,
             taskRecordId: initialScope.taskRecord.id,
+            pythonPath: pythonEnv.pythonPath,
+            workspaceDataDirectory: workspace.workspaceDirectory,
           },
           projectDisplayName: initialScope.project.displayName,
           recordName: initialScope.record.name,
