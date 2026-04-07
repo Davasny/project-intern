@@ -1,6 +1,6 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
 import { DataTable } from "@/components/ui/data-table/data-table"
@@ -21,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ExecutionMonitorRow } from "@/features/execution/components/execution-monitor-row"
+import { ExecutionPageNavigation } from "@/features/execution/components/execution-page-navigation"
+import { useExecutionMonitorQuery } from "@/features/execution/hooks/use-execution-monitor-query"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -31,16 +33,7 @@ export const ExecutionMonitorPage = () => {
   const [expandedRecords, setExpandedRecords] = useState<Set<string>>(
     () => new Set(),
   )
-  const executionQuery = useQuery({
-    ...trpc.execution.getMonitor.queryOptions({
-      organizationSlug,
-      projectSlug,
-    }),
-    refetchInterval: (query) => {
-      const data = query.state.data
-      return data && data.summary.activeCount > 0 ? 3000 : false
-    },
-  })
+  const executionQuery = useExecutionMonitorQuery()
   const toggleAutopickMutation = useMutation(
     trpc.execution.updateAutopick.mutationOptions({
       onSuccess: async () => {
@@ -111,8 +104,9 @@ export const ExecutionMonitorPage = () => {
             controls.
           </p>
         </div>
-        {executionQuery.data.debugControlsEnabled ? (
-          <PageHeaderActions>
+        <PageHeaderActions>
+          <ExecutionPageNavigation activePage="monitor" />
+          {executionQuery.data.debugControlsEnabled ? (
             <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground">
               <span>Autopick</span>
               <Switch
@@ -127,8 +121,8 @@ export const ExecutionMonitorPage = () => {
                 }
               />
             </div>
-          </PageHeaderActions>
-        ) : null}
+          ) : null}
+        </PageHeaderActions>
       </PageHeader>
       <ProgressMetricGrid>
         <ProgressMetric

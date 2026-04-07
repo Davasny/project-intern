@@ -5,6 +5,7 @@ import Link from "next/link"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
+import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import {
   TableBody,
@@ -13,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ExecutionPageNavigation } from "@/features/execution/components/execution-page-navigation"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -46,6 +48,9 @@ export const AgentRunListPage = () => {
             records.
           </p>
         </div>
+        <PageHeaderActions>
+          <ExecutionPageNavigation activePage="runs" />
+        </PageHeaderActions>
       </PageHeader>
       <DataTable>
         <TableHead>

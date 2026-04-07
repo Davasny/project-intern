@@ -4,6 +4,8 @@ import Link from "next/link"
 import { RecordStatusBadge } from "@/components/ui/status-badge/record-status-badge"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
+import type { ProjectSchemaField } from "@/features/project-schema/schemas/project-schema-field"
+import { RecordContextValueCell } from "@/features/records/components/record-context-value-cell"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 
 type RecordListRowProps = {
@@ -19,6 +21,7 @@ type RecordListRowProps = {
         | "running"
     } | null
     id: string
+    context: Record<string, unknown>
     name: string
     progress: {
       completedCount: number
@@ -35,9 +38,15 @@ type RecordListRowProps = {
     updatedAt: Date
     version: number
   }
+  contextColumns: ProjectSchemaField[]
+  showContextValues: boolean
 }
 
-export const RecordListRow = ({ record }: RecordListRowProps) => {
+export const RecordListRow = ({
+  contextColumns,
+  record,
+  showContextValues,
+}: RecordListRowProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
 
   return (
@@ -72,6 +81,14 @@ export const RecordListRow = ({ record }: RecordListRowProps) => {
         )}
       </TableCell>
       <TableCell>{record.relationSummary.activeCount} relations</TableCell>
+      {showContextValues
+        ? contextColumns.map((field) => (
+            <RecordContextValueCell
+              key={`${record.id}-${field.key}`}
+              value={record.context[field.key]}
+            />
+          ))
+        : null}
       <TableCell>{record.updatedAt.toLocaleString()}</TableCell>
     </TableRow>
   )

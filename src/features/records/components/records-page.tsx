@@ -17,6 +17,7 @@ import { FilterBarActions } from "@/components/ui/filter-bar/filter-bar-actions"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
+import { Switch } from "@/components/ui/switch"
 import {
   TableBody,
   TableHead,
@@ -34,6 +35,7 @@ export const RecordsPage = () => {
   const trpc = useTRPC()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isImportOpen, setIsImportOpen] = useState(false)
+  const [showContextValues, setShowContextValues] = useState(false)
   const initialSchemaQuery = useQuery(
     trpc.projectSchema.getByVersion.queryOptions({
       organizationSlug,
@@ -41,17 +43,31 @@ export const RecordsPage = () => {
       version: 1,
     }),
   )
+  const activeSchemaQuery = useQuery(
+    trpc.projectSchema.getActive.queryOptions({
+      organizationSlug,
+      projectSlug,
+    }),
+  )
   const recordsQuery = useQuery(
     trpc.records.list.queryOptions({ organizationSlug, projectSlug }),
   )
 
-  if (initialSchemaQuery.isLoading || recordsQuery.isLoading) {
+  if (
+    initialSchemaQuery.isLoading ||
+    activeSchemaQuery.isLoading ||
+    recordsQuery.isLoading
+  ) {
     return <LoadingState label="Loading records..." />
   }
 
-  if (!initialSchemaQuery.data) {
+  if (!initialSchemaQuery.data || !activeSchemaQuery.data) {
     return <LoadingState label="Initial schema could not be loaded." />
   }
+
+  const contextColumns = activeSchemaQuery.data.schemaDefinition.fields.filter(
+    (field) => !field.isSystem,
+  )
 
   return (
     <>
@@ -83,9 +99,22 @@ export const RecordsPage = () => {
           </PageHeaderActions>
         </PageHeader>
         <FilterBar>
-          <div className="text-sm text-muted-foreground">
-            {recordsQuery.data ? recordsQuery.data.length : 0} records in this
-            project.
+          <div className="flex items-center gap-6">
+            <div className="text-sm text-muted-foreground">
+              {recordsQuery.data ? recordsQuery.data.length : 0} records in this
+              project.
+            </div>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <span>
+                {showContextValues
+                  ? "Hide context values"
+                  : "Show context values"}
+              </span>
+              <Switch
+                checked={showContextValues}
+                onCheckedChange={setShowContextValues}
+              />
+            </div>
           </div>
           <FilterBarActions>
             <Button
@@ -116,12 +145,22 @@ export const RecordsPage = () => {
                 <TableHeader>Waiting</TableHeader>
                 <TableHeader>Latest run</TableHeader>
                 <TableHeader>Relations</TableHeader>
+                {showContextValues
+                  ? contextColumns.map((field) => (
+                      <TableHeader key={field.key}>{field.label}</TableHeader>
+                    ))
+                  : null}
                 <TableHeader>Updated</TableHeader>
               </TableRow>
             </TableHead>
             <TableBody>
               {recordsQuery.data.map((record) => (
-                <RecordListRow key={record.id} record={record} />
+                <RecordListRow
+                  contextColumns={contextColumns}
+                  key={record.id}
+                  record={record}
+                  showContextValues={showContextValues}
+                />
               ))}
             </TableBody>
           </DataTable>
