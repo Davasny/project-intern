@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm"
 import { getProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-project-schema-version-by-project-id"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
+import { assertRecordNameIsAvailable } from "@/features/records/lib/assert-record-name-is-available"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 import { validateRecordContext } from "@/features/records/lib/validate-record-context"
 import type { RecordUpdateInput } from "@/features/records/schemas/record-input"
@@ -47,11 +48,17 @@ export const updateRecord = async ({
     schemaDefinition: recordSchemaVersion.schemaDefinition,
   })
 
+  const normalizedName = await assertRecordNameIsAvailable({
+    excludedRecordId: input.recordId,
+    name: input.name,
+    projectId: project.id,
+  })
+
   const [updatedRecord] = await db
     .update(recordTable)
     .set({
       context,
-      name: input.name,
+      name: normalizedName,
       version: input.version + 1,
     })
     .where(

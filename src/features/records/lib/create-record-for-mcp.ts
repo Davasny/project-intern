@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { getProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-project-schema-version-by-project-id"
 import { recordTable } from "@/features/records/db"
+import { assertRecordNameIsAvailable } from "@/features/records/lib/assert-record-name-is-available"
 import { validateRecordContext } from "@/features/records/lib/validate-record-context"
 import type { RecordInput } from "@/features/records/schemas/record-input"
 import { backfillTaskRecordsForRecord } from "@/features/task-records/lib/backfill-task-records-for-record"
@@ -32,11 +33,17 @@ export const createRecordForMcp = async ({
     schemaDefinition: initialSchemaVersion.schemaDefinition,
   })
 
+  const normalizedName = await assertRecordNameIsAvailable({
+    excludedRecordId: null,
+    name,
+    projectId,
+  })
+
   const [record] = await db
     .insert(recordTable)
     .values({
       context: validatedContext,
-      name,
+      name: normalizedName,
       projectId,
       schemaVersion: initialSchemaVersion.version,
       state: "active",

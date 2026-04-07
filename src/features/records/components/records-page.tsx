@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
+import { RecordCsvImportDialog } from "@/features/records/components/record-csv-import-dialog"
 import { RecordForm } from "@/features/records/components/record-form"
 import { RecordListRow } from "@/features/records/components/record-list-row"
 import { useTRPC } from "@/lib/trpc/client"
@@ -32,6 +33,7 @@ export const RecordsPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isImportOpen, setIsImportOpen] = useState(false)
   const initialSchemaQuery = useQuery(
     trpc.projectSchema.getByVersion.queryOptions({
       organizationSlug,
@@ -68,6 +70,13 @@ export const RecordsPage = () => {
             </p>
           </div>
           <PageHeaderActions>
+            <Button
+              onClick={() => setIsImportOpen(true)}
+              type="button"
+              variant="outline"
+            >
+              Import CSV
+            </Button>
             <Button onClick={() => setIsCreateOpen(true)} type="button">
               New record
             </Button>
@@ -79,6 +88,13 @@ export const RecordsPage = () => {
             project.
           </div>
           <FilterBarActions>
+            <Button
+              onClick={() => setIsImportOpen(true)}
+              type="button"
+              variant="outline"
+            >
+              Import CSV
+            </Button>
             <Button
               onClick={() => setIsCreateOpen(true)}
               type="button"
@@ -141,6 +157,10 @@ export const RecordsPage = () => {
           />
         </DialogContent>
       </Dialog>
+      <RecordCsvImportDialog
+        isOpen={isImportOpen}
+        onOpenChange={setIsImportOpen}
+      />
     </>
   )
 }

@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core"
 import { projectTable } from "@/features/projects/db"
@@ -37,7 +38,10 @@ export const recordTable = pgTable(
   },
   (table) => [
     index("record_project_id_idx").on(table.projectId, table.id),
-    index("record_project_name_idx").on(table.projectId, table.name),
+    uniqueIndex("record_project_name_unique_idx").on(
+      table.projectId,
+      table.name,
+    ),
   ],
 )
 

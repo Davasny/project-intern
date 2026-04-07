@@ -1,11 +1,17 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import { commitRecordImport } from "@/features/records/lib/commit-record-import"
 import { createRecord } from "@/features/records/lib/create-record"
 import { deleteRecord } from "@/features/records/lib/delete-record"
 import { getRecordById } from "@/features/records/lib/get-record-by-id"
 import { listRecords } from "@/features/records/lib/list-records"
+import { previewRecordImport } from "@/features/records/lib/preview-record-import"
 import { updateRecord } from "@/features/records/lib/update-record"
+import {
+  recordImportCommitInputSchema,
+  recordImportPreviewInputSchema,
+} from "@/features/records/schemas/record-import"
 import {
   recordInputSchema,
   recordUpdateInputSchema,
@@ -37,6 +43,26 @@ export const recordsRouter = router({
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
         recordId: input.recordId,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  importPreview: protectedProcedure
+    .input(projectScopeSchema.extend({ input: recordImportPreviewInputSchema }))
+    .mutation(({ ctx, input }) =>
+      previewRecordImport({
+        csvContent: input.input.csvContent,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  importCommit: protectedProcedure
+    .input(projectScopeSchema.extend({ input: recordImportCommitInputSchema }))
+    .mutation(({ ctx, input }) =>
+      commitRecordImport({
+        input: input.input,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
         userId: ctx.session.user.id,
       }),
     ),

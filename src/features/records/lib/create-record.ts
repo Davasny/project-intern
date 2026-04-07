@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server"
 import { getProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-project-schema-version-by-project-id"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
+import { assertRecordNameIsAvailable } from "@/features/records/lib/assert-record-name-is-available"
 import { validateRecordContext } from "@/features/records/lib/validate-record-context"
 import type { RecordInput } from "@/features/records/schemas/record-input"
 import { backfillTaskRecordsForRecord } from "@/features/task-records/lib/backfill-task-records-for-record"
@@ -38,6 +39,12 @@ export const createRecord = async ({
     version: 1,
   })
 
+  const normalizedName = await assertRecordNameIsAvailable({
+    excludedRecordId: null,
+    name: input.name,
+    projectId: project.id,
+  })
+
   const context = validateRecordContext({
     context: input.context,
     schemaDefinition: initialSchemaVersion.schemaDefinition,
@@ -47,7 +54,7 @@ export const createRecord = async ({
     .insert(recordTable)
     .values({
       context,
-      name: input.name,
+      name: normalizedName,
       projectId: project.id,
       schemaVersion: initialSchemaVersion.version,
       state: "active",
