@@ -1,12 +1,15 @@
 import { TRPCError } from "@trpc/server"
-import { and, eq } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { agentRunTable } from "@/features/agent-runs/db"
+import { buildExecutionScopeErrorMessage } from "@/features/execution/lib/build-execution-scope-error-message"
 import type { ExecutionRunScope } from "@/features/execution/schemas/execution-run-scope"
+import type { ExecutionScopeValidationFailure } from "@/features/execution/schemas/execution-scope-validation-failure"
 import { projectTable } from "@/features/projects/db"
 import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 type GetTaskRecordExecutionScopeParams = ExecutionRunScope
 
@@ -17,101 +20,211 @@ export const getTaskRecordExecutionScope = async ({
   taskId,
   taskRecordId,
 }: GetTaskRecordExecutionScopeParams) => {
-  const executionScope = await db
-    .select({
-      agentRunAttemptNumber: agentRunTable.attemptNumber,
-      agentRunId: agentRunTable.id,
-      agentRunSelectedAgent: agentRunTable.selectedAgent,
-      agentRunSelectedModel: agentRunTable.selectedModel,
-      agentRunSessionReference: agentRunTable.sessionReference,
-      agentRunState: agentRunTable.state,
-      projectDisplayName: projectTable.displayName,
-      projectId: projectTable.id,
-      projectOrganizationId: projectTable.organizationId,
-      projectSlug: projectTable.slug,
-      projectDefaultModel: projectTable.defaultModel,
-      recordContext: recordTable.context,
-      recordCreatedAt: recordTable.createdAt,
-      recordId: recordTable.id,
-      recordName: recordTable.name,
-      recordSchemaVersion: recordTable.schemaVersion,
-      recordState: recordTable.state,
-      recordUpdatedAt: recordTable.updatedAt,
-      recordVersion: recordTable.version,
-      taskDescriptionMarkdown: taskTable.descriptionMarkdown,
-      taskId: taskTable.id,
-      taskModel: taskTable.model,
-      taskSchemaVersion: taskTable.schemaVersion,
-      taskSortOrder: taskTable.sortOrder,
-      taskTargetSchemaVersionId: taskTable.targetSchemaVersionId,
-      taskTitle: taskTable.title,
-      taskRecordId: taskRecordTable.id,
-      taskRecordState: taskRecordTable.state,
-    })
-    .from(taskRecordTable)
-    .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
-    .innerJoin(recordTable, eq(taskRecordTable.recordId, recordTable.id))
-    .innerJoin(projectTable, eq(taskTable.projectId, projectTable.id))
-    .innerJoin(
-      agentRunTable,
-      eq(agentRunTable.taskRecordId, taskRecordTable.id),
-    )
-    .where(
-      and(
-        eq(agentRunTable.id, agentRunId),
-        eq(projectTable.id, projectId),
-        eq(recordTable.id, recordId),
-        eq(taskTable.id, taskId),
-        eq(taskRecordTable.id, taskRecordId),
-      ),
-    )
-    .then((rows) => rows[0] ?? null)
+  const executionScopeInput: ExecutionRunScope = {
+    agentRunId,
+    projectId,
+    recordId,
+    taskId,
+    taskRecordId,
+  }
 
-  if (!executionScope) {
+  const [agentRun, project, record, task, taskRecord] = await Promise.all([
+    db
+      .select({
+        attemptNumber: agentRunTable.attemptNumber,
+        id: agentRunTable.id,
+        selectedAgent: agentRunTable.selectedAgent,
+        selectedModel: agentRunTable.selectedModel,
+        sessionReference: agentRunTable.sessionReference,
+        state: agentRunTable.state,
+        taskRecordId: agentRunTable.taskRecordId,
+      })
+      .from(agentRunTable)
+      .where(eq(agentRunTable.id, agentRunId))
+      .then((rows) => rows[0] ?? null),
+    db
+      .select({
+        defaultModel: projectTable.defaultModel,
+        displayName: projectTable.displayName,
+        id: projectTable.id,
+        organizationId: projectTable.organizationId,
+        slug: projectTable.slug,
+      })
+      .from(projectTable)
+      .where(eq(projectTable.id, projectId))
+      .then((rows) => rows[0] ?? null),
+    db
+      .select({
+        context: recordTable.context,
+        createdAt: recordTable.createdAt,
+        id: recordTable.id,
+        name: recordTable.name,
+        projectId: recordTable.projectId,
+        schemaVersion: recordTable.schemaVersion,
+        state: recordTable.state,
+        updatedAt: recordTable.updatedAt,
+        version: recordTable.version,
+      })
+      .from(recordTable)
+      .where(eq(recordTable.id, recordId))
+      .then((rows) => rows[0] ?? null),
+    db
+      .select({
+        descriptionMarkdown: taskTable.descriptionMarkdown,
+        id: taskTable.id,
+        model: taskTable.model,
+        projectId: taskTable.projectId,
+        schemaVersion: taskTable.schemaVersion,
+        sortOrder: taskTable.sortOrder,
+        targetSchemaVersionId: taskTable.targetSchemaVersionId,
+        title: taskTable.title,
+      })
+      .from(taskTable)
+      .where(eq(taskTable.id, taskId))
+      .then((rows) => rows[0] ?? null),
+    db
+      .select({
+        id: taskRecordTable.id,
+        recordId: taskRecordTable.recordId,
+        state: taskRecordTable.state,
+        taskId: taskRecordTable.taskId,
+      })
+      .from(taskRecordTable)
+      .where(eq(taskRecordTable.id, taskRecordId))
+      .then((rows) => rows[0] ?? null),
+  ])
+
+  const throwScopeValidationError = (
+    failure: ExecutionScopeValidationFailure,
+  ) => {
+    logger.warn(
+      {
+        eventFamily: "execution.scope_validation",
+        failure,
+        scope: executionScopeInput,
+      },
+      "Execution scope validation failed",
+    )
+
+    const message = buildExecutionScopeErrorMessage({
+      failure,
+      scope: executionScopeInput,
+    })
+
     throw new TRPCError({
       code: "FORBIDDEN",
-      message: "Execution scope is invalid.",
+      message,
+    })
+  }
+
+  if (!project) {
+    throwScopeValidationError({
+      invalidFields: ["projectId"],
+      reason: "project_not_found",
+    })
+  }
+
+  if (!record) {
+    throwScopeValidationError({
+      invalidFields: ["recordId"],
+      reason: "record_not_found",
+    })
+  }
+
+  if (!task) {
+    throwScopeValidationError({
+      invalidFields: ["taskId"],
+      reason: "task_not_found",
+    })
+  }
+
+  if (!taskRecord) {
+    throwScopeValidationError({
+      invalidFields: ["taskRecordId"],
+      reason: "task_record_not_found",
+    })
+  }
+
+  if (!agentRun) {
+    throwScopeValidationError({
+      invalidFields: ["agentRunId"],
+      reason: "agent_run_not_found",
+    })
+  }
+
+  if (record.projectId !== project.id) {
+    throwScopeValidationError({
+      invalidFields: ["recordId", "projectId"],
+      reason: "record_project_mismatch",
+    })
+  }
+
+  if (task.projectId !== project.id) {
+    throwScopeValidationError({
+      invalidFields: ["taskId", "projectId"],
+      reason: "task_project_mismatch",
+    })
+  }
+
+  if (taskRecord.recordId !== record.id) {
+    throwScopeValidationError({
+      invalidFields: ["taskRecordId", "recordId"],
+      reason: "task_record_record_mismatch",
+    })
+  }
+
+  if (taskRecord.taskId !== task.id) {
+    throwScopeValidationError({
+      invalidFields: ["taskRecordId", "taskId"],
+      reason: "task_record_task_mismatch",
+    })
+  }
+
+  if (agentRun.taskRecordId !== taskRecord.id) {
+    throwScopeValidationError({
+      invalidFields: ["agentRunId", "taskRecordId"],
+      reason: "agent_run_task_record_mismatch",
     })
   }
 
   return {
     agentRun: {
-      attemptNumber: executionScope.agentRunAttemptNumber,
-      id: executionScope.agentRunId,
-      selectedAgent: executionScope.agentRunSelectedAgent,
-      selectedModel: executionScope.agentRunSelectedModel,
-      sessionReference: executionScope.agentRunSessionReference,
-      state: executionScope.agentRunState,
+      attemptNumber: agentRun.attemptNumber,
+      id: agentRun.id,
+      selectedAgent: agentRun.selectedAgent,
+      selectedModel: agentRun.selectedModel,
+      sessionReference: agentRun.sessionReference,
+      state: agentRun.state,
     },
     project: {
-      defaultModel: executionScope.projectDefaultModel,
-      displayName: executionScope.projectDisplayName,
-      id: executionScope.projectId,
-      organizationId: executionScope.projectOrganizationId,
-      slug: executionScope.projectSlug,
+      defaultModel: project.defaultModel,
+      displayName: project.displayName,
+      id: project.id,
+      organizationId: project.organizationId,
+      slug: project.slug,
     },
     record: {
-      context: executionScope.recordContext,
-      createdAt: executionScope.recordCreatedAt,
-      id: executionScope.recordId,
-      name: executionScope.recordName,
-      schemaVersion: executionScope.recordSchemaVersion,
-      state: executionScope.recordState,
-      updatedAt: executionScope.recordUpdatedAt,
-      version: executionScope.recordVersion,
+      context: record.context,
+      createdAt: record.createdAt,
+      id: record.id,
+      name: record.name,
+      schemaVersion: record.schemaVersion,
+      state: record.state,
+      updatedAt: record.updatedAt,
+      version: record.version,
     },
     task: {
-      descriptionMarkdown: executionScope.taskDescriptionMarkdown,
-      id: executionScope.taskId,
-      model: executionScope.taskModel,
-      schemaVersion: executionScope.taskSchemaVersion,
-      sortOrder: executionScope.taskSortOrder,
-      targetSchemaVersionId: executionScope.taskTargetSchemaVersionId,
-      title: executionScope.taskTitle,
+      descriptionMarkdown: task.descriptionMarkdown,
+      id: task.id,
+      model: task.model,
+      schemaVersion: task.schemaVersion,
+      sortOrder: task.sortOrder,
+      targetSchemaVersionId: task.targetSchemaVersionId,
+      title: task.title,
     },
     taskRecord: {
-      id: executionScope.taskRecordId,
-      state: executionScope.taskRecordState,
+      id: taskRecord.id,
+      state: taskRecord.state,
     },
   }
 }
