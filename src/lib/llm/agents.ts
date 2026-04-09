@@ -4,7 +4,6 @@ import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-
 type Agent = AgentConfig & {
   name: string
   description: string
-  maxSteps: number
   prompt: string
   systemPromptFn: typeof buildTaskRecordSystemPrompt
 }
@@ -12,7 +11,6 @@ type Agent = AgentConfig & {
 export const recordWorkerAgent: Agent = {
   name: "record-worker",
   description: "Scoped CRM record worker",
-  maxSteps: 12,
   prompt: `
 You execute one scoped CRM record task at a time. 
 Use the crm MCP server for scoped record and relation operations.

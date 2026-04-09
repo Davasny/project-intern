@@ -6,7 +6,6 @@ export const buildOpencodeConfig = (params: { mcpToken: string }): Config => ({
   agent: {
     [recordWorkerAgent.name]: {
       description: recordWorkerAgent.description,
-      maxSteps: recordWorkerAgent.maxSteps,
       permission: recordWorkerAgent.permission,
       prompt: recordWorkerAgent.prompt,
       tools: recordWorkerAgent.tools,
