@@ -109,7 +109,16 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
         const existingAgentRun = await db
           .select({ id: agentRunTable.id })
           .from(agentRunTable)
-          .where(eq(agentRunTable.taskRecordId, context.taskId))
+          .innerJoin(
+            taskRecordTable,
+            eq(agentRunTable.taskRecordId, taskRecordTable.id),
+          )
+          .where(
+            and(
+              eq(taskRecordTable.taskId, context.taskId),
+              eq(taskRecordTable.recordId, context.recordId),
+            ),
+          )
           .orderBy(agentRunTable.createdAt)
           .then((rows) => rows[0] ?? null)
 
