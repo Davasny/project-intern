@@ -58,6 +58,7 @@ export const AgentRunListPage = () => {
             <TableHeader>State</TableHeader>
             <TableHeader>Provider</TableHeader>
             <TableHeader>Model</TableHeader>
+            <TableHeader>Temperature</TableHeader>
             <TableHeader>Selected Agent</TableHeader>
             <TableHeader>Task</TableHeader>
             <TableHeader>Record</TableHeader>
@@ -82,6 +83,11 @@ export const AgentRunListPage = () => {
               </TableCell>
               <TableCell>{run.provider ?? "—"}</TableCell>
               <TableCell>{run.model ?? "—"}</TableCell>
+              <TableCell>
+                {run.selectedTemperature !== null
+                  ? run.selectedTemperature.toFixed(1)
+                  : "—"}
+              </TableCell>
               <TableCell>{run.selectedAgent ?? "—"}</TableCell>
               <TableCell>
                 <Link

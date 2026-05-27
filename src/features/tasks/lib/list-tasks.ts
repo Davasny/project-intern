@@ -36,6 +36,7 @@ export const listTasks = async ({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
+      temperature: taskTable.temperature,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,
@@ -62,6 +63,7 @@ export const listTasks = async ({
 
     return {
       ...task,
+      effectiveTemperature: task.temperature ?? project.defaultTemperature,
       progress: {
         completedCount: states.filter((state) => state === "completed").length,
         failedCount: states.filter((state) => state === "failed").length,

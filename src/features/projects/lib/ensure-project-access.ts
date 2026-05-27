@@ -17,6 +17,7 @@ export const ensureProjectAccess = async ({
   db
     .select({
       activeSchemaVersionId: projectTable.activeSchemaVersionId,
+      defaultTemperature: projectTable.defaultTemperature,
       displayName: projectTable.displayName,
       id: projectTable.id,
       organizationId: organization.id,

@@ -68,6 +68,7 @@ export const projectsRouter = router({
         projectSlug: z.string().trim().min(1),
         input: z.object({
           defaultModel: z.string().trim().min(1),
+          defaultTemperature: z.number(),
         }),
       }),
     )

@@ -27,6 +27,7 @@ import { taskTable } from "@/features/tasks/db"
 import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
 import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
+import { resolveEffectiveTemperature } from "@/lib/llm/resolve-effective-temperature"
 import { logger } from "@/lib/logger"
 
 type SpawnDebugSessionParams = {
@@ -158,7 +159,9 @@ export const spawnDebugSession = async ({
         id: taskTable.id,
         title: taskTable.title,
         model: taskTable.model,
+        temperature: taskTable.temperature,
         projectDefaultModel: projectTable.defaultModel,
+        projectDefaultTemperature: projectTable.defaultTemperature,
       })
       .from(taskTable)
       .innerJoin(projectTable, eq(projectTable.id, taskTable.projectId))
@@ -189,6 +192,10 @@ export const spawnDebugSession = async ({
     projectDefaultModel: task.projectDefaultModel,
     taskModel: task.model,
   })
+  const resolvedTemperature = resolveEffectiveTemperature({
+    projectDefaultTemperature: task.projectDefaultTemperature,
+    taskTemperature: task.temperature,
+  })
 
   const existingAttempts = await db
     .select({ maxAttempt: sql<number>`max(${agentRunTable.attemptNumber})` })
@@ -201,7 +208,9 @@ export const spawnDebugSession = async ({
     attemptNumber: existingAttempts + 1,
     model: resolvedModel,
     projectDefaultModel: task.projectDefaultModel,
+    projectDefaultTemperature: task.projectDefaultTemperature,
     taskRecordId,
+    temperature: resolvedTemperature,
   })
 
   if (!agentRunResult) {
@@ -365,6 +374,7 @@ ${JSON.stringify(
       }
     },
     organizationId,
+    runtimeTemperature: resolvedTemperature,
   })
 }
 

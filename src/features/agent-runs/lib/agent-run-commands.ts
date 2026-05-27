@@ -6,24 +6,30 @@ import {
 import { getToolCallCount } from "@/features/agent-runs/lib/get-tool-call-count"
 import { db } from "@/lib/db"
 import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
+import { resolveEffectiveTemperature } from "@/lib/llm/resolve-effective-temperature"
 
 type CreateAgentRunCommandParams = {
   attemptNumber: number
   model: string | null
   projectDefaultModel: string
+  projectDefaultTemperature: number
   taskRecordId: string
+  temperature: number | null
 }
 
 type CreateAgentRunCommandResult = {
   agentRunId: string
   selectedModel: string
+  selectedTemperature: number
 }
 
 export const createAgentRunCommand = async ({
   attemptNumber,
   model,
   projectDefaultModel,
+  projectDefaultTemperature,
   taskRecordId,
+  temperature,
 }: CreateAgentRunCommandParams): Promise<CreateAgentRunCommandResult | null> => {
   const agentRunIdResult = await db.execute<{ id: string }>(sql`
     select uuidv7() as id
@@ -37,6 +43,10 @@ export const createAgentRunCommand = async ({
   const selectedModel = resolveEffectiveModel({
     projectDefaultModel,
     taskModel: model,
+  })
+  const selectedTemperature = resolveEffectiveTemperature({
+    projectDefaultTemperature,
+    taskTemperature: temperature,
   })
 
   await createAgentRunActor(agentRunId, {
@@ -54,6 +64,7 @@ export const createAgentRunCommand = async ({
     resultPayload: null,
     selectedAgent: "record-worker",
     selectedModel,
+    selectedTemperature,
     sessionReference: null,
     startedAt: null,
     taskRecordId,
@@ -64,7 +75,7 @@ export const createAgentRunCommand = async ({
     toolSummary: {},
   })
 
-  return { agentRunId, selectedModel }
+  return { agentRunId, selectedModel, selectedTemperature }
 }
 
 type BootAgentRunCommandParams = {

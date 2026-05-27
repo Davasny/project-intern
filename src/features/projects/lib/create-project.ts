@@ -66,6 +66,7 @@ export const createProject = async ({
       .insert(projectTable)
       .values({
         defaultModel: backendConfig.CRM_DEFAULT_RUNTIME_MODEL,
+        defaultTemperature: 0.5,
         displayName,
         organizationId: organization.id,
         slug: projectSlug,

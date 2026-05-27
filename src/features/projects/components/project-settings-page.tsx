@@ -36,23 +36,25 @@ export const ProjectSettingsPage = () => {
             Project settings
           </h1>
           <p className="text-sm text-muted-foreground">
-            Configure default model and other project-wide settings.
+            Configure default model, temperature, and other project-wide
+            settings.
           </p>
         </div>
       </PageHeader>
       <SectionCard>
         <SectionCardHeader>
           <h2 className="text-lg font-semibold text-foreground">
-            Default model
+            Runtime defaults
           </h2>
           <p className="text-sm text-muted-foreground">
-            Tasks without an explicit model override will use this model.
+            Tasks without explicit overrides use these runtime defaults.
           </p>
         </SectionCardHeader>
         <SectionCardContent>
           <ProjectSettingsForm
             approvedModels={settingsQuery.data.approvedModels}
             initialDefaultModel={settingsQuery.data.defaultModel}
+            initialDefaultTemperature={settingsQuery.data.defaultTemperature}
           />
         </SectionCardContent>
       </SectionCard>

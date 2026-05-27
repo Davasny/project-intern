@@ -247,6 +247,7 @@ export const proposeProjectTaskDrafts = async (
           descriptionMarkdown: taskInput.descriptionMarkdown,
           model: null,
           schemaVersion: schema.version,
+          temperature: null,
           title: taskInput.title,
         },
         organizationId: scope.organizationId,

@@ -15,10 +15,11 @@ import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-sch
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
 import { startTaskRecord } from "@/features/task-records/lib/start-task-record"
 import { recordWorkerAgent } from "@/lib/llm/agents"
+import { buildTaskRecordAgentPrompt } from "@/lib/llm/build-task-record-agent-prompt"
 import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-prompt"
 import { resolveRuntimeModel } from "@/lib/llm/resolve-runtime-model"
+import { resolveRuntimeTemperature } from "@/lib/llm/resolve-runtime-temperature"
 import { logger } from "@/lib/logger"
-import { buildTaskRecordAgentPrompt } from "@/lib/llm/build-task-record-agent-prompt"
 
 type ExecutorServiceParams = {
   agentRunId: string
@@ -59,8 +60,15 @@ export const executorService = async ({
       projectDefaultModel: initialScope.project.defaultModel,
       taskModel: initialScope.task.model,
     })
+    const runtimeTemperature = resolveRuntimeTemperature({
+      projectDefaultTemperature: initialScope.project.defaultTemperature,
+      taskTemperature: initialScope.task.temperature,
+    })
 
-    executionLogger.info({ runtimeModel }, "Resolved runtime model")
+    executionLogger.info(
+      { runtimeModel, runtimeTemperature },
+      "Resolved runtime settings",
+    )
 
     executionLogger.info("Ensuring record workspace")
 
@@ -220,6 +228,7 @@ export const executorService = async ({
             filesAvailable: files.length,
             preloadedDataEntries: preparedWorkspaceData.copiedEntryCount,
             relationCount: relations.summary.activeCount,
+            temperature: runtimeTemperature,
           },
         })
 
@@ -308,6 +317,7 @@ export const executorService = async ({
             model: runtimeModel,
             relationCount: relations.summary.activeCount,
             sessionId: session.data.id,
+            temperature: runtimeTemperature,
           },
         })
 
@@ -348,6 +358,7 @@ export const executorService = async ({
           {
             model: runtimeModel,
             sessionId: session.data.id,
+            temperature: runtimeTemperature,
           },
           "Submitted OpenCode prompt asynchronously",
         )
@@ -369,10 +380,12 @@ export const executorService = async ({
           sessionId: session.data.id,
           taskId: initialScope.task.id,
           taskRecordId: initialScope.taskRecord.id,
+          temperature: runtimeTemperature,
           workspace,
         }
       },
       organizationId: initialScope.project.organizationId,
+      runtimeTemperature,
     })
   } catch (error) {
     executionLogger.error(

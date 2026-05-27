@@ -45,6 +45,7 @@ export const getTaskRecordExecutionScope = async ({
     db
       .select({
         defaultModel: projectTable.defaultModel,
+        defaultTemperature: projectTable.defaultTemperature,
         displayName: projectTable.displayName,
         id: projectTable.id,
         organizationId: projectTable.organizationId,
@@ -73,6 +74,7 @@ export const getTaskRecordExecutionScope = async ({
         descriptionMarkdown: taskTable.descriptionMarkdown,
         id: taskTable.id,
         model: taskTable.model,
+        temperature: taskTable.temperature,
         projectId: taskTable.projectId,
         schemaVersion: taskTable.schemaVersion,
         sortOrder: taskTable.sortOrder,
@@ -198,6 +200,7 @@ export const getTaskRecordExecutionScope = async ({
     },
     project: {
       defaultModel: project.defaultModel,
+      defaultTemperature: project.defaultTemperature,
       displayName: project.displayName,
       id: project.id,
       organizationId: project.organizationId,
@@ -217,6 +220,7 @@ export const getTaskRecordExecutionScope = async ({
       descriptionMarkdown: task.descriptionMarkdown,
       id: task.id,
       model: task.model,
+      temperature: task.temperature,
       schemaVersion: task.schemaVersion,
       sortOrder: task.sortOrder,
       targetSchemaVersionId: task.targetSchemaVersionId,

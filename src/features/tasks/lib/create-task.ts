@@ -1,15 +1,16 @@
 import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get-active-project-schema-version"
+import { taskTable } from "@/features/tasks/db"
 import { acceptTaskDraft } from "@/features/tasks/lib/accept-task-draft"
 import { createTaskDraft } from "@/features/tasks/lib/create-task-draft"
-import { taskTable } from "@/features/tasks/db"
 import type {
   TaskCreateIntent,
   TaskInput,
 } from "@/features/tasks/schemas/task-input"
 import { db } from "@/lib/db"
 import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
+import { validateRuntimeTemperature } from "@/lib/llm/validate-runtime-temperature"
 
 type CreateTaskParams = {
   intent: TaskCreateIntent
@@ -40,12 +41,16 @@ export const createTask = async ({
   }
 
   const model = validateApprovedTaskModel({ model: input.model })
+  const temperature = validateRuntimeTemperature({
+    temperature: input.temperature,
+  })
 
   const draftTask = await createTaskDraft({
     database: db,
     input: {
       ...input,
       model,
+      temperature,
     },
     organizationId: activeSchemaVersion.project.organizationId,
     projectId: activeSchemaVersion.project.id,
@@ -83,6 +88,7 @@ export const createTask = async ({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
+      temperature: taskTable.temperature,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,

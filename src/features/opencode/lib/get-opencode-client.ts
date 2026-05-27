@@ -69,8 +69,10 @@ const findAvailablePort = async ({
 
 const startEmbeddedServer = async ({
   organizationId,
+  runtimeTemperature,
 }: {
   organizationId: string
+  runtimeTemperature: number | null
 }) => {
   const { key } = await createOrgMcpApiKey({ organizationId })
 
@@ -90,7 +92,7 @@ const startEmbeddedServer = async ({
   )
 
   const instance = await createOpencode({
-    config: buildOpencodeConfig({ mcpToken: key }),
+    config: buildOpencodeConfig({ mcpToken: key, runtimeTemperature }),
     hostname: backendConfig.CRM_OPENCODE_HOST,
     port,
     timeout: backendConfig.CRM_OPENCODE_TIMEOUT_MS,
@@ -142,11 +144,24 @@ const shutdownEmbeddedServer = async ({
 export const withOpencodeForOrg = async <T>({
   fn,
   organizationId,
+  runtimeTemperature,
 }: {
   fn: (params: { client: OpencodeClient; mcpToken: string }) => Promise<T>
   organizationId: string
+  runtimeTemperature: number | null
 }): Promise<T> => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
+    if (runtimeTemperature !== null) {
+      logger.warn(
+        {
+          baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
+          mode: "external-configured",
+          runtimeTemperature,
+        },
+        "Runtime temperature override is not enforced for external OpenCode servers",
+      )
+    }
+
     logger.info(
       {
         baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
@@ -162,7 +177,10 @@ export const withOpencodeForOrg = async <T>({
     return fn({ client, mcpToken: "" })
   }
 
-  const server = await startEmbeddedServer({ organizationId })
+  const server = await startEmbeddedServer({
+    organizationId,
+    runtimeTemperature,
+  })
 
   const dbRow = await db
     .insert(opencodeServerTable)
@@ -222,7 +240,10 @@ export const startInteractiveServer = async ({
     }
   }
 
-  const server = await startEmbeddedServer({ organizationId })
+  const server = await startEmbeddedServer({
+    organizationId,
+    runtimeTemperature: null,
+  })
 
   const dbRow = await db
     .insert(opencodeServerTable)

@@ -134,6 +134,20 @@
       "when": 1775553420402,
       "tag": "0018_conscious_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1775755494214,
+      "tag": "0019_parched_hiroim",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1775769734749,
+      "tag": "0020_pretty_enchantress",
+      "breakpoints": true
     }
   ]
 }

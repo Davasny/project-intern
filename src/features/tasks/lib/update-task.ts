@@ -6,6 +6,7 @@ import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import type { TaskUpdateInput } from "@/features/tasks/schemas/task-input"
 import { db } from "@/lib/db"
 import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
+import { validateRuntimeTemperature } from "@/lib/llm/validate-runtime-temperature"
 import { logger } from "@/lib/logger"
 
 type UpdateTaskParams = {
@@ -61,12 +62,16 @@ export const updateTask = async ({
   }
 
   const model = validateApprovedTaskModel({ model: input.model })
+  const temperature = validateRuntimeTemperature({
+    temperature: input.temperature,
+  })
 
   const [task] = await db
     .update(taskTable)
     .set({
       descriptionMarkdown: input.descriptionMarkdown,
       model,
+      temperature,
       schemaVersion: input.schemaVersion,
       title: input.title,
     })
@@ -76,6 +81,7 @@ export const updateTask = async ({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
+      temperature: taskTable.temperature,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,

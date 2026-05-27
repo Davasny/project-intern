@@ -26,6 +26,7 @@ import { useTRPC } from "@/lib/trpc/client"
 
 const projectSettingsFormSchema = z.object({
   defaultModel: z.string().trim().min(1, "Default model is required."),
+  defaultTemperature: z.string().trim().min(1, "Default temperature is required."),
 })
 
 type ProjectSettingsFormValues = z.infer<typeof projectSettingsFormSchema>
@@ -33,11 +34,17 @@ type ProjectSettingsFormValues = z.infer<typeof projectSettingsFormSchema>
 type ProjectSettingsFormProps = {
   approvedModels: string[]
   initialDefaultModel: string
+  initialDefaultTemperature: number
 }
+
+const temperatureOptions = Array.from({ length: 11 }, (_, index) =>
+  (index / 10).toFixed(1),
+)
 
 export const ProjectSettingsForm = ({
   approvedModels,
   initialDefaultModel,
+  initialDefaultTemperature,
 }: ProjectSettingsFormProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
@@ -45,6 +52,7 @@ export const ProjectSettingsForm = ({
   const form = useForm<ProjectSettingsFormValues>({
     defaultValues: {
       defaultModel: initialDefaultModel,
+      defaultTemperature: initialDefaultTemperature.toFixed(1),
     },
     resolver: zodResolver(projectSettingsFormSchema),
   })
@@ -66,6 +74,7 @@ export const ProjectSettingsForm = ({
     await updateSettingsMutation.mutateAsync({
       input: {
         defaultModel: values.defaultModel,
+        defaultTemperature: Number(values.defaultTemperature),
       },
       organizationSlug,
       projectSlug,
@@ -101,6 +110,34 @@ export const ProjectSettingsForm = ({
               </Select>
               <FormDescription>
                 This model will be used by all tasks that do not specify an
+                override.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="defaultTemperature"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Default temperature</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select temperature" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {temperatureOptions.map((temperature) => (
+                    <SelectItem key={temperature} value={temperature}>
+                      {temperature}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Default sampling temperature used when tasks do not specify an
                 override.
               </FormDescription>
               <FormMessage />

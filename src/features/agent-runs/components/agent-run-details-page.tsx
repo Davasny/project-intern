@@ -82,6 +82,13 @@ export const AgentRunDetailsPage = ({
 
   const stats = [
     { label: "Model", value: run.selectedModel ?? run.model ?? "—" },
+    {
+      label: "Temperature",
+      value:
+        run.selectedTemperature !== null
+          ? run.selectedTemperature.toFixed(1)
+          : "—",
+    },
     { label: "Agent", value: run.selectedAgent ?? "—" },
     { label: "Duration", value: durationDisplay },
     { label: "Tokens", value: totalTokens.toLocaleString() },
@@ -98,6 +105,13 @@ export const AgentRunDetailsPage = ({
       { label: "Provider", value: run.provider ?? "—" },
       { label: "Model", value: run.model ?? "—" },
       { label: "Selected Model", value: run.selectedModel ?? "—" },
+      {
+        label: "Selected Temperature",
+        value:
+          run.selectedTemperature !== null
+            ? run.selectedTemperature.toFixed(1)
+            : "—",
+      },
       { label: "Selected Agent", value: run.selectedAgent ?? "—" },
     ],
     [

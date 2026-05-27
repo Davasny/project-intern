@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { runtimeTemperatureSchema } from "@/features/execution/schemas/runtime-temperature"
 
 const nullableStringSchema = z.string().trim().min(1).nullable()
 
@@ -8,6 +9,7 @@ export const taskInputSchema = z.object({
     .trim()
     .min(1, "Task description is required."),
   model: nullableStringSchema,
+  temperature: runtimeTemperatureSchema.nullable(),
   schemaVersion: z.number().int().min(1),
   title: z.string().trim().min(1, "Task title is required."),
 })

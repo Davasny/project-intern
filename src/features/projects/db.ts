@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm"
 import {
   boolean,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -28,6 +29,13 @@ export const projectTable = pgTable(
     slug: text("slug").notNull(),
     displayName: text("display_name").notNull(),
     defaultModel: text("default_model").notNull(),
+    defaultTemperature: numeric("default_temperature", {
+      mode: "number",
+      precision: 2,
+      scale: 1,
+    })
+      .notNull()
+      .default(0.5),
     activeSchemaVersionId: uuid("active_schema_version_id"),
     isAutopickEnabled: boolean("is_autopick_enabled").notNull().default(true),
     createdAt: createdAtColumn(),

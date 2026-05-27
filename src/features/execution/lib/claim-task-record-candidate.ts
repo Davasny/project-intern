@@ -41,6 +41,7 @@ type ClaimTaskRecordCandidateParams =
 type ClaimTaskRecordCandidate = {
   attemptNumber: number
   model: string | null
+  projectDefaultTemperature: number
   organizationId: string
   projectId: string
   projectDefaultModel: string
@@ -48,6 +49,7 @@ type ClaimTaskRecordCandidate = {
   state: TaskRecordState
   taskId: string
   taskRecordId: string
+  temperature: number | null
 }
 
 export const claimTaskRecordCandidate = async (
@@ -78,10 +80,12 @@ export const claimTaskRecordCandidate = async (
       organizationId: projectTable.organizationId,
       projectId: taskTable.projectId,
       projectDefaultModel: projectTable.defaultModel,
+      projectDefaultTemperature: projectTable.defaultTemperature,
       recordId: taskRecordTable.recordId,
       state: taskRecordTable.state,
       taskId: taskRecordTable.taskId,
       taskRecordId: taskRecordTable.id,
+      temperature: taskTable.temperature,
     })
     .from(taskRecordTable)
     .innerJoin(taskTable, eq(taskTable.id, taskRecordTable.taskId))
@@ -179,9 +183,11 @@ export const claimTaskRecordCandidate = async (
     organizationId: candidate.organizationId,
     projectId: candidate.projectId,
     projectDefaultModel: candidate.projectDefaultModel,
+    projectDefaultTemperature: candidate.projectDefaultTemperature,
     recordId: candidate.recordId,
     state: candidate.state,
     taskId: candidate.taskId,
     taskRecordId: candidate.taskRecordId,
+    temperature: candidate.temperature,
   } satisfies ClaimTaskRecordCandidate
 }

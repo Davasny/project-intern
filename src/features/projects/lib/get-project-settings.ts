@@ -32,6 +32,7 @@ export const getProjectSettings = async ({
   const settings = await db
     .select({
       defaultModel: projectTable.defaultModel,
+      defaultTemperature: projectTable.defaultTemperature,
     })
     .from(projectTable)
     .where(eq(projectTable.id, project.id))

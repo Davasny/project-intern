@@ -34,6 +34,11 @@ export const agentRunTable = pgTable(
     provider: text("provider"),
     model: text("model"),
     selectedModel: text("selected_model"),
+    selectedTemperature: numeric("selected_temperature", {
+      mode: "number",
+      precision: 2,
+      scale: 1,
+    }),
     selectedAgent: text("selected_agent"),
     sessionReference: text("session_reference"),
     directory: text("directory"),

@@ -23,6 +23,7 @@ type AgentRunMachineContext = {
   resultPayload: Record<string, unknown> | null
   selectedAgent: string | null
   selectedModel: string | null
+  selectedTemperature: number | null
   directory: string | null
   sessionReference: string | null
   startedAt: Date | null

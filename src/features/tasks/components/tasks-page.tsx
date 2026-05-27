@@ -94,6 +94,7 @@ export const TasksPage = () => {
               <TableRow>
                 <TableHeader>Order</TableHeader>
                 <TableHeader>Task</TableHeader>
+                <TableHeader>Temperature</TableHeader>
                 <TableHeader>Status</TableHeader>
                 <TableHeader>Completed</TableHeader>
                 <TableHeader>Active</TableHeader>
@@ -131,6 +132,7 @@ export const TasksPage = () => {
           <TaskForm
             initialDescriptionMarkdown=""
             initialModel={null}
+            initialTemperature={null}
             initialSchemaVersion={latestSchemaVersion}
             initialTitle=""
             onSubmitted={() => setIsCreateOpen(false)}

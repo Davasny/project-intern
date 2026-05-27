@@ -3,8 +3,8 @@ import { type InferStates, machine } from "machin"
 import { withDrizzlePg } from "machin/drizzle/pg"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectTable } from "@/features/projects/db"
-import { publishTask } from "@/features/tasks/lib/publish-task"
 import { taskTable } from "@/features/tasks/db"
+import { publishTask } from "@/features/tasks/lib/publish-task"
 import { db } from "@/lib/db"
 
 type TaskMachineContext = {
@@ -12,6 +12,7 @@ type TaskMachineContext = {
   descriptionMarkdown: string
   idempotencyKey: string
   model: string | null
+  temperature: number | null
   projectId: string
   proposedBy: string | null
   rejectedBy: string | null
@@ -81,6 +82,7 @@ const taskMachineDefinition = machine<TaskMachineContext>().define({
             descriptionMarkdown: context.descriptionMarkdown,
             id: event.taskId,
             projectId: context.projectId,
+            temperature: context.temperature,
             schemaVersion: context.schemaVersion,
             sortOrder: context.sortOrder,
             sourceSchemaVersionId: context.sourceSchemaVersionId,

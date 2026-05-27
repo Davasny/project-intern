@@ -12,6 +12,7 @@ import { useTRPC } from "@/lib/trpc/client"
 type TaskListRowProps = {
   task: {
     id: string
+    effectiveTemperature: number
     progress: {
       completedCount: number
       failedCount: number
@@ -36,6 +37,7 @@ type TaskListRowProps = {
       | "in_progress"
       | "not_started"
       | "partially_completed"
+    temperature: number | null
     title: string
   }
 }
@@ -118,6 +120,12 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
             Schema v{task.schemaVersion}
           </span>
         </div>
+      </TableCell>
+      <TableCell>
+        <span className="text-sm text-muted-foreground">
+          {task.effectiveTemperature.toFixed(1)}
+          {task.temperature === null ? " (default)" : " (override)"}
+        </span>
       </TableCell>
       <TableCell>
         {task.state === "accepted" ? (

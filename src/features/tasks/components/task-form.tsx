@@ -26,6 +26,7 @@ const taskFormSchema = z.object({
     .trim()
     .min(1, "Task description is required."),
   model: z.string().trim(),
+  temperature: z.string().trim(),
   schemaVersion: z.number().int().min(1),
   title: z.string().trim().min(1, "Task title is required."),
 })
@@ -35,6 +36,7 @@ type TaskFormValues = z.infer<typeof taskFormSchema>
 type TaskFormProps = {
   initialDescriptionMarkdown: string
   initialModel: string | null
+  initialTemperature: number | null
   initialSchemaVersion: number
   initialTitle: string
   onSubmitted: () => void
@@ -42,9 +44,14 @@ type TaskFormProps = {
   taskId: string | null
 }
 
+const temperatureOptions = Array.from({ length: 11 }, (_, index) =>
+  (index / 10).toFixed(1),
+)
+
 export const TaskForm = ({
   initialDescriptionMarkdown,
   initialModel,
+  initialTemperature,
   initialSchemaVersion,
   initialTitle,
   onSubmitted,
@@ -61,6 +68,8 @@ export const TaskForm = ({
     defaultValues: {
       descriptionMarkdown: initialDescriptionMarkdown,
       model: initialModel ?? "",
+      temperature:
+        initialTemperature === null ? "" : initialTemperature.toFixed(1),
       schemaVersion: initialSchemaVersion,
       title: initialTitle,
     },
@@ -82,6 +91,7 @@ export const TaskForm = ({
         form.reset({
           descriptionMarkdown: "",
           model: "",
+          temperature: "",
           schemaVersion: initialSchemaVersion,
           title: "",
         })
@@ -111,6 +121,8 @@ export const TaskForm = ({
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const model = values.model.length > 0 ? values.model : null
+    const temperature =
+      values.temperature.length > 0 ? Number(values.temperature) : null
 
     if (taskId) {
       await updateTaskMutation.mutateAsync({
@@ -119,6 +131,7 @@ export const TaskForm = ({
           model,
           schemaVersion: values.schemaVersion,
           taskId,
+          temperature,
           title: values.title,
         },
         organizationSlug,
@@ -134,6 +147,7 @@ export const TaskForm = ({
         descriptionMarkdown: values.descriptionMarkdown,
         model,
         schemaVersion: values.schemaVersion,
+        temperature,
         title: values.title,
       },
       organizationSlug,
@@ -225,6 +239,30 @@ export const TaskForm = ({
                 <FormLabel>Model override</FormLabel>
                 <FormControl>
                   <Input placeholder="openai/gpt-5.4" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="temperature"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Temperature override</FormLabel>
+                <FormControl>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    onChange={(event) => field.onChange(event.target.value)}
+                    value={field.value}
+                  >
+                    <option value="">Use project default</option>
+                    {temperatureOptions.map((temperature) => (
+                      <option key={temperature} value={temperature}>
+                        {temperature}
+                      </option>
+                    ))}
+                  </select>
                 </FormControl>
                 <FormMessage />
               </FormItem>

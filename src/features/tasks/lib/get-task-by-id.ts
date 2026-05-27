@@ -39,9 +39,11 @@ export const getTaskById = async ({
     .select({
       createdAt: taskTable.createdAt,
       defaultModel: projectTable.defaultModel,
+      defaultTemperature: projectTable.defaultTemperature,
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
+      temperature: taskTable.temperature,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,
@@ -62,7 +64,11 @@ export const getTaskById = async ({
     })
   }
 
-  const { defaultModel: projectDefaultModel, ...task } = taskWithProject
+  const {
+    defaultModel: projectDefaultModel,
+    defaultTemperature: projectDefaultTemperature,
+    ...task
+  } = taskWithProject
 
   const revisions = await db
     .select({
@@ -107,6 +113,7 @@ export const getTaskById = async ({
   return {
     ...task,
     effectiveModel: task.model ?? projectDefaultModel,
+    effectiveTemperature: task.temperature ?? projectDefaultTemperature,
     progress: {
       completedCount: taskRecordStates.filter((state) => state === "completed")
         .length,

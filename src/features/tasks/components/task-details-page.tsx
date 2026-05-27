@@ -232,8 +232,20 @@ export const TaskDetailsPage = ({
                 value={taskQuery.data.model ?? "Use project default"}
               />
               <MetadataListItem
+                label="Temperature override"
+                value={
+                  taskQuery.data.temperature === null
+                    ? "Use project default"
+                    : taskQuery.data.temperature.toFixed(1)
+                }
+              />
+              <MetadataListItem
                 label="Effective model"
                 value={taskQuery.data.effectiveModel}
+              />
+              <MetadataListItem
+                label="Effective temperature"
+                value={taskQuery.data.effectiveTemperature.toFixed(1)}
               />
               <MetadataListItem
                 label="Created"
@@ -264,6 +276,7 @@ export const TaskDetailsPage = ({
                   <TableHeader>Task record</TableHeader>
                   <TableHeader>Latest run</TableHeader>
                   <TableHeader>Model</TableHeader>
+                  <TableHeader>Temperature</TableHeader>
                   <TableHeader>Last transition</TableHeader>
                 </TableRow>
               </TableHead>
@@ -304,6 +317,7 @@ export const TaskDetailsPage = ({
           <TaskForm
             initialDescriptionMarkdown={taskQuery.data.descriptionMarkdown}
             initialModel={taskQuery.data.model}
+            initialTemperature={taskQuery.data.temperature}
             initialSchemaVersion={taskQuery.data.schemaVersion}
             initialTitle={taskQuery.data.title}
             onSubmitted={() => setIsEditOpen(false)}

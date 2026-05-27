@@ -15,6 +15,7 @@ type TaskRecordRowProps = {
       id: string
       failurePayload: Record<string, unknown> | null
       selectedModel: string | null
+      selectedTemperature: number | null
       state:
         | "aborted"
         | "booting"
@@ -87,6 +88,9 @@ export const TaskRecordRow = ({ taskRecord }: TaskRecordRowProps) => {
       </TableCell>
       <TableCell>
         {taskRecord.latestAgentRun?.selectedModel ?? "Default"}
+      </TableCell>
+      <TableCell>
+        {taskRecord.latestAgentRun?.selectedTemperature?.toFixed(1) ?? "Default"}
       </TableCell>
       <TableCell>{taskRecord.lastTransitionAt.toLocaleString()}</TableCell>
     </TableRow>

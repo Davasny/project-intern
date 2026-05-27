@@ -14,6 +14,7 @@ type CreateProjectTaskParams = {
   database: DatabaseClient
   descriptionMarkdown: string
   model: string | null
+  temperature: number | null
   organizationId: string
   projectId: string
   schemaVersion: number
@@ -27,6 +28,7 @@ export const createProjectTask = async ({
   database,
   descriptionMarkdown,
   model,
+  temperature,
   organizationId,
   projectId,
   schemaVersion,
@@ -48,6 +50,7 @@ export const createProjectTask = async ({
       descriptionMarkdown,
       idempotencyKey: crypto.randomUUID(),
       model,
+      temperature,
       projectId,
       schemaVersion,
       sortOrder: nextSortOrder,
@@ -60,6 +63,7 @@ export const createProjectTask = async ({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
+      temperature: taskTable.temperature,
       projectId: taskTable.projectId,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,

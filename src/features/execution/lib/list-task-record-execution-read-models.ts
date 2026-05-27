@@ -70,6 +70,7 @@ export const listTaskRecordExecutionReadModels = async ({
             resultPayload: agentRunTable.resultPayload,
             selectedAgent: agentRunTable.selectedAgent,
             selectedModel: agentRunTable.selectedModel,
+            selectedTemperature: agentRunTable.selectedTemperature,
             startedAt: agentRunTable.startedAt,
             state: agentRunTable.state,
             taskRecordId: agentRunTable.taskRecordId,

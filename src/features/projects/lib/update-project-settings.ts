@@ -5,10 +5,12 @@ import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { db } from "@/lib/db"
 import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
+import { validateRuntimeTemperature } from "@/lib/llm/validate-runtime-temperature"
 import { logger } from "@/lib/logger"
 
 const updateProjectSettingsInputSchema = z.object({
   defaultModel: z.string().trim().min(1),
+  defaultTemperature: z.number(),
 })
 
 type UpdateProjectSettingsParams = {
@@ -40,6 +42,9 @@ export const updateProjectSettings = async ({
   const validatedModel = validateApprovedTaskModel({
     model: input.defaultModel,
   })
+  const validatedTemperature = validateRuntimeTemperature({
+    temperature: input.defaultTemperature,
+  })
 
   if (!validatedModel) {
     throw new TRPCError({
@@ -48,17 +53,33 @@ export const updateProjectSettings = async ({
     })
   }
 
+  if (validatedTemperature === null) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Default temperature is required.",
+    })
+  }
+
   const [updated] = await db
     .update(projectTable)
-    .set({ defaultModel: validatedModel })
+    .set({
+      defaultModel: validatedModel,
+      defaultTemperature: validatedTemperature,
+    })
     .where(eq(projectTable.id, project.id))
     .returning({
       defaultModel: projectTable.defaultModel,
+      defaultTemperature: projectTable.defaultTemperature,
     })
 
   logger.info(
-    { projectId: project.id, userId, defaultModel: validatedModel },
-    "Updated project default model",
+    {
+      defaultModel: validatedModel,
+      defaultTemperature: validatedTemperature,
+      projectId: project.id,
+      userId,
+    },
+    "Updated project default runtime settings",
   )
 
   return updated

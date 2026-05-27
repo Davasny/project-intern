@@ -140,7 +140,9 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
           attemptNumber: candidate.attemptNumber,
           model: candidate.model,
           projectDefaultModel: candidate.projectDefaultModel,
+          projectDefaultTemperature: candidate.projectDefaultTemperature,
           taskRecordId: taskRecordInfo.id,
+          temperature: candidate.temperature,
         })
 
         if (!agentRunResult) {

@@ -53,6 +53,7 @@ export const getAgentRunById = async ({
       resultPayload: agentRunTable.resultPayload,
       selectedAgent: agentRunTable.selectedAgent,
       selectedModel: agentRunTable.selectedModel,
+      selectedTemperature: agentRunTable.selectedTemperature,
       sessionReference: agentRunTable.sessionReference,
       startedAt: agentRunTable.startedAt,
       state: agentRunTable.state,

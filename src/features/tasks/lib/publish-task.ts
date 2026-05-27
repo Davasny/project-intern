@@ -19,6 +19,7 @@ type PublishTaskParams = {
     descriptionMarkdown: string
     id: string
     projectId: string
+    temperature: number | null
     schemaVersion: number
     sortOrder: number
     sourceSchemaVersionId: string | null
@@ -110,6 +111,7 @@ export const publishTask = async ({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
       model: taskTable.model,
+      temperature: taskTable.temperature,
       schemaVersion: taskTable.schemaVersion,
       sortOrder: taskTable.sortOrder,
       sourceSchemaVersionId: taskTable.sourceSchemaVersionId,

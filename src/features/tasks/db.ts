@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm"
 import {
   index,
   integer,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -33,6 +34,11 @@ export const taskTable = pgTable(
     state: text("state").$type<TaskState>().default("accepted").notNull(),
     sortOrder: integer("sort_order").notNull(),
     model: text("model"),
+    temperature: numeric("temperature", {
+      mode: "number",
+      precision: 2,
+      scale: 1,
+    }),
     schemaVersion: integer("schema_version").notNull(),
     sourceSchemaVersionId: uuid("source_schema_version_id").references(
       () => projectSchemaVersionTable.id,

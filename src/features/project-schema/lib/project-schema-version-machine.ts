@@ -4,10 +4,10 @@ import { withDrizzlePg } from "machin/drizzle/pg"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { buildSchemaMigrationTaskDescription } from "@/features/project-schema/lib/build-schema-migration-task-description"
+import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
 import { projectTable } from "@/features/projects/db"
 import { recordTable } from "@/features/records/db"
 import { createProjectTask } from "@/features/tasks/lib/create-project-task"
-import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
 import { db } from "@/lib/db"
 
 type ProjectSchemaVersionMachineContext = {
@@ -68,6 +68,7 @@ const projectSchemaVersionMachineDefinition =
                     previousVersion: event.previousVersionNumber!,
                   }),
                   model: null,
+                  temperature: null,
                   organizationId: event.organizationId,
                   projectId: context.projectId,
                   schemaVersion: context.version,
