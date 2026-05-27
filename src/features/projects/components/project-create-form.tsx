@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import {
@@ -47,10 +48,14 @@ export const ProjectCreateForm = ({
   const createProjectMutation = useMutation(
     trpc.projects.create.mutationOptions({
       onSuccess: async (project) => {
+        toast.success(`Project "${project.displayName}" created`)
         await queryClient.invalidateQueries(
           trpc.projects.listForOrganization.queryFilter({ organizationSlug }),
         )
         router.push(`/app/${organizationSlug}/${project.slug}`)
+      },
+      onError: () => {
+        toast.error("Failed to create project")
       },
     }),
   )

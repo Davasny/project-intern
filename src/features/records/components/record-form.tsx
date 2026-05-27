@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import {
@@ -60,7 +61,8 @@ export const RecordForm = ({
 
   const createRecordMutation = useMutation(
     trpc.records.create.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (record) => {
+        toast.success(`Record "${record.name}" created`)
         await queryClient.invalidateQueries(
           trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
         )
@@ -72,12 +74,16 @@ export const RecordForm = ({
           }),
         )
       },
+      onError: () => {
+        toast.error("Failed to create record")
+      },
     }),
   )
 
   const updateRecordMutation = useMutation(
     trpc.records.update.mutationOptions({
       onSuccess: async (record) => {
+        toast.success(`Record "${record.name}" updated`)
         await queryClient.invalidateQueries(
           trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
         )
@@ -88,6 +94,9 @@ export const RecordForm = ({
             recordId: record.id,
           }),
         )
+      },
+      onError: () => {
+        toast.error("Failed to update record")
       },
     }),
   )

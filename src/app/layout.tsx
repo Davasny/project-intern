@@ -4,6 +4,7 @@ import { Providers } from "@/app/providers"
 import { frontendConfig } from "@/lib/config/frontend"
 import "@/app/globals.css"
 import { Geist } from "next/font/google"
+import { Toaster } from "sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
@@ -23,6 +24,7 @@ const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => (
     <body>
       <Providers>
         <TooltipProvider>{children}</TooltipProvider>
+        <Toaster />
       </Providers>
     </body>
   </html>

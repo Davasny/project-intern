@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import {
@@ -78,7 +79,8 @@ export const TaskForm = ({
 
   const createTaskMutation = useMutation(
     trpc.tasks.create.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (task) => {
+        toast.success(`Task "${task.title}" created`)
         await queryClient.invalidateQueries(
           trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
         )
@@ -96,12 +98,16 @@ export const TaskForm = ({
           title: "",
         })
       },
+      onError: () => {
+        toast.error("Failed to create task")
+      },
     }),
   )
 
   const updateTaskMutation = useMutation(
     trpc.tasks.update.mutationOptions({
       onSuccess: async (task) => {
+        toast.success(`Task "${task.title}" updated`)
         await queryClient.invalidateQueries(
           trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
         )
@@ -115,6 +121,9 @@ export const TaskForm = ({
         await queryClient.invalidateQueries(
           trpc.projects.overview.queryFilter({ organizationSlug, projectSlug }),
         )
+      },
+      onError: () => {
+        toast.error("Failed to update task")
       },
     }),
   )
