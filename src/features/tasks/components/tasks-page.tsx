@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { FilterBar } from "@/components/ui/filter-bar/filter-bar"
-import { FilterBarActions } from "@/components/ui/filter-bar/filter-bar-actions"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
@@ -78,15 +77,7 @@ export const TasksPage = () => {
           <div className="text-sm text-muted-foreground">
             {tasksQuery.data.length} tasks ordered for this project queue.
           </div>
-          <FilterBarActions>
-            <Button
-              onClick={() => setIsCreateOpen(true)}
-              type="button"
-              variant="secondary"
-            >
-              Create task
-            </Button>
-          </FilterBarActions>
+
         </FilterBar>
         {tasksQuery.data.length > 0 ? (
           <DataTable>
