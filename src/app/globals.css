@@ -111,6 +111,16 @@
   --tone-warning: oklch(0.85 0.08 85);
   --tone-warning-foreground: oklch(0.55 0.14 85);
   --tone-warning-bg: oklch(0.97 0.02 85);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --spacing-section: 1.5rem;
+  --spacing-element: 0.5rem;
+  --spacing-page: 2rem;
 }
 
 .dark {

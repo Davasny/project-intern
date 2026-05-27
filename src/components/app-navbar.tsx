@@ -12,6 +12,11 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { cn } from "@/lib/utils"
 import { CustomSidebarTrigger } from "./custom-sidebar-trigger"
@@ -42,6 +47,7 @@ type BreadcrumbItemData = {
   label: string
   href: string
   isCurrentPage: boolean
+  originalLabel?: string
 }
 
 const getBreadcrumbs = (
@@ -83,8 +89,10 @@ const getBreadcrumbs = (
     const isLast = i === restSegments.length - 1
 
     let label: string
+    let originalLabel: string | undefined
     if (isUuidLike(segment)) {
       label = formatDynamicSegment(segment)
+      originalLabel = segment
     } else {
       label =
         segmentLabels[segment] ??
@@ -92,9 +100,10 @@ const getBreadcrumbs = (
     }
 
     breadcrumbs.push({
-      label,
       href: currentPath,
       isCurrentPage: isLast,
+      label,
+      ...(originalLabel ? { originalLabel } : {}),
     })
   }
 
@@ -122,18 +131,29 @@ export const AppNavbar = ({ user }: { user: NavUserProps }) => {
         {breadcrumbs.length > 0 ? (
           <Breadcrumb>
             <BreadcrumbList>
-              {breadcrumbs.map((crumb, index) => (
-                <BreadcrumbItem key={crumb.href}>
-                  {index > 0 && <BreadcrumbSeparator />}
-                  {crumb.isCurrentPage ? (
-                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink href={crumb.href}>
-                      {crumb.label}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              ))}
+              {breadcrumbs.map((crumb, index) => {
+                const content = crumb.isCurrentPage ? (
+                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink href={crumb.href}>
+                    {crumb.label}
+                  </BreadcrumbLink>
+                )
+
+                return (
+                  <BreadcrumbItem key={crumb.href}>
+                    {index > 0 && <BreadcrumbSeparator />}
+                    {crumb.originalLabel ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>{content}</TooltipTrigger>
+                        <TooltipContent>{crumb.originalLabel}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      content
+                    )}
+                  </BreadcrumbItem>
+                )
+              })}
             </BreadcrumbList>
           </Breadcrumb>
         ) : null}

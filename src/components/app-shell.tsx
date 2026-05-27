@@ -18,7 +18,7 @@ export const AppShell = ({ children, user }: AppShellProps) => {
         <SidebarInset>
           <AppNavbar user={user} />
           <div
-            className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6"
+            className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-200"
             id="main-content"
           >
             {children}
