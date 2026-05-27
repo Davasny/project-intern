@@ -112,13 +112,17 @@ export const ExecutionMonitorPage = () => {
               <Switch
                 checked={executionQuery.data.isAutopickEnabled}
                 disabled={toggleAutopickMutation.isPending}
-                onCheckedChange={(isAutopickEnabled) =>
-                  toggleAutopickMutation.mutate({
-                    isAutopickEnabled,
-                    organizationSlug,
-                    projectSlug,
-                  })
-                }
+                onCheckedChange={async (isAutopickEnabled) => {
+                  try {
+                    await toggleAutopickMutation.mutateAsync({
+                      isAutopickEnabled,
+                      organizationSlug,
+                      projectSlug,
+                    })
+                  } catch (error) {
+                    console.error("Failed to toggle autopick:", error)
+                  }
+                }}
               />
             </div>
           ) : null}
