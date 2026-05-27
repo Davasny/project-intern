@@ -1,8 +1,8 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Upload } from "lucide-react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { FileUpIcon, InfoIcon } from "lucide-react"
 import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -22,6 +22,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import {
   TableBody,
   TableCell,
@@ -51,6 +52,17 @@ const DEFAULT_FORM_VALUES: RecordCsvImportFormValues = {
   file: null,
 }
 
+const FIELD_TYPE_HINTS: Record<string, string> = {
+  boolean: 'Accepted: "true", "false", "1", "0", "yes", "no" (case‑insensitive)',
+  date: "Format: YYYY-MM-DD",
+  datetime: 'Format: YYYY-MM-DDTHH:MM (e.g. "2026-05-27T14:30")',
+  email: "A valid email address",
+  enum: "Must match one of the configured enum options",
+  json: "A single JSON object (e.g. {\"key\":\"value\"})",
+  number: "A numeric value (integer or decimal)",
+  url: "A valid URL",
+}
+
 export const RecordCsvImportDialog = ({
   isOpen,
   onOpenChange,
@@ -61,6 +73,14 @@ export const RecordCsvImportDialog = ({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [previewResult, setPreviewResult] =
     useState<RecordImportPreviewResult | null>(null)
+
+  const initialSchemaQuery = useQuery(
+    trpc.projectSchema.getByVersion.queryOptions({
+      organizationSlug,
+      projectSlug,
+      version: 1,
+    }),
+  )
 
   const form = useForm<RecordCsvImportFormValues>({
     defaultValues: DEFAULT_FORM_VALUES,
@@ -140,22 +160,29 @@ export const RecordCsvImportDialog = ({
     }
   }
 
+  const customFields = initialSchemaQuery.data
+    ? initialSchemaQuery.data.schemaDefinition.fields.filter(
+        (field) => !field.isSystem,
+      )
+    : []
+
   return (
     <Dialog onOpenChange={handleDialogOpenChange} open={isOpen}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import records from CSV</DialogTitle>
           <DialogDescription>
-            Imported records are validated against schema v1 and each record name
-            must be unique in this project.
+            Upload a CSV file to import records. The first row must be a header
+            row. Each record is validated against schema version{" "}
+            {initialSchemaQuery.data?.version ?? 1}.
           </DialogDescription>
         </DialogHeader>
 
         {previewResult ? (
           <div className="flex flex-col gap-4">
             <div className="rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-              {previewResult.summary.proposedCount} proposed, {" "}
-              {previewResult.summary.errorCount} errors, {" "}
+              {previewResult.summary.proposedCount} proposed,{" "}
+              {previewResult.summary.errorCount} errors,{" "}
               {previewResult.summary.totalRows} total rows.
             </div>
 
@@ -203,7 +230,8 @@ export const RecordCsvImportDialog = ({
               </Button>
               <Button
                 disabled={
-                  importCommitMutation.isPending || previewResult.errors.length > 0
+                  importCommitMutation.isPending ||
+                  previewResult.errors.length > 0
                 }
                 onClick={handleCommitImport}
                 type="button"
@@ -216,7 +244,68 @@ export const RecordCsvImportDialog = ({
           </div>
         ) : (
           <Form {...form}>
-            <form className="flex flex-col gap-6" onSubmit={handlePreviewSubmit}>
+            <form
+              className="flex flex-col gap-6"
+              onSubmit={handlePreviewSubmit}
+            >
+              {initialSchemaQuery.isLoading ? (
+                <LoadingState
+                  label="Loading schema columns..."
+                  variant="spinner"
+                />
+              ) : (
+                <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-4 text-sm">
+                  <div className="flex items-center gap-2 font-medium text-foreground">
+                    <InfoIcon aria-hidden="true" className="size-4 shrink-0" />
+                    Required columns
+                  </div>
+                  <ul className="ml-6 list-disc space-y-1 text-muted-foreground">
+                    <li>
+                      <span className="font-medium text-foreground">name</span>{" "}
+                      — The record name (must be unique in this project).
+                    </li>
+                  </ul>
+
+                  {customFields.length > 0 ? (
+                    <>
+                      <div className="mt-2 font-medium text-foreground">
+                        Optional columns (schema version{" "}
+                        {initialSchemaQuery.data?.version ?? 1})
+                      </div>
+                      <ul className="ml-6 list-disc space-y-1 text-muted-foreground">
+                        {customFields.map((field) => (
+                          <li key={field.key}>
+                            <span className="font-medium text-foreground">
+                              {field.key}
+                            </span>{" "}
+                            — {field.label}
+                            {field.required ? (
+                              <span className="text-tone-danger-foreground">
+                                {" "}
+                                (required)
+                              </span>
+                            ) : (
+                              ""
+                            )}
+                            <br />
+                            <span className="text-xs">
+                              Type: {field.type}.{" "}
+                              {FIELD_TYPE_HINTS[field.type] ??
+                                "Plain text value."}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      No custom fields are defined in this project&rsquo;s
+                      schema. Only the <code>name</code> column is expected.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <FormField
                 control={form.control}
                 name="file"
@@ -253,7 +342,7 @@ export const RecordCsvImportDialog = ({
                   Cancel
                 </Button>
                 <Button disabled={importPreviewMutation.isPending} type="submit">
-                  <Upload className="mr-1.5 size-4" />
+                  <FileUpIcon className="mr-1.5 size-4" />
                   {importPreviewMutation.isPending
                     ? "Preparing preview..."
                     : "Upload and preview"}
