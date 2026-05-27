@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import { cn } from "@/utils/cn"
 
@@ -54,9 +55,9 @@ export const SchemaVersionTimelineItem = ({
           Version {version.version}
         </span>
         {isActive ? (
-          <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
+          <Badge className="bg-accent text-accent-foreground">
             active
-          </span>
+          </Badge>
         ) : null}
         <StatusBadge
           label={version.migration.status.replaceAll("_", " ")}

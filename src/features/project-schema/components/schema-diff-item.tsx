@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 
 type SchemaDiffItemProps = {
@@ -13,9 +14,9 @@ export const SchemaDiffItem = ({ diff }: SchemaDiffItemProps) => (
   <Card className="p-4">
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+        <Badge className="bg-muted text-muted-foreground">
           {diff.changeType}
-        </span>
+        </Badge>
         <span className="text-sm font-semibold text-foreground">
           {diff.key}
         </span>

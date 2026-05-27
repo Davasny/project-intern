@@ -2,6 +2,7 @@
 
 import { ChevronDown } from "lucide-react"
 import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { ProjectSchemaField } from "@/features/project-schema/schemas/project-schema-field"
 import { cn } from "@/utils/cn"
@@ -24,18 +25,18 @@ export const SchemaVersionFieldItem = ({
       >
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-medium text-foreground">{field.label}</h3>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+          <Badge className="bg-muted text-foreground">
             {field.type}
-          </span>
+          </Badge>
           {field.required ? (
-            <span className="text-tone-warning-foreground rounded-full bg-tone-warning-bg px-2 py-0.5 text-xs font-medium">
+            <Badge className="bg-tone-warning-bg text-tone-warning-foreground">
               required
-            </span>
+            </Badge>
           ) : null}
           {field.isSystem ? (
-            <span className="text-tone-info-foreground rounded-full bg-tone-info-bg px-2 py-0.5 text-xs font-medium">
+            <Badge className="bg-tone-info-bg text-tone-info-foreground">
               system
-            </span>
+            </Badge>
           ) : null}
         </div>
         <ChevronDown
@@ -90,12 +91,12 @@ export const SchemaVersionFieldItem = ({
             <div className="flex flex-wrap items-center gap-1">
               <span className="text-xs text-muted-foreground">Options:</span>
               {field.config.enumOptions.map((option) => (
-                <span
-                  className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground"
+                <Badge
+                  className="bg-muted text-foreground"
                   key={option}
                 >
                   {option}
-                </span>
+                </Badge>
               ))}
             </div>
           ) : null}
