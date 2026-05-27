@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
+import { invalidateRelationQueries } from "@/features/record-edges/lib/invalidate-relation-queries"
 import {
   relationTypeRules,
   relationTypeValues,
@@ -92,70 +93,18 @@ export const RelationForm = ({
     enabled: targetProjectSlug.length > 0,
   })
 
-  const invalidateQueries = async (
-    targetProjectValue: string,
-    targetRecordValue: string,
-  ) => {
-    await queryClient.invalidateQueries(
-      trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
-    )
-    await queryClient.invalidateQueries(
-      trpc.records.getById.queryFilter({
-        organizationSlug,
-        projectSlug,
-        recordId,
-      }),
-    )
-    await queryClient.invalidateQueries(
-      trpc.records.list.queryFilter({
-        organizationSlug,
-        projectSlug: targetProjectValue,
-      }),
-    )
-    await queryClient.invalidateQueries(
-      trpc.records.getById.queryFilter({
-        organizationSlug,
-        projectSlug: targetProjectValue,
-        recordId: targetRecordValue,
-      }),
-    )
-    await queryClient.invalidateQueries(
-      trpc.recordEdges.listForRecord.queryFilter({
-        organizationSlug,
-        projectSlug,
-        recordId,
-      }),
-    )
-    await queryClient.invalidateQueries(
-      trpc.recordEdges.listForRecord.queryFilter({
-        organizationSlug,
-        projectSlug: targetProjectValue,
-        recordId: targetRecordValue,
-      }),
-    )
-    await queryClient.invalidateQueries(
-      trpc.recordEdges.listActivity.queryFilter({
-        organizationSlug,
-        projectSlug,
-        recordId,
-      }),
-    )
-    await queryClient.invalidateQueries(
-      trpc.recordEdges.listActivity.queryFilter({
-        organizationSlug,
-        projectSlug: targetProjectValue,
-        recordId: targetRecordValue,
-      }),
-    )
-  }
-
   const createRelationMutation = useMutation(
     trpc.recordEdges.create.mutationOptions({
       onSuccess: async (_data, variables) => {
-        await invalidateQueries(
-          variables.input.targetProjectSlug,
-          variables.input.targetRecordId,
-        )
+        await invalidateRelationQueries({
+          queryClient,
+          trpc,
+          organizationSlug,
+          projectSlug,
+          recordId,
+          targetProjectSlug: variables.input.targetProjectSlug,
+          targetRecordId: variables.input.targetRecordId,
+        })
         onSubmitted()
       },
     }),
@@ -163,10 +112,15 @@ export const RelationForm = ({
   const updateRelationMutation = useMutation(
     trpc.recordEdges.update.mutationOptions({
       onSuccess: async (_data, variables) => {
-        await invalidateQueries(
-          variables.input.targetProjectSlug,
-          variables.input.targetRecordId,
-        )
+        await invalidateRelationQueries({
+          queryClient,
+          trpc,
+          organizationSlug,
+          projectSlug,
+          recordId,
+          targetProjectSlug: variables.input.targetProjectSlug,
+          targetRecordId: variables.input.targetRecordId,
+        })
         onSubmitted()
       },
     }),
