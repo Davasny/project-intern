@@ -1,13 +1,10 @@
-import { z } from "zod"
 import { completeScopedTaskRecord } from "@/features/execution/lib/complete-scoped-task-record"
 import { failScopedTaskRecord } from "@/features/execution/lib/fail-scoped-task-record"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
 import { getTaskRecordPatchSchemaVersion } from "@/features/execution/lib/get-task-record-patch-schema-version"
-import { taskFailureSchema } from "@/features/execution/schemas/task-failure"
 import { createProjectSchemaVersionProposalByProjectId } from "@/features/project-schema/lib/create-project-schema-version-proposal-by-project-id"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listProjectSchemaVersionsByProjectId } from "@/features/project-schema/lib/list-project-schema-versions-by-project-id"
-import { projectSchemaDefinitionSchema } from "@/features/project-schema/schemas/project-schema-version"
 import { listOrganizationProjectsById } from "@/features/projects/lib/list-organization-projects-by-id"
 import { createRecordEdgeById } from "@/features/record-edges/lib/create-record-edge-by-id"
 import { deactivateRecordEdgeById } from "@/features/record-edges/lib/deactivate-record-edge-by-id"
@@ -19,162 +16,26 @@ import { createRecordForMcp } from "@/features/records/lib/create-record-for-mcp
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 import { proposeRecordPatch as proposePatch } from "@/features/records/lib/propose-record-patch"
 import { createTaskDraft } from "@/features/tasks/lib/create-task-draft"
+import type {
+  CrmRecordApplyPatchInput,
+  CrmRecordCompleteTaskInput,
+  CrmRecordCreateInput,
+  CrmRecordCreateRelationEdgeInput,
+  CrmRecordDeactivateRelationEdgeInput,
+  CrmRecordFailTaskInput,
+  CrmRecordGetRelatedInput,
+  CrmRecordGetRelatedRecordsInput,
+  CrmRecordListRelationsInput,
+  CrmRecordProposePatchInput,
+  CrmRecordReadInput,
+  CrmProjectListInput,
+  CrmProjectReadSchemaInput,
+  CrmProjectSchemaProposeVersionInput,
+  CrmProjectTaskProposeInput,
+} from "./crm-schemas"
 import type { CrmScope } from "@/lib/crm/types"
 import { db } from "@/lib/db"
 import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
-
-const executionScopeInputSchema = z.object({
-  agentRunId: z.string().uuid(),
-  projectId: z.string().uuid(),
-  recordId: z.string().uuid(),
-  taskId: z.string().uuid(),
-  taskRecordId: z.string().uuid(),
-})
-
-export const crmRecordReadInputSchema = executionScopeInputSchema
-
-type CrmRecordReadInput = z.infer<typeof crmRecordReadInputSchema>
-
-const crmProjectReadSchemaInputSchema = executionScopeInputSchema
-
-type CrmProjectReadSchemaInput = z.infer<typeof crmProjectReadSchemaInputSchema>
-
-export const crmProjectSchemaProposeVersionInputSchema = z.object({
-  projectId: z.string().uuid(),
-  schemaDefinition: projectSchemaDefinitionSchema,
-})
-
-type CrmProjectSchemaProposeVersionInput = z.infer<
-  typeof crmProjectSchemaProposeVersionInputSchema
->
-
-const crmProjectTaskProposalItemInputSchema = z.object({
-  descriptionMarkdown: z
-    .string()
-    .trim()
-    .min(1, "Task description is required."),
-  title: z.string().trim().min(1, "Task title is required."),
-})
-
-export const crmProjectTaskProposeInputSchema = z.object({
-  projectId: z.string().uuid(),
-  tasks: z.array(crmProjectTaskProposalItemInputSchema).min(1),
-})
-
-type CrmProjectTaskProposeInput = z.infer<
-  typeof crmProjectTaskProposeInputSchema
->
-
-const patchProposalSchema = z.object({
-  baseVersion: z.number().int().positive(),
-  changes: z.array(
-    z.union([
-      z.object({
-        field: z.string().trim().min(1),
-        op: z.literal("set"),
-        reason: z.string().trim().min(1),
-        sources: z.array(z.string().trim().min(1)).min(1),
-        value: z.unknown(),
-      }),
-      z.object({
-        field: z.string().trim().min(1),
-        op: z.literal("unset"),
-        reason: z.string().trim().min(1),
-        sources: z.array(z.string().trim().min(1)).min(1),
-      }),
-    ]),
-  ),
-  recordId: z.string().uuid(),
-})
-
-export const crmRecordProposePatchInputSchema = z.object({
-  execution: executionScopeInputSchema,
-  patch: patchProposalSchema,
-})
-
-export const crmRecordPatchInputSchema = z.object({
-  execution: executionScopeInputSchema,
-  patch: patchProposalSchema,
-})
-
-type CrmRecordProposePatchInput = z.infer<typeof crmRecordPatchInputSchema>
-type CrmRecordApplyPatchInput = z.infer<typeof crmRecordPatchInputSchema>
-
-export const crmRecordCompleteTaskInputSchema = z.object({
-  execution: executionScopeInputSchema,
-  patch: patchProposalSchema.nullable(),
-  resultPayload: z.record(z.string(), z.unknown()).nullable(),
-})
-
-type CrmRecordCompleteTaskInput = z.infer<
-  typeof crmRecordCompleteTaskInputSchema
->
-
-export const crmRecordFailTaskInputSchema = z.object({
-  execution: executionScopeInputSchema,
-  failure: taskFailureSchema,
-})
-
-type CrmRecordFailTaskInput = z.infer<typeof crmRecordFailTaskInputSchema>
-
-export const crmRecordListRelationsInputSchema = executionScopeInputSchema
-
-type CrmRecordListRelationsInput = z.infer<
-  typeof crmRecordListRelationsInputSchema
->
-
-export const crmRecordGetRelatedInputSchema = z.object({
-  execution: executionScopeInputSchema,
-  recordEdgeId: z.string().uuid(),
-})
-
-type CrmRecordGetRelatedInput = z.infer<typeof crmRecordGetRelatedInputSchema>
-
-export const crmRecordGetRelatedRecordsInputSchema = executionScopeInputSchema
-
-type CrmRecordGetRelatedRecordsInput = z.infer<
-  typeof crmRecordGetRelatedRecordsInputSchema
->
-
-export const crmRecordCreateRelationEdgeInputSchema = z.object({
-  direction: z.enum(["bidirectional", "outbound"]),
-  execution: executionScopeInputSchema,
-  idempotencyKey: z.string().trim().min(1),
-  metadata: z.record(z.string(), z.unknown()),
-  relationType: z.enum([
-    "belongs_to",
-    "depends_on",
-    "duplicates",
-    "related_to",
-  ]),
-  targetProjectId: z.string().uuid(),
-  targetRecordId: z.string().uuid(),
-})
-
-type CrmRecordCreateRelationEdgeInput = z.infer<
-  typeof crmRecordCreateRelationEdgeInputSchema
->
-
-export const crmRecordDeactivateRelationEdgeInputSchema = z.object({
-  execution: executionScopeInputSchema,
-  recordEdgeId: z.string().uuid(),
-})
-
-type CrmRecordDeactivateRelationEdgeInput = z.infer<
-  typeof crmRecordDeactivateRelationEdgeInputSchema
->
-
-export const crmRecordCreateInputSchema = z.object({
-  context: z.record(z.string(), z.unknown()),
-  name: z.string().trim().min(1, "Record name is required."),
-  projectId: z.string().uuid(),
-})
-
-type CrmRecordCreateInput = z.infer<typeof crmRecordCreateInputSchema>
-
-export const crmProjectListInputSchema = z.object({})
-
-type CrmProjectListInput = z.infer<typeof crmProjectListInputSchema>
 
 export const readRecord = async (
   input: CrmRecordReadInput,

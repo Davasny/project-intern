@@ -1,9 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import {
-  applyRecordPatch,
-  completeTaskRecord,
-  createRecord,
-  createRelationEdge,
   crmProjectListInputSchema,
   crmProjectSchemaProposeVersionInputSchema,
   crmProjectTaskProposeInputSchema,
@@ -18,6 +14,12 @@ import {
   crmRecordPatchInputSchema,
   crmRecordProposePatchInputSchema,
   crmRecordReadInputSchema,
+} from "@/lib/crm/crm-schemas"
+import {
+  applyRecordPatch,
+  completeTaskRecord,
+  createRecord,
+  createRelationEdge,
   deactivateRelationEdge,
   failTaskRecord,
   getRelatedRecord,
