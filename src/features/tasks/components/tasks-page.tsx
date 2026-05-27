@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ErrorState } from "@/components/ui/error-state/error-state"
 import { FilterBar } from "@/components/ui/filter-bar/filter-bar"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
@@ -46,7 +47,12 @@ export const TasksPage = () => {
   }
 
   if (!schemaVersionsQuery.data || !tasksQuery.data) {
-    return <LoadingState label="Task queue could not be loaded." />
+    return (
+      <ErrorState
+        message="The task queue could not be loaded. Please try again."
+        title="Failed to load tasks"
+      />
+    )
   }
 
   const schemaVersionOptions = schemaVersionsQuery.data.map(

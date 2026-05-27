@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ErrorState } from "@/components/ui/error-state/error-state"
 import { FilterBar } from "@/components/ui/filter-bar/filter-bar"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
@@ -61,7 +62,21 @@ export const RecordsPage = () => {
   }
 
   if (!initialSchemaQuery.data || !activeSchemaQuery.data) {
-    return <LoadingState label="Initial schema could not be loaded." />
+    return (
+      <ErrorState
+        message="The schema could not be loaded. Please try again."
+        title="Failed to load schema"
+      />
+    )
+  }
+
+  if (!recordsQuery.data) {
+    return (
+      <ErrorState
+        message="Records could not be loaded. Please try again."
+        title="Failed to load records"
+      />
+    )
   }
 
   const contextColumns = activeSchemaQuery.data.schemaDefinition.fields.filter(

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-timeline"
 import { ActivityTimelineItem } from "@/components/ui/activity-timeline/activity-timeline-item"
+import { ErrorState } from "@/components/ui/error-state/error-state"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderMeta } from "@/components/ui/page-header/page-header-meta"
@@ -29,7 +30,12 @@ export const ProjectOverviewPage = () => {
   }
 
   if (!overviewQuery.data) {
-    return <LoadingState label="Project overview could not be loaded." />
+    return (
+      <ErrorState
+        message="Project overview could not be loaded. Please try again."
+        title="Failed to load overview"
+      />
+    )
   }
 
   return (
