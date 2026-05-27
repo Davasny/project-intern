@@ -1,14 +1,16 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import {
-  applyRecordPatch,
-  completeTaskRecord,
-  createRecord,
   crmRecordCompleteTaskInputSchema,
   crmRecordCreateInputSchema,
   crmRecordFailTaskInputSchema,
   crmRecordPatchInputSchema,
   crmRecordProposePatchInputSchema,
   crmRecordReadInputSchema,
+} from "@/lib/crm/crm-schemas"
+import {
+  applyRecordPatch,
+  completeTaskRecord,
+  createRecord,
   failTaskRecord,
   proposeRecordPatch,
   readRecord,

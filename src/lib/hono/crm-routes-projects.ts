@@ -3,6 +3,8 @@ import {
   crmProjectListInputSchema,
   crmProjectSchemaProposeVersionInputSchema,
   crmRecordReadInputSchema,
+} from "@/lib/crm/crm-schemas"
+import {
   listProjects,
   proposeProjectSchemaVersion,
   readProjectSchema,

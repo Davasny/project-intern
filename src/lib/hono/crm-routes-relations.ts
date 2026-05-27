@@ -1,11 +1,13 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import {
-  createRelationEdge,
   crmRecordCreateRelationEdgeInputSchema,
   crmRecordDeactivateRelationEdgeInputSchema,
   crmRecordGetRelatedInputSchema,
   crmRecordGetRelatedRecordsInputSchema,
   crmRecordListRelationsInputSchema,
+} from "@/lib/crm/crm-schemas"
+import {
+  createRelationEdge,
   deactivateRelationEdge,
   getRelatedRecord,
   getRelatedRecords,
