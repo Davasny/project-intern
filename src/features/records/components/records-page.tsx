@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { DatabaseIcon } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
@@ -58,7 +59,7 @@ export const RecordsPage = () => {
     activeSchemaQuery.isLoading ||
     recordsQuery.isLoading
   ) {
-    return <LoadingState label="Loading records..." />
+    return <LoadingState label="Loading records..." variant="table" />
   }
 
   if (!initialSchemaQuery.data || !activeSchemaQuery.data) {
@@ -171,6 +172,7 @@ export const RecordsPage = () => {
               </Button>
             }
             description="New records automatically backfill task-record rows for all existing project tasks."
+            icon={<DatabaseIcon />}
             title="No records yet"
           />
         )}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { ListTodoIcon } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
@@ -43,7 +44,7 @@ export const TasksPage = () => {
   )
 
   if (schemaVersionsQuery.isLoading || tasksQuery.isLoading) {
-    return <LoadingState label="Loading task queue..." />
+    return <LoadingState label="Loading task queue..." variant="table" />
   }
 
   if (!schemaVersionsQuery.data || !tasksQuery.data) {
@@ -114,6 +115,7 @@ export const TasksPage = () => {
               </Button>
             }
             description="Create the first project task to fan out task records across every current record."
+            icon={<ListTodoIcon />}
             title="No tasks yet"
           />
         )}
