@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Upload } from "lucide-react"
-import { useRef, useState } from "react"
+import { type ChangeEvent, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { SectionCard } from "@/components/ui/section-card/section-card"
@@ -48,7 +48,7 @@ export const RecordFilePanel = ({
   )
 
   const handleUploadFiles = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files
 
