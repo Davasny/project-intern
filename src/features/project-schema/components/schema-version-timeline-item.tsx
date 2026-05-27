@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 type SchemaVersionTimelineItemProps = {
   canCompare: boolean

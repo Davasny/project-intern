@@ -4,7 +4,7 @@ import type {
   TdHTMLAttributes,
   ThHTMLAttributes,
 } from "react"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 export const Table = ({
   className,

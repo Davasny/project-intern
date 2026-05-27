@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 type ExecutionPageNavigationProps = {
   activePage: "matrix" | "monitor" | "runs"

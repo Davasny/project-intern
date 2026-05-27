@@ -1,6 +1,6 @@
 import { FileIcon } from "@react-symbols/icons/utils"
 import type { ComponentProps } from "react"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 const CodeBlock = ({
   children,

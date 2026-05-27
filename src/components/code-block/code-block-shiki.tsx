@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from "react"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 import { highlight, type Languages, Themes } from "@/utils/shiki/highlight"
 import { showLineNumbers } from "@/utils/shiki/transformers/show-line-numbers"
 import { wordWrapContent } from "@/utils/shiki/transformers/word-wrap"

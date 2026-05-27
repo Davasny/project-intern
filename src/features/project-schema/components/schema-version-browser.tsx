@@ -20,7 +20,7 @@ import { SchemaVersionProposalItem } from "@/features/project-schema/components/
 import { SchemaVersionTimelineItem } from "@/features/project-schema/components/schema-version-timeline-item"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 export const SchemaVersionBrowser = () => {
   const { organizationSlug, projectSlug } = useProjectScope()

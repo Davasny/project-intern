@@ -1,6 +1,6 @@
 import type { HTMLAttributes } from "react"
 import { Card } from "@/components/ui/card"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 export const SectionCard = ({
   className,

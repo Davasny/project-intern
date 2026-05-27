@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { ProjectSchemaField } from "@/features/project-schema/schemas/project-schema-field"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 type SchemaVersionFieldItemProps = {
   field: ProjectSchemaField

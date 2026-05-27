@@ -2,7 +2,7 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import type { ComponentProps } from "react"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 export const Dialog = DialogPrimitive.Root
 

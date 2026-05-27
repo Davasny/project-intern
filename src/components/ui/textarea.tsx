@@ -1,5 +1,5 @@
 import type { TextareaHTMLAttributes } from "react"
-import { cn } from "@/utils/cn"
+import { cn } from "@/lib/utils"
 
 export const Textarea = ({
   className,
