@@ -11,7 +11,7 @@ type StatsBarProps = {
 
 export const StatsBar = ({ stats, details, className }: StatsBarProps) => (
   <div className={className}>
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-3xl border border-border bg-card px-6 py-4">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-border bg-card px-6 py-4">
       {stats.map((stat) => (
         <div key={stat.label} className="flex flex-col gap-1">
           <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
