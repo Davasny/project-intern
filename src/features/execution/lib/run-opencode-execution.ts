@@ -223,6 +223,7 @@ export const runOpencodeExecution = async ({
     sessionId: session.data.id,
     agentRunId: initialScope.agentRun.id,
     client,
+    taskRecordId: initialScope.taskRecord.id,
   })
 
   return {

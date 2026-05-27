@@ -1,5 +1,6 @@
 import type { OpencodeClient } from "@opencode-ai/sdk"
 import type pino from "pino"
+import { failAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
 import { updateAgentRunMetrics } from "@/features/agent-runs/lib/update-agent-run-metrics"
 import { logger as rootLogger } from "@/lib/logger"
 
@@ -7,6 +8,7 @@ type PollSessionForMetricsParams = {
   sessionId: string
   agentRunId: string
   client: OpencodeClient
+  taskRecordId: string
   intervalMs?: number
   timeoutMs?: number
 }
@@ -18,6 +20,7 @@ export const pollSessionForMetrics = async ({
   sessionId,
   agentRunId,
   client,
+  taskRecordId,
   intervalMs = DEFAULT_INTERVAL_MS,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 }: PollSessionForMetricsParams) => {
@@ -80,7 +83,31 @@ export const pollSessionForMetrics = async ({
     }
   }
 
-  log.warn("Polling timed out waiting for session to finish")
+  log.warn("Polling timed out waiting for session to finish, failing agent run")
+
+  try {
+    await failAgentRunCommand({
+      agentRunId,
+      costUsd: null,
+      errorCode: "EXECUTION_TIMEOUT",
+      failurePayload: {
+        code: "EXECUTION_TIMEOUT",
+        message: `Execution timed out after ${timeoutMs}ms polling for session ${sessionId}`,
+        retryable: true,
+      },
+      latencyMs: null,
+      taskRecordId,
+      tokenInput: null,
+      tokenOutput: null,
+      toolActivitySummary: {},
+    })
+    log.info("Successfully failed agent run after polling timeout")
+  } catch (failError) {
+    log.error(
+      { error: failError },
+      "Failed to fail agent run after polling timeout",
+    )
+  }
 }
 
 async function fetchAndUpdateMetrics({
