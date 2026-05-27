@@ -1,4 +1,5 @@
 import { handleTaskExecutorWorkerError } from "@/features/execution/lib/handle-task-executor-worker-error"
+import { sweepStaleExecutions } from "@/features/execution/lib/sweep-stale-executions"
 import {
   scheduleTaskExecutor,
   taskRetryScanWorker,
@@ -118,6 +119,12 @@ const runExecutionWorkers = async () => {
   try {
     registerShutdownHandlers()
     registerWorkerEventHandlers()
+
+    const sweepResult = await sweepStaleExecutions()
+    logger.info(
+      { sweptCount: sweepResult.sweptCount },
+      "Completed stale execution sweep on startup",
+    )
 
     logger.info(
       {
