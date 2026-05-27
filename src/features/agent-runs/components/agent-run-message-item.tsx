@@ -1,6 +1,6 @@
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import { AgentRunMessagePartItem } from "@/features/agent-runs/components/agent-run-message-part-item"
-import type { AgentRunSessionMessage } from "@/features/agent-runs/lib/get-agent-run-session-messages"
+import type { AgentRunSessionMessage } from "@/features/agent-runs/lib/agent-run-session-message-types"
 
 type AgentRunMessageItemProps = {
   message: AgentRunSessionMessage

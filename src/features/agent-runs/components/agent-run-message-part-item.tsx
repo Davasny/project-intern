@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { Card } from "@/components/ui/card"
 import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
-import type { AgentRunSessionMessagePart } from "@/features/agent-runs/lib/get-agent-run-session-messages"
+import type { AgentRunSessionMessagePart } from "@/features/agent-runs/lib/agent-run-session-message-types"
 
 type AgentRunMessagePartItemProps = {
   part: AgentRunSessionMessagePart
