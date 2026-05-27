@@ -52,35 +52,43 @@ export const OpencodeSessionsPage = () => {
     }),
   )
 
-  const handleSpawn = () => {
-    spawnMutation.mutate({
-      organizationSlug,
-      projectSlug,
-      taskId: selectedTaskId,
-      recordId: selectedRecordId,
-    })
+  const handleSpawn = async () => {
+    try {
+      await spawnMutation.mutateAsync({
+        organizationSlug,
+        projectSlug,
+        taskId: selectedTaskId,
+        recordId: selectedRecordId,
+      })
+    } catch {
+      // Error state captured by spawnMutation.isError
+    }
   }
 
-  const handleStop = () => {
+  const handleStop = async () => {
     const data = spawnMutation.data
     if (!data) return
 
-    if (
-      "agentRunId" in data &&
-      "taskRecordId" in data &&
-      typeof data.agentRunId === "string" &&
-      typeof data.taskRecordId === "string"
-    ) {
-      stopMutation.mutate({
-        agentRunId: data.agentRunId,
-        taskRecordId: data.taskRecordId,
-      })
-    } else if (
-      "serverId" in data &&
-      typeof data.serverId === "string" &&
-      data.serverId.length > 0
-    ) {
-      stopMutation.mutate({ serverId: data.serverId })
+    try {
+      if (
+        "agentRunId" in data &&
+        "taskRecordId" in data &&
+        typeof data.agentRunId === "string" &&
+        typeof data.taskRecordId === "string"
+      ) {
+        await stopMutation.mutateAsync({
+          agentRunId: data.agentRunId,
+          taskRecordId: data.taskRecordId,
+        })
+      } else if (
+        "serverId" in data &&
+        typeof data.serverId === "string" &&
+        data.serverId.length > 0
+      ) {
+        await stopMutation.mutateAsync({ serverId: data.serverId })
+      }
+    } catch {
+      // Error state captured by stopMutation.isError
     }
   }
 
