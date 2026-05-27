@@ -9,15 +9,15 @@ import { mcpApp } from "@/lib/mcp/mcp-app"
 import { createTrpcContext } from "@/lib/trpc/create-context"
 import { appRouter } from "@/lib/trpc/router"
 
-export const apiApp = new Hono().basePath("/api")
+export const apiApp = new Hono()
 
-apiApp.get("/health", (context) => context.json({ ok: true }))
+apiApp.get("/api/health", (context) => context.json({ ok: true }))
 
-apiApp.on(["GET", "POST"], "/auth/*", (context) =>
+apiApp.on(["GET", "POST"], "/api/auth/*", (context) =>
   auth.handler(context.req.raw),
 )
 
-apiApp.on(["GET", "POST"], "/trpc/*", (context) =>
+apiApp.on(["GET", "POST"], "/api/trpc/*", (context) =>
   fetchRequestHandler({
     endpoint: "/api/trpc",
     req: context.req.raw,
@@ -36,7 +36,7 @@ apiApp.on(["GET", "POST"], "/trpc/*", (context) =>
   }),
 )
 
-apiApp.post("/upload/record/:recordId", sessionGuard, uploadRecordFilesHandler)
+apiApp.post("/api/upload/record/:recordId", sessionGuard, uploadRecordFilesHandler)
 
-apiApp.route("/mcp", mcpApp)
-apiApp.route("/crm", crmApiApp)
+apiApp.route("/api/mcp", mcpApp)
+apiApp.route("/api/crm", crmApiApp)
