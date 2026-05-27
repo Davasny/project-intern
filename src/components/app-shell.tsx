@@ -17,7 +17,10 @@ export const AppShell = ({ children, user }: AppShellProps) => {
 
         <SidebarInset>
           <AppNavbar user={user} />
-          <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6">
+          <div
+            className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6"
+            id="main-content"
+          >
             {children}
           </div>
         </SidebarInset>

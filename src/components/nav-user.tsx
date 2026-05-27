@@ -44,7 +44,7 @@ export function NavUser({ name, email, avatar }: NavUserProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="size-8 cursor-pointer">
+        <Avatar aria-label="User menu" className="size-8 cursor-pointer">
           <AvatarImage src={avatar} />
           <AvatarFallback>{name.charAt(0)}</AvatarFallback>
         </Avatar>
