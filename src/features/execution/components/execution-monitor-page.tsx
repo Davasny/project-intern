@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ChevronDown, ChevronRight } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
@@ -48,30 +48,31 @@ export const ExecutionMonitorPage = () => {
     }),
   )
 
-  const groupedTaskRecords = useMemo(() => {
-    if (!executionQuery.data) return []
-    const groups = new Map<
-      string,
-      {
-        recordId: string
-        recordName: string
-        taskRecords: (typeof executionQuery.data.taskRecords)[number][]
-      }
-    >()
-    for (const taskRecord of executionQuery.data.taskRecords) {
-      const existing = groups.get(taskRecord.recordId)
-      if (existing) {
-        existing.taskRecords.push(taskRecord)
-      } else {
-        groups.set(taskRecord.recordId, {
-          recordId: taskRecord.recordId,
-          recordName: taskRecord.recordName,
-          taskRecords: [taskRecord],
-        })
-      }
+  if (!executionQuery.data) {
+    return <LoadingState label="Execution monitor could not be loaded." />
+  }
+
+  const groups = new Map<
+    string,
+    {
+      recordId: string
+      recordName: string
+      taskRecords: (typeof executionQuery.data.taskRecords)[number][]
     }
-    return Array.from(groups.values())
-  }, [executionQuery.data])
+  >()
+  for (const taskRecord of executionQuery.data.taskRecords) {
+    const existing = groups.get(taskRecord.recordId)
+    if (existing) {
+      existing.taskRecords.push(taskRecord)
+    } else {
+      groups.set(taskRecord.recordId, {
+        recordId: taskRecord.recordId,
+        recordName: taskRecord.recordName,
+        taskRecords: [taskRecord],
+      })
+    }
+  }
+  const groupedTaskRecords = Array.from(groups.values())
 
   const toggleRecord = (recordId: string) => {
     setExpandedRecords((prev) => {
@@ -87,10 +88,6 @@ export const ExecutionMonitorPage = () => {
 
   if (executionQuery.isLoading) {
     return <LoadingState label="Loading execution monitor..." />
-  }
-
-  if (!executionQuery.data) {
-    return <LoadingState label="Execution monitor could not be loaded." />
   }
 
   return (
