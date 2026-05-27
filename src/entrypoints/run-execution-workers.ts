@@ -1,5 +1,3 @@
-import { handleTaskExecutorWorkerError } from "@/features/execution/lib/handle-task-executor-worker-error"
-import { sweepStaleExecutions } from "@/features/execution/lib/sweep-stale-executions"
 import {
   scheduleTaskExecutor,
   taskRetryScanWorker,
@@ -70,21 +68,6 @@ const registerShutdownHandlers = () => {
 }
 
 const registerWorkerEventHandlers = () => {
-  taskExecutorWorker.on("error", ({ error, job }) => {
-    void handleTaskExecutorWorkerError({ error, job }).catch(
-      (taskExecutorWorkerError) => {
-        logger.error(
-          {
-            error: taskExecutorWorkerError,
-            jobId: job.id,
-            jobName: job.name,
-          },
-          "Failed to map task executor worker error to task record failure",
-        )
-      },
-    )
-  })
-
   for (const { name, worker } of stoppableWorkers) {
     const childLogger = logger.child({ worker: name })
 

@@ -1,5 +1,6 @@
 import { Worker } from "pg-bosser"
 import { executorService } from "@/features/execution/lib/executor-service"
+import { handleTaskExecutorWorkerError } from "@/features/execution/lib/handle-task-executor-worker-error"
 import {
   taskExecutorQueue,
   taskExecutorQueuePayloadSchema,
@@ -38,6 +39,20 @@ export const taskExecutorWorker = new Worker(taskExecutorQueue, async (job) => {
       "task executor job failed during executor service",
     )
 
-    throw error
+    // Map the error to an agent run failure so the task record state machine
+    // transitions properly. Do NOT re-throw — pg-bosser retries at the queue
+    // level would conflict with state machine transitions. Instead the retry
+    // scan worker will pick up failed task records and retry them via the
+    // state machine.
+    try {
+      await handleTaskExecutorWorkerError({ error, job })
+    } catch (mappingError) {
+      childLogger.error(
+        { error: mappingError },
+        "Failed to map executor error to task record failure, re-throwing for pg-bosser retry",
+      )
+      // Re-throw only when even the error mapping fails (infrastructure error)
+      throw error
+    }
   }
 })
