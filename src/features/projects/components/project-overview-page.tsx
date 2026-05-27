@@ -12,6 +12,7 @@ import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { TaskStatusBadge } from "@/components/ui/status-badge/task-status-badge"
+import { Card } from "@/components/ui/card"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -76,8 +77,8 @@ export const ProjectOverviewPage = () => {
           <SectionCardContent className="flex flex-col gap-3">
             {overviewQuery.data.recentTasks.length > 0 ? (
               overviewQuery.data.recentTasks.map((task) => (
-                <div
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 p-4"
+                <Card
+                  className="flex items-center justify-between gap-3 bg-muted/30 p-4"
                   key={task.id}
                 >
                   <div className="flex flex-col gap-1">
@@ -87,9 +88,9 @@ export const ProjectOverviewPage = () => {
                     <span className="text-xs text-muted-foreground">
                       Updated {task.updatedAt.toLocaleString()}
                     </span>
-                  </div>
-                  <TaskStatusBadge state={task.summaryState} />
                 </div>
+                  <TaskStatusBadge state={task.summaryState} />
+                </Card>
               ))
             ) : (
               <p className="text-sm text-muted-foreground">

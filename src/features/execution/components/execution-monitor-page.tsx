@@ -12,6 +12,7 @@ import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-met
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import {
   TableBody,
@@ -107,7 +108,7 @@ export const ExecutionMonitorPage = () => {
         <PageHeaderActions>
           <ExecutionPageNavigation activePage="monitor" />
           {executionQuery.data.debugControlsEnabled ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground">
+            <Card className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-muted-foreground">
               <span>Autopick</span>
               <Switch
                 checked={executionQuery.data.isAutopickEnabled}
@@ -124,7 +125,7 @@ export const ExecutionMonitorPage = () => {
                   }
                 }}
               />
-            </div>
+            </Card>
           ) : null}
         </PageHeaderActions>
       </PageHeader>

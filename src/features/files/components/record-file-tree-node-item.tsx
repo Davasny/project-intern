@@ -1,4 +1,5 @@
 import { FileTextIcon, FolderIcon } from "lucide-react"
+import { Card } from "@/components/ui/card"
 import type { RecordFileTreeNode } from "@/lib/storage/record-file-tree-node"
 import { formatFileSize } from "@/utils/format-file-size"
 
@@ -22,7 +23,7 @@ export const RecordFileTreeNodeItem = ({
       </div>
     </div>
   ) : (
-    <div className="flex flex-col gap-1 rounded-md border border-border bg-card p-3">
+    <Card className="flex flex-col gap-1 p-3">
       <div className="flex flex-row items-center gap-2 text-sm font-medium text-foreground">
         <FileTextIcon className="size-4" />
         <span>{node.name}</span>
@@ -31,6 +32,6 @@ export const RecordFileTreeNodeItem = ({
         {node.path} · {formatFileSize(node.sizeBytes)} ·{" "}
         {node.updatedAt.toLocaleString()}
       </div>
-    </div>
+    </Card>
   )
 }

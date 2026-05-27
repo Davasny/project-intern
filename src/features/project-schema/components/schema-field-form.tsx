@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { SectionCard } from "@/components/ui/section-card/section-card"
 
 export type SchemaVersionFormValues = {
   fields: Array<{
@@ -62,7 +63,7 @@ export const SchemaFieldForm = ({
   const fieldType = form.watch(`fields.${index}.type`)
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border p-4">
+    <SectionCard>
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Custom field</h3>
         <Button onClick={onRemove} type="button" variant="ghost">
@@ -235,6 +236,6 @@ export const SchemaFieldForm = ({
           </FormItem>
         )}
       />
-    </div>
+    </SectionCard>
   )
 }

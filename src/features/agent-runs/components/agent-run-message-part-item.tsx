@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { Card } from "@/components/ui/card"
 import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import type { AgentRunSessionMessagePart } from "@/features/agent-runs/lib/get-agent-run-session-messages"
@@ -108,12 +109,12 @@ const PartTextBlock = ({ text, tone }: PartTextBlockProps) => (
 )
 
 const AttachmentItem = ({ filename, mime, url }: AttachmentItemProps) => (
-  <div className="flex flex-col gap-1 rounded-2xl border border-border bg-card p-3">
+  <Card className="flex flex-col gap-1 p-3">
     <span className="text-sm font-medium text-foreground">
       {filename ?? url}
     </span>
     <span className="text-xs text-muted-foreground">{mime}</span>
-  </div>
+  </Card>
 )
 
 export const AgentRunMessagePartItem = ({
