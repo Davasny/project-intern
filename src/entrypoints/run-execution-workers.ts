@@ -42,17 +42,23 @@ const stoppableWorkers = [
 
 let isShuttingDown = false
 
-const stopExecutionWorkers = () => {
+const stopExecutionWorkers = async () => {
   if (isShuttingDown) {
     return
   }
 
   isShuttingDown = true
 
-  for (const { name, worker } of stoppableWorkers) {
-    logger.info({ worker: name }, "stopping worker")
-    worker.stop()
-  }
+  const drainTimeoutMs = 30_000
+  await Promise.race([
+    Promise.all(
+      stoppableWorkers.map(async ({ name, worker }) => {
+        logger.info({ worker: name }, "stopping worker")
+        await worker.stop()
+      }),
+    ),
+    new Promise<void>((resolve) => setTimeout(resolve, drainTimeoutMs)),
+  ])
 }
 
 const registerShutdownHandlers = () => {
@@ -61,8 +67,7 @@ const registerShutdownHandlers = () => {
   for (const signal of signals) {
     process.on(signal, () => {
       logger.info({ signal }, "received shutdown signal")
-      stopExecutionWorkers()
-      process.exit(0)
+      void stopExecutionWorkers().then(() => process.exit(0))
     })
   }
 }
@@ -136,7 +141,7 @@ const runExecutionWorkers = async () => {
     )
   } catch (error) {
     logger.error({ error }, "failed to start execution workers")
-    stopExecutionWorkers()
+    await stopExecutionWorkers()
     process.exit(1)
   }
 }

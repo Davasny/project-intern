@@ -32,8 +32,48 @@ const getErrorMessage = (error: unknown) => {
   return "Task execution failed unexpectedly."
 }
 
+const isRetryableError = (error: unknown) => {
+  if (!isObject(error)) return false
+
+  if ("retryable" in error && typeof error.retryable === "boolean") {
+    return error.retryable
+  }
+
+  if ("code" in error) {
+    const code = String(error.code)
+
+    if (
+      code === "ECONNREFUSED" ||
+      code === "ECONNRESET" ||
+      code === "ETIMEDOUT" ||
+      code === "ENOTFOUND" ||
+      code === "EAI_AGAIN"
+    ) {
+      return true
+    }
+
+    if (code === "UND_ERR_CONNECT_TIMEOUT" || code === "UND_ERR_HEADERS_TIMEOUT") {
+      return true
+    }
+
+    if (
+      code === "57P01" ||
+      code === "57P02" ||
+      code === "57P03" ||
+      code === "08006" ||
+      code === "08001" ||
+      code === "40001" ||
+      code === "40P01"
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export const createTaskFailureFromError = (error: unknown): TaskFailure => ({
   code: getErrorCode(error),
   message: getErrorMessage(error),
-  retryable: false,
+  retryable: isRetryableError(error),
 })
