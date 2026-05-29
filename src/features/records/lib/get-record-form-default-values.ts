@@ -1,17 +1,10 @@
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
+import { formatRecordContextFormValue } from "@/features/records/lib/format-record-context-form-value"
 
 type GetRecordFormDefaultValuesParams = {
   context: Record<string, unknown>
   name: string
   schemaDefinition: ProjectSchemaDefinition
-}
-
-const getJsonFieldValue = (value: unknown) => {
-  if (value === undefined || value === null) {
-    return ""
-  }
-
-  return JSON.stringify(value, null, 2)
 }
 
 export const getRecordFormDefaultValues = ({
@@ -24,23 +17,10 @@ export const getRecordFormDefaultValues = ({
       .filter((field) => !field.isSystem)
       .map((field) => {
         const contextValue = context[field.key] ?? field.defaultValue
-
-        if (field.type === "boolean") {
-          return [
-            field.key,
-            typeof contextValue === "boolean" ? contextValue : false,
-          ]
-        }
-
-        if (field.type === "json") {
-          return [field.key, getJsonFieldValue(contextValue)]
-        }
-
-        if (field.type === "number") {
-          return [field.key, contextValue ?? ""]
-        }
-
-        return [field.key, typeof contextValue === "string" ? contextValue : ""]
+        return [
+          field.key,
+          formatRecordContextFormValue({ field, value: contextValue }),
+        ]
       }),
   )
 

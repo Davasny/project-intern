@@ -44,6 +44,8 @@ export type SchemaVersionFormValues = {
       | "email"
       | "enum"
       | "json"
+      | "string_array"
+      | "number_array"
   }>
 }
 
@@ -128,6 +130,8 @@ export const SchemaFieldForm = ({
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="enum">Enum</SelectItem>
                     <SelectItem value="json">JSON</SelectItem>
+                    <SelectItem value="string_array">String array</SelectItem>
+                    <SelectItem value="number_array">Number array</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>

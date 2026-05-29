@@ -60,6 +60,8 @@ const FIELD_TYPE_HINTS: Record<string, string> = {
   enum: "Must match one of the configured enum options",
   json: "A single JSON object (e.g. {\"key\":\"value\"})",
   number: "A numeric value (integer or decimal)",
+  number_array: "A JSON array of numbers (e.g. [1,2,3])",
+  string_array: 'A JSON array of strings (e.g. ["alpha","beta"])',
   url: "A valid URL",
 }
 

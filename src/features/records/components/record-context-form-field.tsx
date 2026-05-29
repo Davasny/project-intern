@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { ProjectSchemaField } from "@/features/project-schema/schemas/project-schema-field"
+import { isRecordJsonTextareaField } from "@/features/records/lib/is-record-json-textarea-field"
 
 type RecordFormValues = {
   context: Record<string, unknown>
@@ -84,7 +85,7 @@ export const RecordContextFormField = ({
                 </SelectGroup>
               </SelectContent>
             </Select>
-          ) : schemaField.type === "json" ? (
+          ) : isRecordJsonTextareaField(schemaField) ? (
             <Textarea
               name={field.name}
               onBlur={field.onBlur}

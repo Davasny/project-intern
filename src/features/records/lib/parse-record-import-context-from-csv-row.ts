@@ -38,9 +38,9 @@ const parseNumberValue = (value: string) => {
   return parsedNumber
 }
 
-const parseJsonValue = (value: string) => {
+const parseJsonValue = (value: string): unknown => {
   try {
-    return JSON.parse(value) as unknown
+    return JSON.parse(value)
   } catch {
     throw new Error("Expected valid JSON value.")
   }
@@ -61,7 +61,11 @@ const parseValueByFieldType = ({
     return parseBooleanValue(rawValue)
   }
 
-  if (fieldType === "json") {
+  if (
+    fieldType === "json" ||
+    fieldType === "string_array" ||
+    fieldType === "number_array"
+  ) {
     return parseJsonValue(rawValue)
   }
 

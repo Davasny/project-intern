@@ -11,6 +11,8 @@ const schemaFieldTypeValues = [
   "email",
   "enum",
   "json",
+  "string_array",
+  "number_array",
 ] as const
 
 const fieldConfigSchema = z
@@ -42,3 +44,4 @@ export const projectSchemaCustomFieldSchema =
   })
 
 export type ProjectSchemaField = z.infer<typeof projectSchemaFieldSchema>
+export type ProjectSchemaFieldType = ProjectSchemaField["type"]

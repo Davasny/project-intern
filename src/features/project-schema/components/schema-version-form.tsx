@@ -10,6 +10,8 @@ import {
   SchemaFieldForm,
   type SchemaVersionFormValues,
 } from "@/features/project-schema/components/schema-field-form"
+import { formatProjectSchemaDefaultValue } from "@/features/project-schema/lib/format-project-schema-default-value"
+import { parseProjectSchemaDefaultValue } from "@/features/project-schema/lib/parse-project-schema-default-value"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
@@ -39,6 +41,8 @@ const schemaVersionFormSchema = z.object({
         "email",
         "enum",
         "json",
+        "string_array",
+        "number_array",
       ]),
     }),
   ),
@@ -60,31 +64,6 @@ const parseNumberValue = (value: string) => {
   return Number(trimmedValue)
 }
 
-const parseDefaultValue = (
-  type: SchemaVersionFormValues["fields"][number]["type"],
-  value: string,
-) => {
-  const trimmedValue = value.trim()
-
-  if (!trimmedValue) {
-    return null
-  }
-
-  if (type === "number") {
-    return Number(trimmedValue)
-  }
-
-  if (type === "boolean") {
-    return trimmedValue === "true"
-  }
-
-  if (type === "json") {
-    return JSON.parse(trimmedValue)
-  }
-
-  return trimmedValue
-}
-
 const getInitialFormValues = (
   initialSchemaDefinition: ProjectSchemaDefinition,
 ): SchemaVersionFormValues => ({
@@ -100,8 +79,7 @@ const getInitialFormValues = (
             ? ""
             : String(field.config.multilineRows),
       },
-      defaultValue:
-        field.defaultValue === null ? "" : JSON.stringify(field.defaultValue),
+      defaultValue: formatProjectSchemaDefaultValue(field.defaultValue),
       description: field.description,
       key: field.key,
       label: field.label,
@@ -211,7 +189,10 @@ export const SchemaVersionForm = ({
         min: parseNumberValue(field.config.min),
         multilineRows: parseNumberValue(field.config.multilineRows),
       },
-      defaultValue: parseDefaultValue(field.type, field.defaultValue),
+      defaultValue: parseProjectSchemaDefaultValue({
+        type: field.type,
+        value: field.defaultValue,
+      }),
       description: field.description,
       isSystem: false as const,
       key: field.key,

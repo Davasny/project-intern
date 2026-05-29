@@ -1,30 +1,10 @@
-import { TRPCError } from "@trpc/server"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
+import { isRecordJsonTextareaField } from "@/features/records/lib/is-record-json-textarea-field"
+import { parseRecordJsonTextareaValue } from "@/features/records/lib/parse-record-json-textarea-value"
 
 type BuildRecordContextPayloadParams = {
   rawContext: Record<string, unknown>
   schemaDefinition: ProjectSchemaDefinition
-}
-
-const parseJsonString = (value: unknown) => {
-  if (typeof value !== "string") {
-    return value
-  }
-
-  const trimmedValue = value.trim()
-
-  if (!trimmedValue) {
-    return null
-  }
-
-  try {
-    return JSON.parse(trimmedValue)
-  } catch {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "JSON fields must contain valid JSON.",
-    })
-  }
 }
 
 export const buildRecordContextPayload = ({
@@ -53,8 +33,8 @@ export const buildRecordContextPayload = ({
           return [field.key, rawValue === true]
         }
 
-        if (field.type === "json") {
-          return [field.key, parseJsonString(rawValue)]
+        if (isRecordJsonTextareaField(field)) {
+          return [field.key, parseRecordJsonTextareaValue(rawValue)]
         }
 
         if (typeof rawValue === "string") {

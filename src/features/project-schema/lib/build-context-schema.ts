@@ -85,6 +85,10 @@ export const buildProjectSchemaFieldValidator = (field: ProjectSchemaField) => {
     }
 
     fieldSchema = z.enum([firstOption, ...restOptions])
+  } else if (field.type === "string_array") {
+    fieldSchema = z.array(z.string())
+  } else if (field.type === "number_array") {
+    fieldSchema = z.array(z.number().finite())
   } else {
     fieldSchema = jsonValueSchema
   }
