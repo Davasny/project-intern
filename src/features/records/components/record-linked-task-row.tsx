@@ -7,6 +7,10 @@ import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
+import {
+  type TaskRecordState,
+  retryableTaskRecordStates,
+} from "@/features/task-records/schemas/task-record-state"
 import { useTRPC } from "@/lib/trpc/client"
 
 type RecordLinkedTaskRowProps = {
@@ -26,13 +30,7 @@ type RecordLinkedTaskRowProps = {
         | "running"
     } | null
     sortOrder: number
-    state:
-      | "completed"
-      | "failed"
-      | "in_progress"
-      | "picked_up"
-      | "skipped"
-      | "waiting"
+    state: TaskRecordState
     errorCode: string | null
     taskId: string
     taskRecordId: string
@@ -81,19 +79,25 @@ export const RecordLinkedTaskRow = ({
       },
     }),
   )
-  const canRetry = task.state === "failed" || task.state === "skipped"
+  const canRetry = retryableTaskRecordStates.includes(
+    task.state as (typeof retryableTaskRecordStates)[number],
+  )
   const canTrigger =
     task.state === "waiting" &&
     nextWaitingSortOrder !== null &&
     task.sortOrder === nextWaitingSortOrder
 
   const handleRetry = async () => {
-    await retryTaskRecordMutation.mutateAsync({
-      organizationSlug,
-      projectSlug,
-      recordId,
-      taskRecordId: task.taskRecordId,
-    })
+    try {
+      await retryTaskRecordMutation.mutateAsync({
+        organizationSlug,
+        projectSlug,
+        recordId,
+        taskRecordId: task.taskRecordId,
+      })
+    } catch {
+      // Error is rendered inline from retryTaskRecordMutation.error.
+    }
   }
 
   const triggerTaskRecordMutation = useMutation(
@@ -117,13 +121,20 @@ export const RecordLinkedTaskRow = ({
   )
 
   const handleTrigger = async () => {
-    await triggerTaskRecordMutation.mutateAsync({
-      organizationSlug,
-      projectSlug,
-      recordId,
-      taskRecordId: task.taskRecordId,
-    })
+    try {
+      await triggerTaskRecordMutation.mutateAsync({
+        organizationSlug,
+        projectSlug,
+        recordId,
+        taskRecordId: task.taskRecordId,
+      })
+    } catch {
+      // Error is rendered inline from triggerTaskRecordMutation.error.
+    }
   }
+
+  const actionError =
+    triggerTaskRecordMutation.error ?? retryTaskRecordMutation.error
 
   return (
     <TableRow>
@@ -158,25 +169,34 @@ export const RecordLinkedTaskRow = ({
         )}
       </TableCell>
       <TableCell>
-        {canTrigger ? (
-          <Button
-            disabled={triggerTaskRecordMutation.isPending}
-            onClick={handleTrigger}
-            variant="secondary"
-          >
-            {triggerTaskRecordMutation.isPending ? "Triggering..." : "Trigger"}
-          </Button>
-        ) : canRetry ? (
-          <Button
-            disabled={retryTaskRecordMutation.isPending}
-            onClick={handleRetry}
-            variant="secondary"
-          >
-            {retryTaskRecordMutation.isPending ? "Retrying..." : "Retry"}
-          </Button>
-        ) : (
-          <span className="text-sm text-muted-foreground">—</span>
-        )}
+        <div className="flex flex-col gap-1">
+          {canTrigger ? (
+            <Button
+              disabled={triggerTaskRecordMutation.isPending}
+              onClick={handleTrigger}
+              variant="secondary"
+            >
+              {triggerTaskRecordMutation.isPending
+                ? "Triggering..."
+                : "Trigger"}
+            </Button>
+          ) : canRetry ? (
+            <Button
+              disabled={retryTaskRecordMutation.isPending}
+              onClick={handleRetry}
+              variant="secondary"
+            >
+              {retryTaskRecordMutation.isPending ? "Retrying..." : "Retry"}
+            </Button>
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
+          )}
+          {actionError ? (
+            <span className="max-w-80 text-xs text-destructive">
+              {actionError.message}
+            </span>
+          ) : null}
+        </div>
       </TableCell>
     </TableRow>
   )

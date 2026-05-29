@@ -35,7 +35,11 @@ export const getExecutionMonitorReadModel = async ({
         taskRecord.state === "picked_up" || taskRecord.state === "in_progress",
     ).length,
     failedCount: taskRecords.filter(
-      (taskRecord) => taskRecord.state === "failed",
+      (taskRecord) =>
+        taskRecord.state === "failed" ||
+        taskRecord.state === "picked_up_failed" ||
+        taskRecord.state === "completed_failed" ||
+        taskRecord.state === "failed_failed",
     ).length,
     retriedCount: taskRecords.filter(
       (taskRecord) => taskRecord.attemptCount > 1,

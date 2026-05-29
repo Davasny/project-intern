@@ -1,4 +1,4 @@
-type AgentRunSessionTokens = {
+export type AgentRunSessionTokens = {
   input: number
   output: number
   reasoning: number
@@ -6,7 +6,7 @@ type AgentRunSessionTokens = {
   cacheWrite: number
 }
 
-type AgentRunSessionMessageError = {
+export type AgentRunSessionMessageError = {
   name: string
   message: string
 }

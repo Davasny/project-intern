@@ -34,7 +34,7 @@ export const validateApprovedTaskModel = ({
 
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Task model is not approved for runtime execution.",
+      message: `Task model "${parsedModel.data}" is not approved for runtime execution. Approved models: ${backendConfig.CRM_APPROVED_RUNTIME_MODELS.join(", ")}.`,
     })
   }
 

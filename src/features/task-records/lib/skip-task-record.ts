@@ -14,7 +14,7 @@ export const skipTaskRecord = async ({
   const actor = await getTaskRecordActor(taskRecordId)
   const lastTransitionAt = new Date()
 
-  if (actor.state === "waiting" || actor.state === "failed") {
+  if (actor.nextEvents.includes("skip")) {
     return actor.send("skip", {
       agentRunId,
       errorCode,
@@ -22,9 +22,15 @@ export const skipTaskRecord = async ({
     })
   }
 
-  return actor.send("cancel", {
-    agentRunId,
-    errorCode,
-    lastTransitionAt,
-  })
+  if (actor.nextEvents.includes("cancel")) {
+    return actor.send("cancel", {
+      agentRunId,
+      errorCode,
+      lastTransitionAt,
+    })
+  }
+
+  throw new Error(
+    `Cannot skip task record ${taskRecordId} in state ${actor.state}. Available events: ${actor.nextEvents.join(", ")}`,
+  )
 }

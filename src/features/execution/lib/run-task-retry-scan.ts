@@ -1,6 +1,7 @@
 import { inArray } from "drizzle-orm"
 import { taskRecordTable } from "@/features/task-records/db"
 import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
+import { retryableTaskRecordStates } from "@/features/task-records/schemas/task-record-state"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
@@ -23,7 +24,7 @@ export const runTaskRetryScan = async ({
       state: taskRecordTable.state,
     })
     .from(taskRecordTable)
-    .where(inArray(taskRecordTable.state, ["failed", "skipped"]))
+    .where(inArray(taskRecordTable.state, retryableTaskRecordStates))
     .limit(limit)
 
   if (taskRecords.length === 0) {

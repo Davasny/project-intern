@@ -1,25 +1,18 @@
-import { claimTaskRecordCandidate } from "@/features/execution/lib/claim-task-record-candidate"
+import { claimAndCreateRun } from "@/features/execution/lib/execution-claim-service"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
-import { launchTaskRecordExecution } from "@/features/task-records/lib/launch-task-record-execution"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
 export const claimNextTaskRecord = async () => {
   try {
-    const candidate = await claimTaskRecordCandidate({
-      mode: "autopick",
+    const claimedTaskRecord = await claimAndCreateRun({
+      requestedBy: "scheduler",
     })
 
-    if (!candidate) {
-      return null
-    }
-
-    const claimedTaskRecord = await launchTaskRecordExecution({
-      projectId: candidate.projectId,
-      taskRecordId: candidate.taskRecordId,
-    })
-
-    if (!claimedTaskRecord) {
+    if (
+      claimedTaskRecord.status !== "claimed" &&
+      claimedTaskRecord.status !== "already_claimed"
+    ) {
       return null
     }
 
@@ -46,7 +39,14 @@ export const claimNextTaskRecord = async () => {
 
     logger.info(claimedTaskRecord, "Claimed next task record")
 
-    return claimedTaskRecord
+    return {
+      agentRunId: claimedTaskRecord.agentRunId,
+      organizationId: claimedTaskRecord.organizationId,
+      projectId: claimedTaskRecord.projectId,
+      recordId: claimedTaskRecord.recordId,
+      taskId: claimedTaskRecord.taskId,
+      taskRecordId: claimedTaskRecord.taskRecordId,
+    }
   } catch (error) {
     if (
       error !== null &&

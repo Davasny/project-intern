@@ -1,4 +1,4 @@
-type AgentRunMachineContext = {
+export type AgentRunMachineContext = {
   attemptNumber: number
   costUsd: string | null
   estimatedCostUsd: string | null
@@ -24,7 +24,7 @@ type AgentRunMachineContext = {
   toolSummary: Record<string, unknown>
 }
 
-type BootingEvent = {
+export type BootingEvent = {
   agentRunId: string
   directory: string | null
   model: string
@@ -36,7 +36,7 @@ type BootingEvent = {
   toolSummary: Record<string, unknown>
 }
 
-type RunningEvent = {
+export type RunningEvent = {
   inputTokens: number | null
   latencyMs: number | null
   model: string
@@ -48,7 +48,7 @@ type RunningEvent = {
   toolSummary: Record<string, unknown>
 }
 
-type PersistingOutputsEvent = {
+export type PersistingOutputsEvent = {
   outputTokens: number | null
   resultPayload: Record<string, unknown> | null
   tokenOutput: number | null
@@ -57,7 +57,7 @@ type PersistingOutputsEvent = {
   toolSummary: Record<string, unknown>
 }
 
-type CompletedEvent = {
+export type CompletedEvent = {
   agentRunId: string
   costUsd: string | null
   estimatedCostUsd: string | null
@@ -74,7 +74,7 @@ type CompletedEvent = {
   toolSummary: Record<string, unknown>
 }
 
-type FailedEvent = {
+export type FailedEvent = {
   agentRunId: string
   costUsd: string | null
   errorCode: string
@@ -92,7 +92,7 @@ type FailedEvent = {
   toolSummary: Record<string, unknown>
 }
 
-type AbortedEvent = {
+export type AbortedEvent = {
   agentRunId: string
   failurePayload: Record<string, unknown> | null
   taskRecordId: string

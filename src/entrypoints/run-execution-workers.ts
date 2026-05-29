@@ -1,3 +1,5 @@
+import { reconcileExecutions } from "@/features/execution/lib/execution-reconciler"
+import { sweepStaleExecutions } from "@/features/execution/lib/sweep-stale-executions"
 import {
   scheduleTaskExecutor,
   taskRetryScanWorker,
@@ -112,6 +114,15 @@ const runExecutionWorkers = async () => {
     logger.info(
       { sweptCount: sweepResult.sweptCount },
       "Completed stale execution sweep on startup",
+    )
+
+    const reconcileResult = await reconcileExecutions({ limit: 25 })
+    logger.info(
+      {
+        recoveredCount: reconcileResult.recoveredCount,
+        skippedCount: reconcileResult.skippedCount,
+      },
+      "Completed execution reconciliation on startup",
     )
 
     logger.info(

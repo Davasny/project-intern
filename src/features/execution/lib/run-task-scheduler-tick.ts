@@ -1,6 +1,6 @@
+import { releaseClaimedTaskRecord } from "@/features/execution/lib/execution-claim-service"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { schedulerService } from "@/features/execution/lib/scheduler-service"
-import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
 import { logger } from "@/lib/logger"
 
 type RunTaskSchedulerTickParams = {
@@ -37,24 +37,34 @@ export const runTaskSchedulerTick = async ({
         "Failed to enqueue claimed task record, releasing back to waiting",
       )
 
-      // Release the task record back to waiting so it can be picked up
-      // again on the next scheduler tick
       try {
-        const actor = await taskRecordMachine.getActor(
-          scheduledTaskRecord.taskRecordId,
-        )
-        if (actor && actor.nextEvents.includes("release")) {
-          await actor.send("release", { lastTransitionAt: new Date() })
-        }
+        await releaseClaimedTaskRecord({
+          agentRunId: scheduledTaskRecord.agentRunId,
+          reason: "ENQUEUE_FAILED",
+          taskRecordId: scheduledTaskRecord.taskRecordId,
+        })
       } catch (releaseError) {
         schedulerLogger.error(
-          { error: releaseError, taskRecordId: scheduledTaskRecord.taskRecordId },
+          {
+            error: releaseError,
+            taskRecordId: scheduledTaskRecord.taskRecordId,
+          },
           "Failed to release task record after enqueue failure",
         )
       }
 
       break
     }
+
+    schedulerLogger.info(
+      {
+        agentRunId: scheduledTaskRecord.agentRunId,
+        jobId,
+        requestedBy: "scheduler",
+        taskRecordId: scheduledTaskRecord.taskRecordId,
+      },
+      "Enqueued claimed task record",
+    )
 
     enqueuedTaskRecordIds.push(scheduledTaskRecord.taskRecordId)
   }

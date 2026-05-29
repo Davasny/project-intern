@@ -1,9 +1,6 @@
 import { and, eq } from "drizzle-orm"
 import { machine } from "machin"
 import { withDrizzlePg } from "machin/drizzle/pg"
-import { agentRunTable } from "@/features/agent-runs/db"
-import { createAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
-import { claimTaskRecordCandidate } from "@/features/execution/lib/claim-task-record-candidate"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
 import { finalizeProjectSchemaMigration } from "@/features/project-schema/lib/finalize-project-schema-migration"
@@ -46,6 +43,7 @@ const lookupTaskRecordInfo = async (context: TaskRecordMachineContext) => {
 }
 
 type ClaimEvent = {
+  agentRunId: string
   lastTransitionAt: Date
 }
 
@@ -96,77 +94,12 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
       onSuccess: { target: "waiting" },
     },
     picked_up: {
-      entry: async (context, event: ClaimEvent) => {
-        if (context.agentRunId) {
-          return {
-            ...context,
-            agentRunId: context.agentRunId,
-            errorCode: null,
-            lastTransitionAt: event.lastTransitionAt,
-          }
-        }
-
-        const existingAgentRun = await db
-          .select({ id: agentRunTable.id })
-          .from(agentRunTable)
-          .innerJoin(
-            taskRecordTable,
-            eq(agentRunTable.taskRecordId, taskRecordTable.id),
-          )
-          .where(
-            and(
-              eq(taskRecordTable.taskId, context.taskId),
-              eq(taskRecordTable.recordId, context.recordId),
-            ),
-          )
-          .orderBy(agentRunTable.createdAt)
-          .then((rows) => rows[0] ?? null)
-
-        if (existingAgentRun) {
-          return {
-            ...context,
-            agentRunId: existingAgentRun.id,
-            errorCode: null,
-            lastTransitionAt: event.lastTransitionAt,
-          }
-        }
-
-        const taskRecordInfo = await lookupTaskRecordInfo(context)
-
-        const candidate = await claimTaskRecordCandidate({
-          mode: "manual",
-          projectId: taskRecordInfo.projectId,
-          taskRecordId: taskRecordInfo.id,
-        })
-
-        if (!candidate) {
-          throw new Error(
-            `No claimable candidate found for task record ${taskRecordInfo.id}`,
-          )
-        }
-
-        const agentRunResult = await createAgentRunCommand({
-          attemptNumber: candidate.attemptNumber,
-          model: candidate.model,
-          projectDefaultModel: candidate.projectDefaultModel,
-          projectDefaultTemperature: candidate.projectDefaultTemperature,
-          taskRecordId: taskRecordInfo.id,
-          temperature: candidate.temperature,
-        })
-
-        if (!agentRunResult) {
-          throw new Error(
-            `Failed to create agent run for task record ${taskRecordInfo.id}`,
-          )
-        }
-
-        return {
-          ...context,
-          agentRunId: agentRunResult.agentRunId,
-          errorCode: null,
-          lastTransitionAt: event.lastTransitionAt,
-        }
-      },
+      entry: (context, event: ClaimEvent) => ({
+        ...context,
+        agentRunId: event.agentRunId,
+        errorCode: null,
+        lastTransitionAt: event.lastTransitionAt,
+      }),
       on: {
         cancel: { target: "skipped" },
         fail: { target: "failed" },
@@ -182,7 +115,8 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
         lastTransitionAt: event.lastTransitionAt,
       }),
       on: {
-        retry: { target: "picked_up" },
+        claim: { target: "picked_up" },
+        retry: { target: "waiting" },
         skip: { target: "skipped" },
       },
       onSuccess: { target: "picked_up_failed" },

@@ -14,19 +14,14 @@ import { activeAgentRunStates } from "@/features/agent-runs/schemas/agent-run-st
 import { projectTable } from "@/features/projects/db"
 import { taskRecordTable } from "@/features/task-records/db"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
-import { activeTaskRecordStates } from "@/features/task-records/schemas/task-record-state"
+import {
+  activeTaskRecordStates,
+  claimableTaskRecordStates,
+  terminalTaskRecordStates,
+} from "@/features/task-records/schemas/task-record-state"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
-
-const terminalTaskRecordStates = [
-  "completed",
-  "skipped",
-] satisfies Array<TaskRecordState>
-
-const manualTriggerTaskRecordStates: Array<TaskRecordState> = [
-  "waiting",
-  "skipped",
-]
+import { logger } from "@/lib/logger"
 
 type ClaimTaskRecordCandidateParams =
   | {
@@ -56,10 +51,7 @@ export const claimTaskRecordCandidate = async (
   params: ClaimTaskRecordCandidateParams,
 ) => {
   return db.transaction(async (tx) => {
-    const earlierTaskRecordTable = alias(
-      taskRecordTable,
-      "earlier_task_record",
-    )
+    const earlierTaskRecordTable = alias(taskRecordTable, "earlier_task_record")
     const earlierTaskTable = alias(taskTable, "earlier_task")
     const activeTaskRecordTable = alias(taskRecordTable, "active_task_record")
     const activeAgentRunTaskRecordTable = alias(
@@ -101,7 +93,7 @@ export const claimTaskRecordCandidate = async (
       .where(
         and(
           params.mode === "manual"
-            ? inArray(taskRecordTable.state, manualTriggerTaskRecordStates)
+            ? inArray(taskRecordTable.state, claimableTaskRecordStates)
             : eq(taskRecordTable.state, "waiting"),
           notExists(
             tx
@@ -113,10 +105,7 @@ export const claimTaskRecordCandidate = async (
               )
               .where(
                 and(
-                  eq(
-                    earlierTaskRecordTable.recordId,
-                    taskRecordTable.recordId,
-                  ),
+                  eq(earlierTaskRecordTable.recordId, taskRecordTable.recordId),
                   eq(earlierTaskTable.projectId, taskTable.projectId),
                   lt(earlierTaskTable.sortOrder, taskTable.sortOrder),
                   notInArray(
@@ -132,14 +121,8 @@ export const claimTaskRecordCandidate = async (
               .from(activeTaskRecordTable)
               .where(
                 and(
-                  eq(
-                    activeTaskRecordTable.recordId,
-                    taskRecordTable.recordId,
-                  ),
-                  inArray(
-                    activeTaskRecordTable.state,
-                    activeTaskRecordStates,
-                  ),
+                  eq(activeTaskRecordTable.recordId, taskRecordTable.recordId),
+                  inArray(activeTaskRecordTable.state, activeTaskRecordStates),
                 ),
               ),
           ),
@@ -190,6 +173,13 @@ export const claimTaskRecordCandidate = async (
     const candidate = candidateRows[0] ?? null
 
     if (!candidate) {
+      if (params.mode === "manual") {
+        logger.warn(
+          { taskRecordId: params.taskRecordId, mode: params.mode },
+          "claimTaskRecordCandidate returned null — task record not claimable",
+        )
+      }
+
       return null
     }
 

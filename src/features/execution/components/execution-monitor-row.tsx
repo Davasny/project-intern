@@ -8,7 +8,10 @@ import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-
 import { TableCell, TableRow } from "@/components/ui/table"
 import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
-import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
+import {
+  type TaskRecordState,
+  retryableTaskRecordStates,
+} from "@/features/task-records/schemas/task-record-state"
 import { useTRPC } from "@/lib/trpc/client"
 
 type ExecutionMonitorRowProps = {
@@ -28,6 +31,11 @@ type ExecutionMonitorRowProps = {
     taskTitle: string
   }
 }
+
+const isRetry = (state: TaskRecordState) =>
+  retryableTaskRecordStates.includes(
+    state as (typeof retryableTaskRecordStates)[number],
+  )
 
 export const ExecutionMonitorRow = ({
   debugControlsEnabled,
@@ -98,7 +106,7 @@ export const ExecutionMonitorRow = ({
       <TableCell>
         {debugControlsEnabled &&
         !isAutopickEnabled &&
-        (taskRecord.state === "waiting" || taskRecord.state === "skipped") ? (
+        (taskRecord.state === "waiting" || isRetry(taskRecord.state)) ? (
           <div className="flex flex-col gap-1">
             <Button
               disabled={triggerMutation.isPending}
@@ -106,7 +114,13 @@ export const ExecutionMonitorRow = ({
               type="button"
               variant="secondary"
             >
-              {triggerMutation.isPending ? "Triggering..." : "Trigger"}
+              {triggerMutation.isPending
+                ? isRetry(taskRecord.state)
+                  ? "Retrying..."
+                  : "Triggering..."
+                : isRetry(taskRecord.state)
+                  ? "Retry"
+                  : "Trigger"}
             </Button>
             {triggerMutation.error ? (
               <span className="text-xs text-destructive">

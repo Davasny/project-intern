@@ -1,12 +1,16 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
+import { releaseClaimedTaskRecord } from "@/features/execution/lib/execution-claim-service"
+import { executionLogger } from "@/features/execution/lib/execution-logger"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
 import { taskRecordTable } from "@/features/task-records/db"
 import { launchTaskRecordExecution } from "@/features/task-records/lib/launch-task-record-execution"
+import { retryableTaskRecordStates } from "@/features/task-records/schemas/task-record-state"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 type RetryTaskRecordForRecordParams = {
   actorId: string
@@ -46,10 +50,14 @@ export const retryTaskRecordForRecord = async ({
     })
   }
 
-  if (taskRecord.state !== "failed" && taskRecord.state !== "skipped") {
+  if (
+    !retryableTaskRecordStates.includes(
+      taskRecord.state as (typeof retryableTaskRecordStates)[number],
+    )
+  ) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Only failed or skipped task records can be retried.",
+      message: "Only retryable task records can be retried.",
     })
   }
 
@@ -59,6 +67,11 @@ export const retryTaskRecordForRecord = async ({
   })
 
   if (!claimedTaskRecord) {
+    logger.warn(
+      { taskRecordId, state: taskRecord.state },
+      "launchTaskRecordExecution returned null — see preceding launchTaskRecordExecution warnings for reason",
+    )
+
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "Task record could not be scheduled for retry.",
@@ -119,11 +132,36 @@ export const retryTaskRecordForRecord = async ({
   })
 
   if (jobId === null) {
+    executionLogger.error(
+      {
+        agentRunId: claimedTaskRecord.agentRunId,
+        taskRecordId: claimedTaskRecord.taskRecordId,
+        requestedBy: "retry",
+      },
+      "Failed to enqueue claimed task record",
+    )
+
+    await releaseClaimedTaskRecord({
+      agentRunId: claimedTaskRecord.agentRunId,
+      reason: "ENQUEUE_FAILED",
+      taskRecordId: claimedTaskRecord.taskRecordId,
+    })
+
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Task retry could not enqueue execution.",
     })
   }
+
+  executionLogger.info(
+    {
+      agentRunId: claimedTaskRecord.agentRunId,
+      jobId,
+      requestedBy: "retry",
+      taskRecordId: claimedTaskRecord.taskRecordId,
+    },
+    "Enqueued claimed task record",
+  )
 
   return {
     ...claimedTaskRecord,

@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
+import { releaseClaimedTaskRecord } from "@/features/execution/lib/execution-claim-service"
+import { executionLogger } from "@/features/execution/lib/execution-logger"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { getExecutionMonitorReadModel } from "@/features/execution/lib/get-execution-monitor-read-model"
 import { updateProjectAutopick } from "@/features/execution/lib/update-project-autopick"
@@ -118,11 +120,36 @@ export const executionRouter = router({
       })
 
       if (jobId === null) {
+        executionLogger.error(
+          {
+            agentRunId: claimedTaskRecord.agentRunId,
+            requestedBy: "manual",
+            taskRecordId: claimedTaskRecord.taskRecordId,
+          },
+          "Failed to enqueue claimed task record",
+        )
+
+        await releaseClaimedTaskRecord({
+          agentRunId: claimedTaskRecord.agentRunId,
+          reason: "ENQUEUE_FAILED",
+          taskRecordId: claimedTaskRecord.taskRecordId,
+        })
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Manual trigger could not enqueue execution.",
         })
       }
+
+      executionLogger.info(
+        {
+          agentRunId: claimedTaskRecord.agentRunId,
+          jobId,
+          requestedBy: "manual",
+          taskRecordId: claimedTaskRecord.taskRecordId,
+        },
+        "Enqueued claimed task record",
+      )
 
       return { ...claimedTaskRecord, jobId }
     }),

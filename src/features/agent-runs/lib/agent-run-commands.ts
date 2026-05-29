@@ -5,6 +5,7 @@ import {
 } from "@/features/agent-runs/lib/agent-run-machine"
 import { getToolCallCount } from "@/features/agent-runs/lib/get-tool-call-count"
 import { db } from "@/lib/db"
+import { logger } from "@/lib/logger"
 import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
 import { resolveEffectiveTemperature } from "@/lib/llm/resolve-effective-temperature"
 
@@ -49,31 +50,39 @@ export const createAgentRunCommand = async ({
     taskTemperature: temperature,
   })
 
-  await createAgentRunActor(agentRunId, {
-    attemptNumber,
-    costUsd: null,
-    directory: null,
-    estimatedCostUsd: null,
-    failurePayload: null,
-    finishedAt: null,
-    inputTokens: null,
-    latencyMs: null,
-    model: null,
-    outputTokens: null,
-    provider: null,
-    resultPayload: null,
-    selectedAgent: "record-worker",
-    selectedModel,
-    selectedTemperature,
-    sessionReference: null,
-    startedAt: null,
-    taskRecordId,
-    tokenInput: null,
-    tokenOutput: null,
-    toolActivitySummary: {},
-    toolCallCount: 0,
-    toolSummary: {},
-  })
+  try {
+    await createAgentRunActor(agentRunId, {
+      attemptNumber,
+      costUsd: null,
+      directory: null,
+      estimatedCostUsd: null,
+      failurePayload: null,
+      finishedAt: null,
+      inputTokens: null,
+      latencyMs: null,
+      model: null,
+      outputTokens: null,
+      provider: null,
+      resultPayload: null,
+      selectedAgent: "record-worker",
+      selectedModel,
+      selectedTemperature,
+      sessionReference: null,
+      startedAt: null,
+      taskRecordId,
+      tokenInput: null,
+      tokenOutput: null,
+      toolActivitySummary: {},
+      toolCallCount: 0,
+      toolSummary: {},
+    })
+  } catch (error) {
+    logger.error(
+      { agentRunId, taskRecordId, error },
+      "createAgentRunActor failed",
+    )
+    throw error
+  }
 
   return { agentRunId, selectedModel, selectedTemperature }
 }

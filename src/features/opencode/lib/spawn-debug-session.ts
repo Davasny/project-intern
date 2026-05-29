@@ -118,6 +118,7 @@ const transitionToRunning = async ({
 
   const taskRecordActor = await getTaskRecordActor(taskRecordId)
   await taskRecordActor.send("claim", {
+    agentRunId,
     lastTransitionAt: new Date(),
   })
 

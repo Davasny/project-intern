@@ -5,6 +5,7 @@ import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
+import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 
 type TaskRecordRowProps = {
   taskRecord: {
@@ -27,13 +28,7 @@ type TaskRecordRowProps = {
     } | null
     recordId: string
     recordName: string
-    state:
-      | "completed"
-      | "failed"
-      | "in_progress"
-      | "picked_up"
-      | "skipped"
-      | "waiting"
+    state: TaskRecordState
   }
 }
 
