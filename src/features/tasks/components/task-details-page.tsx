@@ -3,9 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { toast } from "sonner"
-import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-timeline"
 import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/ui/data-table/data-table"
 import {
   Dialog,
   DialogContent,
@@ -14,28 +12,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
-import { MarkdownViewer } from "@/components/ui/markdown-viewer/markdown-viewer"
-import { MetadataList } from "@/components/ui/metadata-list/metadata-list"
-import { MetadataListItem } from "@/components/ui/metadata-list/metadata-list-item"
-import { PageHeader } from "@/components/ui/page-header/page-header"
-import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
-import { PageHeaderMeta } from "@/components/ui/page-header/page-header-meta"
-import { ProgressMetric } from "@/components/ui/progress-metric/progress-metric"
-import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-metric-grid"
-import { SectionCard } from "@/components/ui/section-card/section-card"
-import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
-import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
-import { StatusBadge } from "@/components/ui/status-badge/status-badge"
-import { TaskStatusBadge } from "@/components/ui/status-badge/task-status-badge"
-import {
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { TaskDetailsHeader } from "@/features/tasks/components/task-details-header"
 import { TaskForm } from "@/features/tasks/components/task-form"
-import { TaskRecordRow } from "@/features/tasks/components/task-record-row"
-import { TaskRevisionItem } from "@/features/tasks/components/task-revision-item"
+import { TaskProgressStrip } from "@/features/tasks/components/task-progress-strip"
+import { TaskPromptSection } from "@/features/tasks/components/task-prompt-section"
+import { TaskRecordsSection } from "@/features/tasks/components/task-records-section"
+import { TaskRevisionsSection } from "@/features/tasks/components/task-revisions-section"
 import { useTRPC } from "@/lib/trpc/client"
 
 type TaskDetailsPageProps = {
@@ -145,210 +127,51 @@ export const TaskDetailsPage = ({
     return <LoadingState label="Task details could not be loaded." />
   }
 
-  const draftStatusLabelMap: Record<typeof taskQuery.data.state, string> = {
-    accepted: "accepted",
-    accepting: "accepting",
-    accepting_failed: "accept failed",
-    created: "draft",
-    rejected: "rejected",
-    rejecting: "rejecting",
-    rejecting_failed: "reject failed",
-  }
-
-  const draftStatusToneMap: Record<
-    typeof taskQuery.data.state,
-    "danger" | "info" | "muted" | "success" | "warning"
-  > = {
-    accepted: "success",
-    accepting: "info",
-    accepting_failed: "danger",
-    created: "warning",
-    rejected: "danger",
-    rejecting: "info",
-    rejecting_failed: "danger",
-  }
-
   const schemaVersionOptions = schemaVersionsQuery.data.map(
     (version) => version.version,
   )
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <PageHeader>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                {taskQuery.data.title}
-              </h1>
-              {taskQuery.data.state === "accepted" ? (
-                <TaskStatusBadge state={taskQuery.data.summaryState} />
-              ) : (
-                <StatusBadge
-                  label={draftStatusLabelMap[taskQuery.data.state]}
-                  tone={draftStatusToneMap[taskQuery.data.state]}
-                />
-              )}
-            </div>
-            <PageHeaderMeta>
-              <span>Sort order {taskQuery.data.sortOrder}</span>
-              <span>•</span>
-              <span>Schema v{taskQuery.data.schemaVersion}</span>
-              <span>•</span>
-              <span>{taskQuery.data.updatedAt.toLocaleString()}</span>
-            </PageHeaderMeta>
-          </div>
-          <PageHeaderActions>
-            {taskQuery.data.state === "created" ? (
-              <>
-                <Button
-                  disabled={
-                    acceptDraftMutation.isPending || rejectDraftMutation.isPending
-                  }
-                  onClick={handleRejectDraft}
-                  type="button"
-                  variant="outline"
-                >
-                  Reject draft
-                </Button>
-                <Button
-                  disabled={
-                    acceptDraftMutation.isPending || rejectDraftMutation.isPending
-                  }
-                  onClick={handleAcceptDraft}
-                  type="button"
-                >
-                  Accept draft
-                </Button>
-              </>
-            ) : null}
-            <Button onClick={() => setIsEditOpen(true)} type="button">
-              Edit task
-            </Button>
-            {taskQuery.data.state === "accepted" ? (
-              <Button
-                onClick={() => setIsResetDialogOpen(true)}
-                type="button"
-                variant="outline"
-              >
-                Reset downstream
-              </Button>
-            ) : null}
-          </PageHeaderActions>
-        </PageHeader>
-        <ProgressMetricGrid>
-          <ProgressMetric
-            label="Waiting"
-            value={taskQuery.data.progress.waitingCount}
-          />
-          <ProgressMetric
-            label="Active"
-            value={taskQuery.data.progress.inProgressCount}
-          />
-          <ProgressMetric
-            label="Completed"
-            value={taskQuery.data.progress.completedCount}
-          />
-          <ProgressMetric
-            label="Failed"
-            value={taskQuery.data.progress.failedCount}
-          />
-        </ProgressMetricGrid>
-        <SectionCard>
-          <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-foreground">
-              Task contract
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Canonical descriptive task definition stored on the task itself.
-            </p>
-          </SectionCardHeader>
-          <SectionCardContent className="flex flex-col gap-6">
-            <MetadataList>
-              <MetadataListItem
-                label="Model override"
-                value={taskQuery.data.model ?? "Use project default"}
-              />
-              <MetadataListItem
-                label="Temperature override"
-                value={
-                  taskQuery.data.temperature === null
-                    ? "Use project default"
-                    : taskQuery.data.temperature.toFixed(1)
-                }
-              />
-              <MetadataListItem
-                label="Effective model"
-                value={taskQuery.data.effectiveModel}
-              />
-              <MetadataListItem
-                label="Effective temperature"
-                value={taskQuery.data.effectiveTemperature.toFixed(1)}
-              />
-              <MetadataListItem
-                label="Created"
-                value={taskQuery.data.createdAt.toLocaleString()}
-              />
-              <MetadataListItem
-                label="Updated"
-                value={taskQuery.data.updatedAt.toLocaleString()}
-              />
-            </MetadataList>
-            <MarkdownViewer value={taskQuery.data.descriptionMarkdown} />
-          </SectionCardContent>
-        </SectionCard>
-        <SectionCard>
-          <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-foreground">
-              Per-record progress
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Persisted task-record and agent-run state only.
-            </p>
-          </SectionCardHeader>
-          <SectionCardContent>
-            <DataTable>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Record</TableHeader>
-                  <TableHeader>Task record</TableHeader>
-                  <TableHeader>Latest run</TableHeader>
-                  <TableHeader>Model</TableHeader>
-                  <TableHeader>Temperature</TableHeader>
-                  <TableHeader>Last transition</TableHeader>
-                  <TableHeader>Actions</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {taskQuery.data.taskRecords.map((taskRecord) => (
-                  <TaskRecordRow
-                    key={taskRecord.id}
-                    taskId={taskQuery.data.id}
-                    taskRecord={taskRecord}
-                    taskTitle={taskQuery.data.title}
-                  />
-                ))}
-              </TableBody>
-            </DataTable>
-          </SectionCardContent>
-        </SectionCard>
-        <SectionCard>
-          <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-foreground">
-              Revision history
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Append-only task description revisions.
-            </p>
-          </SectionCardHeader>
-          <SectionCardContent>
-            <ActivityTimeline>
-              {taskQuery.data.revisions.map((revision) => (
-                <TaskRevisionItem key={revision.id} revision={revision} />
-              ))}
-            </ActivityTimeline>
-          </SectionCardContent>
-        </SectionCard>
+      <div className="flex flex-col gap-4">
+        <TaskDetailsHeader
+          draftActionPending={
+            acceptDraftMutation.isPending || rejectDraftMutation.isPending
+          }
+          onAcceptDraft={handleAcceptDraft}
+          onEditTask={() => setIsEditOpen(true)}
+          onRejectDraft={handleRejectDraft}
+          onResetDownstream={() => setIsResetDialogOpen(true)}
+          schemaVersion={taskQuery.data.schemaVersion}
+          sortOrder={taskQuery.data.sortOrder}
+          state={taskQuery.data.state}
+          summaryState={taskQuery.data.summaryState}
+          title={taskQuery.data.title}
+          updatedAt={taskQuery.data.updatedAt}
+        />
+        <TaskProgressStrip
+          activeCount={taskQuery.data.progress.inProgressCount}
+          completedCount={taskQuery.data.progress.completedCount}
+          failedCount={taskQuery.data.progress.failedCount}
+          waitingCount={taskQuery.data.progress.waitingCount}
+        />
+        <TaskPromptSection
+          createdAt={taskQuery.data.createdAt}
+          descriptionMarkdown={taskQuery.data.descriptionMarkdown}
+          effectiveModel={taskQuery.data.effectiveModel}
+          effectiveTemperature={taskQuery.data.effectiveTemperature}
+          model={taskQuery.data.model}
+          schemaVersion={taskQuery.data.schemaVersion}
+          sortOrder={taskQuery.data.sortOrder}
+          temperature={taskQuery.data.temperature}
+          updatedAt={taskQuery.data.updatedAt}
+        />
+        <TaskRecordsSection
+          taskId={taskQuery.data.id}
+          taskRecords={taskQuery.data.taskRecords}
+          taskTitle={taskQuery.data.title}
+        />
+        <TaskRevisionsSection revisions={taskQuery.data.revisions} />
       </div>
       <Dialog onOpenChange={setIsEditOpen} open={isEditOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">

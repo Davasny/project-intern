@@ -162,25 +162,28 @@ export const TaskRecordRow = ({
         </TableCell>
         <TableCell>
           {taskRecord.latestAgentRun ? (
-            <Link
-              className="cursor-pointer"
-              href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${taskRecord.latestAgentRun.id}`}
-            >
-              <RunStatusBadge state={taskRecord.latestAgentRun.state} />
-            </Link>
+            <div className="flex flex-col gap-1">
+              <Link
+                className="cursor-pointer"
+                href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${taskRecord.latestAgentRun.id}`}
+              >
+                <RunStatusBadge state={taskRecord.latestAgentRun.state} />
+              </Link>
+              {taskRecord.latestAgentRun.selectedModel ? (
+                <span className="max-w-64 truncate text-xs text-muted-foreground">
+                  {taskRecord.latestAgentRun.selectedModel}
+                  {taskRecord.latestAgentRun.selectedTemperature === null
+                    ? null
+                    : ` · ${taskRecord.latestAgentRun.selectedTemperature.toFixed(1)}`}
+                </span>
+              ) : null}
+            </div>
           ) : (
             <span className="text-sm text-muted-foreground">No run</span>
           )}
         </TableCell>
-        <TableCell>
-          {taskRecord.latestAgentRun?.selectedModel ?? "Default"}
-        </TableCell>
-        <TableCell>
-          {taskRecord.latestAgentRun?.selectedTemperature?.toFixed(1) ??
-            "Default"}
-        </TableCell>
         <TableCell>{taskRecord.lastTransitionAt.toLocaleString()}</TableCell>
-        <TableCell>
+        <TableCell className="text-right">
           <Button
             disabled={resetDownstreamTaskRecordMutation.isPending}
             onClick={() => setIsResetDialogOpen(true)}
