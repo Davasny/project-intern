@@ -51,12 +51,11 @@ export const okResponse = (data: unknown) => ({
   description: data as string,
 })
 
-type CrmContext = Context<{
-  Variables: { mcpScope: { apiKeyId: string; organizationId: string } }
-}>
-
-export const getScope = (c: CrmContext): CrmScope => {
-  const mcpScope = c.get("mcpScope")
+export const getScope = (c: Context): CrmScope => {
+  const mcpScope = c.get("mcpScope") as {
+    apiKeyId: string
+    organizationId: string
+  }
   return {
     apiKeyId: mcpScope.apiKeyId,
     organizationId: mcpScope.organizationId,

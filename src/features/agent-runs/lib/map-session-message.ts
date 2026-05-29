@@ -24,7 +24,9 @@ const toTokens = ({
   reasoning,
 })
 
-const toMessageError = (message: Extract<Message, { role: "assistant" }>): AgentRunSessionMessageError | null => {
+const toMessageError = (
+  message: Extract<Message, { role: "assistant" }>,
+): AgentRunSessionMessageError | null => {
   if (!message.error) {
     return null
   }
@@ -260,4 +262,4 @@ const toSessionMessage = ({
   } satisfies AgentRunSessionMessage
 }
 
-export { toPart, toSessionMessage, toTokens, toMessageError }
+export { toMessageError, toPart, toSessionMessage, toTokens }

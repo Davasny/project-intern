@@ -9,7 +9,6 @@ import { TableCell, TableRow } from "@/components/ui/table"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import {
   type TaskRecordState,
-  retryableTaskRecordStates,
 } from "@/features/task-records/schemas/task-record-state"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -52,6 +51,12 @@ const getFailureMessage = (task: RecordLinkedTaskRowProps["task"]) => {
   return task.errorCode
 }
 
+const isRetryableState = (state: TaskRecordState) =>
+  state === "failed" ||
+  state === "picked_up_failed" ||
+  state === "completed_failed" ||
+  state === "failed_failed"
+
 export const RecordLinkedTaskRow = ({
   nextWaitingSortOrder,
   recordId,
@@ -79,9 +84,7 @@ export const RecordLinkedTaskRow = ({
       },
     }),
   )
-  const canRetry = retryableTaskRecordStates.includes(
-    task.state as (typeof retryableTaskRecordStates)[number],
-  )
+  const canRetry = isRetryableState(task.state)
   const canTrigger =
     task.state === "waiting" &&
     nextWaitingSortOrder !== null &&
@@ -96,7 +99,6 @@ export const RecordLinkedTaskRow = ({
         taskRecordId: task.taskRecordId,
       })
     } catch {
-      // Error is rendered inline from retryTaskRecordMutation.error.
     }
   }
 
@@ -129,7 +131,6 @@ export const RecordLinkedTaskRow = ({
         taskRecordId: task.taskRecordId,
       })
     } catch {
-      // Error is rendered inline from triggerTaskRecordMutation.error.
     }
   }
 
@@ -148,7 +149,12 @@ export const RecordLinkedTaskRow = ({
       </TableCell>
       <TableCell>
         <div className="flex flex-col gap-1">
-          <TaskRecordStatusBadge state={task.state} />
+          <Link
+            className="inline-flex w-fit rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            href={`/app/${organizationSlug}/${projectSlug}/records/${recordId}`}
+          >
+            <TaskRecordStatusBadge state={task.state} />
+          </Link>
           {task.state === "failed" && getFailureMessage(task) ? (
             <span className="text-xs text-rose-700">
               {getFailureMessage(task)}

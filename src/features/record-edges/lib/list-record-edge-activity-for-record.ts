@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { and, desc, eq, or } from "drizzle-orm"
+import { and, desc, eq, inArray, or } from "drizzle-orm"
 import { activityLogTable } from "@/features/observability/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { db } from "@/lib/db"
@@ -10,6 +10,12 @@ type ListRecordEdgeActivityForRecordParams = {
   recordId: string
   userId: string
 }
+
+const recordEdgeEventTypes: readonly string[] = [
+  "recordEdge.created",
+  "recordEdge.deactivated",
+  "recordEdge.updated",
+]
 
 export const listRecordEdgeActivityForRecord = async ({
   organizationSlug,
@@ -42,14 +48,17 @@ export const listRecordEdgeActivityForRecord = async ({
     })
     .from(activityLogTable)
     .where(
-      or(
-        and(
-          eq(activityLogTable.projectId, project.id),
-          eq(activityLogTable.recordId, recordId),
-        ),
-        and(
-          eq(activityLogTable.relatedProjectId, project.id),
-          eq(activityLogTable.relatedRecordId, recordId),
+      and(
+        inArray(activityLogTable.eventType, recordEdgeEventTypes),
+        or(
+          and(
+            eq(activityLogTable.projectId, project.id),
+            eq(activityLogTable.recordId, recordId),
+          ),
+          and(
+            eq(activityLogTable.relatedProjectId, project.id),
+            eq(activityLogTable.relatedRecordId, recordId),
+          ),
         ),
       ),
     )

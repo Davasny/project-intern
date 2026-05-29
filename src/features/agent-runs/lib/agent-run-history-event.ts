@@ -14,6 +14,19 @@ export type AgentRunHistoryEventDetail = {
   output: string | null
 }
 
+export type AgentRunHistoryEventTokens = {
+  cacheRead: number
+  cacheWrite: number
+  input: number
+  output: number
+  reasoning: number
+}
+
+export type AgentRunHistoryEventMetrics = {
+  cost: number | null
+  tokens: AgentRunHistoryEventTokens | null
+}
+
 export type AgentRunHistoryEvent = {
   id: string
   kind: AgentRunHistoryEventKind
@@ -21,5 +34,6 @@ export type AgentRunHistoryEvent = {
   summary: string
   timestamp: number
   metadata: Array<string>
+  metrics: AgentRunHistoryEventMetrics
   detail: AgentRunHistoryEventDetail
 }

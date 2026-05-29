@@ -1,6 +1,7 @@
 import type {
   AgentRunHistoryEvent,
   AgentRunHistoryEventKind,
+  AgentRunHistoryEventMetrics,
 } from "@/features/agent-runs/lib/agent-run-history-event"
 import type {
   AgentRunSessionMessage,
@@ -28,6 +29,27 @@ const getMessageMetadata = (message: AgentRunSessionMessage) => {
   return metadata
 }
 
+const getMessageMetrics = (
+  message: AgentRunSessionMessage,
+): AgentRunHistoryEventMetrics => ({
+  cost: message.cost,
+  tokens: message.tokens,
+})
+
+const getPartMetrics = ({
+  message,
+  part,
+}: {
+  message: AgentRunSessionMessage
+  part: AgentRunSessionMessagePart
+}): AgentRunHistoryEventMetrics =>
+  part.type === "step-finish"
+    ? {
+        cost: part.cost,
+        tokens: part.tokens,
+      }
+    : getMessageMetrics(message)
+
 const createTextEvent = ({
   message,
   part,
@@ -41,6 +63,7 @@ const createTextEvent = ({
   summary: compactText(part.text) || "Empty message",
   timestamp: message.createdAt,
   metadata: getMessageMetadata(message),
+  metrics: getMessageMetrics(message),
   detail: {
     content: part.text,
     error: null,
@@ -66,6 +89,7 @@ const createReasoningEvent = ({
   summary: compactText(part.text) || "Reasoning trace",
   timestamp: message.createdAt,
   metadata: getMessageMetadata(message),
+  metrics: getMessageMetrics(message),
   detail: {
     content: part.text,
     error: null,
@@ -88,6 +112,7 @@ const createToolEvent = ({
   summary: part.title ?? `${part.tool} ${part.status}`,
   timestamp: message.createdAt,
   metadata: [part.status, ...getMessageMetadata(message)],
+  metrics: getMessageMetrics(message),
   detail: {
     content: part.title,
     error: part.error,
@@ -123,6 +148,7 @@ const createMetadataEvent = ({
   summary,
   timestamp: message.createdAt,
   metadata: getMessageMetadata(message),
+  metrics: getPartMetrics({ message, part }),
   detail: {
     content: null,
     error: null,
@@ -214,6 +240,7 @@ const createMessageErrorEvent = (
     summary: message.error.message,
     timestamp: message.createdAt,
     metadata: getMessageMetadata(message),
+    metrics: getMessageMetrics(message),
     detail: {
       content: null,
       error: message.error.message,

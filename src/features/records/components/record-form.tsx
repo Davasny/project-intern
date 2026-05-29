@@ -153,9 +153,7 @@ export const RecordForm = ({
               <FormControl>
                 <Input placeholder="Acme Corp" {...field} />
               </FormControl>
-              <FormDescription>
-                This is the canonical envelope name for the record.
-              </FormDescription>
+              <FormDescription>Shown in tables and run history.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -169,14 +167,16 @@ export const RecordForm = ({
               schemaField={field}
             />
           ))}
-        <Button
-          disabled={
-            createRecordMutation.isPending || updateRecordMutation.isPending
-          }
-          type="submit"
-        >
-          {submitLabel}
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            disabled={
+              createRecordMutation.isPending || updateRecordMutation.isPending
+            }
+            type="submit"
+          >
+            {submitLabel}
+          </Button>
+        </div>
       </form>
     </Form>
   )

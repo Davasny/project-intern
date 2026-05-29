@@ -9,9 +9,7 @@ type RunTaskRetryScanParams = {
   limit: number
 }
 
-export const runTaskRetryScan = async ({
-  limit,
-}: RunTaskRetryScanParams) => {
+export const runTaskRetryScan = async ({ limit }: RunTaskRetryScanParams) => {
   const retriedTaskRecordIds: string[] = []
   const retryLogger = logger.child({
     limit,

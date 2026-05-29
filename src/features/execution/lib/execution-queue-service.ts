@@ -9,7 +9,7 @@ export const executionQueueService = {
       retryBackoff: true,
       retryDelay: 30,
       retryLimit: 5,
-      singletonKey: payload.taskRecordId,
+      singletonKey: `${payload.taskRecordId}:${payload.agentRunId}`,
       singletonSeconds: 300,
     }),
 }

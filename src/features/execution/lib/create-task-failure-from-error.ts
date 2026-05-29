@@ -52,7 +52,10 @@ const isRetryableError = (error: unknown) => {
       return true
     }
 
-    if (code === "UND_ERR_CONNECT_TIMEOUT" || code === "UND_ERR_HEADERS_TIMEOUT") {
+    if (
+      code === "UND_ERR_CONNECT_TIMEOUT" ||
+      code === "UND_ERR_HEADERS_TIMEOUT"
+    ) {
       return true
     }
 

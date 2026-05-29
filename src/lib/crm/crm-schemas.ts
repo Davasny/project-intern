@@ -78,7 +78,9 @@ export const crmRecordPatchInputSchema = z.object({
   patch: patchProposalSchema,
 })
 
-export type CrmRecordProposePatchInput = z.infer<typeof crmRecordPatchInputSchema>
+export type CrmRecordProposePatchInput = z.infer<
+  typeof crmRecordPatchInputSchema
+>
 export type CrmRecordApplyPatchInput = z.infer<typeof crmRecordPatchInputSchema>
 
 export const crmRecordCompleteTaskInputSchema = z.object({
@@ -96,7 +98,9 @@ export const crmRecordFailTaskInputSchema = z.object({
   failure: taskFailureSchema,
 })
 
-export type CrmRecordFailTaskInput = z.infer<typeof crmRecordFailTaskInputSchema>
+export type CrmRecordFailTaskInput = z.infer<
+  typeof crmRecordFailTaskInputSchema
+>
 
 export const crmRecordListRelationsInputSchema = executionScopeInputSchema
 

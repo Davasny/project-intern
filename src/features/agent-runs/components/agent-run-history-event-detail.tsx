@@ -1,5 +1,6 @@
 import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
+import { AgentRunHistoryMetricList } from "@/features/agent-runs/components/agent-run-history-metric-list"
 import type { AgentRunHistoryEvent } from "@/features/agent-runs/lib/agent-run-history-event"
 
 type AgentRunHistoryEventDetailProps = {
@@ -53,6 +54,7 @@ export const AgentRunHistoryEventDetail = ({
           <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
             {event.summary}
           </p>
+          <AgentRunHistoryMetricList metrics={event.metrics} />
         </div>
       </div>
       <div className="flex min-w-0 max-w-full flex-col gap-5 overflow-hidden pt-5">

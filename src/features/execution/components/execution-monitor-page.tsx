@@ -1,8 +1,7 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ChevronDown, ChevronRight } from "lucide-react"
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
@@ -12,8 +11,7 @@ import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-met
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
-import { Card } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
+import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import {
   TableBody,
   TableCell,
@@ -24,29 +22,12 @@ import {
 import { ExecutionMonitorRow } from "@/features/execution/components/execution-monitor-row"
 import { ExecutionPageNavigation } from "@/features/execution/components/execution-page-navigation"
 import { useExecutionMonitorQuery } from "@/features/execution/hooks/use-execution-monitor-query"
-import { useProjectScope } from "@/features/projects/context/project-scope-context"
-import { useTRPC } from "@/lib/trpc/client"
 
 export const ExecutionMonitorPage = () => {
-  const { organizationSlug, projectSlug } = useProjectScope()
-  const trpc = useTRPC()
-  const queryClient = useQueryClient()
   const [expandedRecords, setExpandedRecords] = useState<Set<string>>(
     () => new Set(),
   )
   const executionQuery = useExecutionMonitorQuery()
-  const toggleAutopickMutation = useMutation(
-    trpc.execution.updateAutopick.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries(
-          trpc.execution.getMonitor.queryFilter({
-            organizationSlug,
-            projectSlug,
-          }),
-        )
-      },
-    }),
-  )
 
   if (!executionQuery.data) {
     return <LoadingState label="Execution monitor could not be loaded." />
@@ -97,33 +78,13 @@ export const ExecutionMonitorPage = () => {
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Execution monitor
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Queue-backed task-record execution, retries, and development
-            controls.
-          </p>
         </div>
         <PageHeaderActions>
           <ExecutionPageNavigation activePage="monitor" />
-          {executionQuery.data.debugControlsEnabled ? (
-            <Card className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-muted-foreground">
-              <span>Autopick</span>
-              <Switch
-                checked={executionQuery.data.isAutopickEnabled}
-                disabled={toggleAutopickMutation.isPending}
-                onCheckedChange={async (isAutopickEnabled) => {
-                  try {
-                    await toggleAutopickMutation.mutateAsync({
-                      isAutopickEnabled,
-                      organizationSlug,
-                      projectSlug,
-                    })
-                  } catch (error) {
-                    console.error("Failed to toggle autopick:", error)
-                  }
-                }}
-              />
-            </Card>
-          ) : null}
+          <StatusBadge
+            label={executionQuery.data.isAutopickEnabled ? "Autopick on" : "Autopick off"}
+            tone={executionQuery.data.isAutopickEnabled ? "success" : "warning"}
+          />
         </PageHeaderActions>
       </PageHeader>
       <ProgressMetricGrid>
@@ -147,29 +108,8 @@ export const ExecutionMonitorPage = () => {
       <SectionCard>
         <SectionCardHeader>
           <h2 className="text-lg font-semibold text-foreground">
-            Debug controls
+            Task records
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Autopick is currently{" "}
-            {executionQuery.data.isAutopickEnabled ? "enabled" : "disabled"}.
-          </p>
-        </SectionCardHeader>
-        <SectionCardContent>
-          <p className="text-sm text-muted-foreground">
-            Manual task-record triggering appears only in development when
-            autopick is disabled.
-          </p>
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard>
-        <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-foreground">
-            Task-record executions
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Live persisted processing state with retry counts and latest run
-            status.
-          </p>
         </SectionCardHeader>
         <SectionCardContent>
           <DataTable>
@@ -188,10 +128,9 @@ export const ExecutionMonitorPage = () => {
               {groupedTaskRecords.map((group) => {
                 const isExpanded = expandedRecords.has(group.recordId)
                 return (
-                  <>
+                  <Fragment key={group.recordId}>
                     <TableRow
                       className="cursor-pointer bg-muted/50 hover:bg-muted/70"
-                      key={`group-${group.recordId}`}
                       onClick={() => toggleRecord(group.recordId)}
                     >
                       <TableCell className="font-medium" colSpan={7}>
@@ -223,7 +162,7 @@ export const ExecutionMonitorPage = () => {
                           />
                         ))
                       : null}
-                  </>
+                  </Fragment>
                 )
               })}
             </TableBody>

@@ -6,16 +6,18 @@ import {
 
 type LaunchTaskRecordExecutionParams = {
   projectId: string
+  requestedBy?: "manual" | "retry"
   taskRecordId: string
 }
 
 export const launchTaskRecordExecution = async ({
   projectId,
+  requestedBy = "manual",
   taskRecordId,
 }: LaunchTaskRecordExecutionParams): Promise<ClaimedTaskRecordExecution | null> => {
   const claimResult = await claimAndCreateRun({
     projectId,
-    requestedBy: "manual",
+    requestedBy,
     taskRecordId,
   })
 

@@ -145,11 +145,8 @@ export const RecordDetailsPage = ({
       <SectionCard>
         <SectionCardHeader>
           <h2 className="text-lg font-semibold text-foreground">
-            Record metadata
+            Metadata
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Canonical record envelope and live task linkage summary.
-          </p>
         </SectionCardHeader>
         <SectionCardContent className="flex flex-col gap-6">
           <MetadataList>
@@ -176,12 +173,8 @@ export const RecordDetailsPage = ({
       <SectionCard>
         <SectionCardHeader>
           <h2 className="text-lg font-semibold text-foreground">
-            Record editor
+            Edit record
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Updates are validated against this record's current schema version
-            before they are saved.
-          </p>
         </SectionCardHeader>
         <SectionCardContent>
           <RecordForm
@@ -200,9 +193,6 @@ export const RecordDetailsPage = ({
           <h2 className="text-lg font-semibold text-foreground">
             Linked tasks
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Persisted task-record and latest agent-run state for this record.
-          </p>
         </SectionCardHeader>
         <SectionCardContent>
           <DataTable>

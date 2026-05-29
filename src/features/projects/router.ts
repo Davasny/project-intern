@@ -69,6 +69,7 @@ export const projectsRouter = router({
         input: z.object({
           defaultModel: z.string().trim().min(1),
           defaultTemperature: z.number(),
+          isAutopickEnabled: z.boolean(),
         }),
       }),
     )

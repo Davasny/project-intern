@@ -1,4 +1,5 @@
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
+import { AgentRunHistoryMetricList } from "@/features/agent-runs/components/agent-run-history-metric-list"
 import type { AgentRunHistoryEvent } from "@/features/agent-runs/lib/agent-run-history-event"
 import { cn } from "@/lib/utils"
 
@@ -54,13 +55,16 @@ export const AgentRunHistoryEventList = ({
             </p>
           ) : null}
         </div>
-        <span className="pt-0.5 text-xs text-muted-foreground">
-          {new Date(event.timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          })}
-        </span>
+        <div className="flex flex-col items-end gap-1 pt-0.5">
+          <span className="text-xs text-muted-foreground">
+            {new Date(event.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })}
+          </span>
+          <AgentRunHistoryMetricList metrics={event.metrics} />
+        </div>
       </button>
     ))}
   </div>

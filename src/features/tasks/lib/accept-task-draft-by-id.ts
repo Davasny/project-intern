@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server"
-import { acceptTaskDraft } from "@/features/tasks/lib/accept-task-draft"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import { acceptTaskDraft } from "@/features/tasks/lib/accept-task-draft"
 import { db } from "@/lib/db"
 
 type AcceptTaskDraftByIdParams = {

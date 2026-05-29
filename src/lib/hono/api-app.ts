@@ -36,7 +36,11 @@ apiApp.on(["GET", "POST"], "/api/trpc/*", (context) =>
   }),
 )
 
-apiApp.post("/api/upload/record/:recordId", sessionGuard, uploadRecordFilesHandler)
+apiApp.post(
+  "/api/upload/record/:recordId",
+  sessionGuard,
+  uploadRecordFilesHandler,
+)
 
 apiApp.route("/api/mcp", mcpApp)
 apiApp.route("/api/crm", crmApiApp)

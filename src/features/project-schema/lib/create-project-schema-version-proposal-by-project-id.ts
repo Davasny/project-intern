@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { desc, eq } from "drizzle-orm"
-import { createProjectSchemaVersionProposal } from "@/features/project-schema/lib/create-project-schema-version-proposal"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
+import { createProjectSchemaVersionProposal } from "@/features/project-schema/lib/create-project-schema-version-proposal"
 import { validateProjectSchemaDefinitionFromFullDefinition } from "@/features/project-schema/lib/validate-project-schema-definition-from-full-definition"
 import { projectTable } from "@/features/projects/db"
 import { db } from "@/lib/db"

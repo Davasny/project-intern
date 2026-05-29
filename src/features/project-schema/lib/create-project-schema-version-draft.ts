@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { createProjectSchemaVersionProposal } from "@/features/project-schema/lib/create-project-schema-version-proposal"
-import { getProjectSchemaVersionActor } from "@/features/project-schema/lib/project-schema-version-machine"
 import { getSchemaWriteMode } from "@/features/project-schema/lib/get-schema-write-mode"
+import { getProjectSchemaVersionActor } from "@/features/project-schema/lib/project-schema-version-machine"
 import { validateProjectSchemaDefinition } from "@/features/project-schema/lib/validate-project-schema-definition"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { db } from "@/lib/db"

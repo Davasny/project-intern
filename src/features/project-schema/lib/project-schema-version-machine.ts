@@ -57,15 +57,18 @@ const projectSchemaVersionMachineDefinition =
             .where(eq(recordTable.projectId, context.projectId))
 
           const migrationTask =
-            event.previousVersionId && recordCount > 0
+            event.previousVersionId &&
+            event.previousSchemaDefinition &&
+            event.previousVersionNumber &&
+            recordCount > 0
               ? await createProjectTask({
                   createdByUserId: event.acceptedByUserId,
                   database: db,
                   descriptionMarkdown: buildSchemaMigrationTaskDescription({
                     nextSchemaDefinition: context.schemaDefinition,
                     nextVersion: context.version,
-                    previousSchemaDefinition: event.previousSchemaDefinition!,
-                    previousVersion: event.previousVersionNumber!,
+                    previousSchemaDefinition: event.previousSchemaDefinition,
+                    previousVersion: event.previousVersionNumber,
                   }),
                   model: null,
                   temperature: null,

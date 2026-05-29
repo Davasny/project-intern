@@ -11,6 +11,7 @@ import { logger } from "@/lib/logger"
 const updateProjectSettingsInputSchema = z.object({
   defaultModel: z.string().trim().min(1),
   defaultTemperature: z.number(),
+  isAutopickEnabled: z.boolean(),
 })
 
 type UpdateProjectSettingsParams = {
@@ -65,17 +66,20 @@ export const updateProjectSettings = async ({
     .set({
       defaultModel: validatedModel,
       defaultTemperature: validatedTemperature,
+      isAutopickEnabled: input.isAutopickEnabled,
     })
     .where(eq(projectTable.id, project.id))
     .returning({
       defaultModel: projectTable.defaultModel,
       defaultTemperature: projectTable.defaultTemperature,
+      isAutopickEnabled: projectTable.isAutopickEnabled,
     })
 
   logger.info(
     {
       defaultModel: validatedModel,
       defaultTemperature: validatedTemperature,
+      isAutopickEnabled: input.isAutopickEnabled,
       projectId: project.id,
       userId,
     },

@@ -5,9 +5,9 @@ import {
 } from "@/features/agent-runs/lib/agent-run-machine"
 import { getToolCallCount } from "@/features/agent-runs/lib/get-tool-call-count"
 import { db } from "@/lib/db"
-import { logger } from "@/lib/logger"
 import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
 import { resolveEffectiveTemperature } from "@/lib/llm/resolve-effective-temperature"
+import { logger } from "@/lib/logger"
 
 type CreateAgentRunCommandParams = {
   attemptNumber: number

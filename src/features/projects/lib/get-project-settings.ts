@@ -33,6 +33,7 @@ export const getProjectSettings = async ({
     .select({
       defaultModel: projectTable.defaultModel,
       defaultTemperature: projectTable.defaultTemperature,
+      isAutopickEnabled: projectTable.isAutopickEnabled,
     })
     .from(projectTable)
     .where(eq(projectTable.id, project.id))
@@ -48,5 +49,6 @@ export const getProjectSettings = async ({
   return {
     ...settings,
     approvedModels: backendConfig.CRM_APPROVED_RUNTIME_MODELS,
+    debugControlsEnabled: backendConfig.IS_DEVELOPMENT,
   }
 }

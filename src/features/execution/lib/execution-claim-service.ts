@@ -1,6 +1,7 @@
-import { eq } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { createAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
+import { activeAgentRunStates } from "@/features/agent-runs/schemas/agent-run-state"
 import { executionLogger } from "@/features/execution/lib/execution-logger"
 import {
   type CandidateRejectionReason,
@@ -52,11 +53,16 @@ const getTaskRecordScope = async (taskRecordId: string) =>
     .where(eq(taskRecordTable.id, taskRecordId))
     .then((rows) => rows[0] ?? null)
 
-const getExistingAgentRun = async (taskRecordId: string) =>
+const getExistingActiveAgentRun = async (taskRecordId: string) =>
   db
     .select({ id: agentRunTable.id })
     .from(agentRunTable)
-    .where(eq(agentRunTable.taskRecordId, taskRecordId))
+    .where(
+      and(
+        eq(agentRunTable.taskRecordId, taskRecordId),
+        inArray(agentRunTable.state, activeAgentRunStates),
+      ),
+    )
     .orderBy(agentRunTable.createdAt)
     .then((rows) => rows[0] ?? null)
 
@@ -129,7 +135,9 @@ export const claimAndCreateRun = async (
   }
 
   const { candidate } = selected
-  const existingAgentRun = await getExistingAgentRun(candidate.taskRecordId)
+  const existingAgentRun = await getExistingActiveAgentRun(
+    candidate.taskRecordId,
+  )
 
   if (existingAgentRun) {
     const execution = await buildClaimedExecution({

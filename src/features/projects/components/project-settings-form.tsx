@@ -21,20 +21,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 const projectSettingsFormSchema = z.object({
   defaultModel: z.string().trim().min(1, "Default model is required."),
   defaultTemperature: z.string().trim().min(1, "Default temperature is required."),
+  isAutopickEnabled: z.boolean(),
 })
 
 type ProjectSettingsFormValues = z.infer<typeof projectSettingsFormSchema>
 
 type ProjectSettingsFormProps = {
   approvedModels: string[]
+  debugControlsEnabled: boolean
   initialDefaultModel: string
   initialDefaultTemperature: number
+  initialIsAutopickEnabled: boolean
 }
 
 const temperatureOptions = Array.from({ length: 11 }, (_, index) =>
@@ -43,8 +47,10 @@ const temperatureOptions = Array.from({ length: 11 }, (_, index) =>
 
 export const ProjectSettingsForm = ({
   approvedModels,
+  debugControlsEnabled,
   initialDefaultModel,
   initialDefaultTemperature,
+  initialIsAutopickEnabled,
 }: ProjectSettingsFormProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
@@ -53,6 +59,7 @@ export const ProjectSettingsForm = ({
     defaultValues: {
       defaultModel: initialDefaultModel,
       defaultTemperature: initialDefaultTemperature.toFixed(1),
+      isAutopickEnabled: initialIsAutopickEnabled,
     },
     resolver: zodResolver(projectSettingsFormSchema),
   })
@@ -66,6 +73,12 @@ export const ProjectSettingsForm = ({
             projectSlug,
           }),
         )
+        await queryClient.invalidateQueries(
+          trpc.execution.getMonitor.queryFilter({
+            organizationSlug,
+            projectSlug,
+          }),
+        )
       },
     }),
   )
@@ -75,6 +88,7 @@ export const ProjectSettingsForm = ({
       input: {
         defaultModel: values.defaultModel,
         defaultTemperature: Number(values.defaultTemperature),
+        isAutopickEnabled: values.isAutopickEnabled,
       },
       organizationSlug,
       projectSlug,
@@ -108,10 +122,7 @@ export const ProjectSettingsForm = ({
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>
-                This model will be used by all tasks that do not specify an
-                override.
-              </FormDescription>
+              <FormDescription>Used when a task has no override.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -136,17 +147,39 @@ export const ProjectSettingsForm = ({
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>
-                Default sampling temperature used when tasks do not specify an
-                override.
-              </FormDescription>
+              <FormDescription>Used when a task has no override.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button disabled={updateSettingsMutation.isPending} type="submit">
-          {submitLabel}
-        </Button>
+        {debugControlsEnabled ? (
+          <FormField
+            control={form.control}
+            name="isAutopickEnabled"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
+                <div className="flex flex-col gap-1">
+                  <FormLabel>Autopick</FormLabel>
+                  <FormDescription>
+                    Automatically claim waiting task records.
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
+        <div className="flex justify-end">
+          <Button disabled={updateSettingsMutation.isPending} type="submit">
+            {submitLabel}
+          </Button>
+        </div>
       </form>
     </Form>
   )

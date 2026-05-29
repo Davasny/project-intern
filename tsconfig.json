@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "es2022"
-    ],
+    "target": "ES2025",
+    "lib": ["dom", "es2025"],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -22,11 +18,9 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
+    "types": ["node"],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     }
   },
   "include": [

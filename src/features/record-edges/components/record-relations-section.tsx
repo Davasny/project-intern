@@ -62,10 +62,6 @@ export const RecordRelationsSection = ({
               <h2 className="text-lg font-semibold text-foreground">
                 Related records
               </h2>
-              <p className="text-sm text-muted-foreground">
-                Canonical depth-1 linked record reads backed by active relation
-                edges.
-              </p>
             </div>
             <Button onClick={() => setIsCreateOpen(true)} type="button">
               New relation
@@ -112,7 +108,7 @@ export const RecordRelationsSection = ({
                   Create first relation
                 </Button>
               }
-              description="Relations stay outside record context and remain auditable through canonical edges."
+              description="Link this record to another record."
               title="No active relations"
             />
           )}
@@ -140,9 +136,6 @@ export const RecordRelationsSection = ({
           <h2 className="text-lg font-semibold text-foreground">
             Relation activity
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Append-only relation lifecycle events for this record scope.
-          </p>
         </SectionCardHeader>
         <SectionCardContent>
           {activityQuery.data.length > 0 ? (
@@ -154,7 +147,7 @@ export const RecordRelationsSection = ({
           ) : (
             <DataTableEmptyState
               action={null}
-              description="Create, edit, or deactivate a relation to start building this audit trail."
+              description="Create, edit, or deactivate a relation to see events here."
               title="No relation activity yet"
             />
           )}

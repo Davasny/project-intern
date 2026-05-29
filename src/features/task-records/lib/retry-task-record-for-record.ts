@@ -6,6 +6,7 @@ import { executionQueueService } from "@/features/execution/lib/execution-queue-
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
 import { taskRecordTable } from "@/features/task-records/db"
+import { getTaskRecordActor } from "@/features/task-records/lib/get-task-record-actor"
 import { launchTaskRecordExecution } from "@/features/task-records/lib/launch-task-record-execution"
 import { retryableTaskRecordStates } from "@/features/task-records/schemas/task-record-state"
 import { taskTable } from "@/features/tasks/db"
@@ -61,8 +62,15 @@ export const retryTaskRecordForRecord = async ({
     })
   }
 
+  const actor = await getTaskRecordActor(taskRecord.id)
+
+  if (actor.nextEvents.includes("retry")) {
+    await actor.send("retry", { lastTransitionAt: new Date() })
+  }
+
   const claimedTaskRecord = await launchTaskRecordExecution({
     projectId,
+    requestedBy: "retry",
     taskRecordId: taskRecord.id,
   })
 

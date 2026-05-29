@@ -16,7 +16,14 @@ import { createRecordForMcp } from "@/features/records/lib/create-record-for-mcp
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
 import { proposeRecordPatch as proposePatch } from "@/features/records/lib/propose-record-patch"
 import { createTaskDraft } from "@/features/tasks/lib/create-task-draft"
+import type { CrmScope } from "@/lib/crm/types"
+import { db } from "@/lib/db"
+import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
 import type {
+  CrmProjectListInput,
+  CrmProjectReadSchemaInput,
+  CrmProjectSchemaProposeVersionInput,
+  CrmProjectTaskProposeInput,
   CrmRecordApplyPatchInput,
   CrmRecordCompleteTaskInput,
   CrmRecordCreateInput,
@@ -28,14 +35,7 @@ import type {
   CrmRecordListRelationsInput,
   CrmRecordProposePatchInput,
   CrmRecordReadInput,
-  CrmProjectListInput,
-  CrmProjectReadSchemaInput,
-  CrmProjectSchemaProposeVersionInput,
-  CrmProjectTaskProposeInput,
 } from "./crm-schemas"
-import type { CrmScope } from "@/lib/crm/types"
-import { db } from "@/lib/db"
-import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
 
 export const readRecord = async (
   input: CrmRecordReadInput,

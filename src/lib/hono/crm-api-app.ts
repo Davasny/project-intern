@@ -1,8 +1,8 @@
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { verifyMcpApiKey } from "@/lib/mcp/verify-mcp-api-key"
 import { registerProjectRoutes } from "./crm-routes-projects"
 import { registerRecordRoutes } from "./crm-routes-records"
 import { registerRelationRoutes } from "./crm-routes-relations"
-import { verifyMcpApiKey } from "@/lib/mcp/verify-mcp-api-key"
 
 export const crmApiApp = new OpenAPIHono()
 
