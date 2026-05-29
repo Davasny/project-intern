@@ -30,7 +30,7 @@ Do not mutate records outside the current task scope.
       // todo: we should get list of available skills from project and then allow them here in the loop
       "*": "deny",
       docx: "allow",
-      pdf: "allow",
+      // pdf: "allow",
       xlsx: "allow",
       markitdown: "allow",
       "glm-ocr": "allow",
