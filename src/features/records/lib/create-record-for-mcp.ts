@@ -4,7 +4,6 @@ import { recordTable } from "@/features/records/db"
 import { assertRecordNameIsAvailable } from "@/features/records/lib/assert-record-name-is-available"
 import { validateRecordContext } from "@/features/records/lib/validate-record-context"
 import type { RecordInput } from "@/features/records/schemas/record-input"
-import { backfillTaskRecordsForRecord } from "@/features/task-records/lib/backfill-task-records-for-record"
 import { db } from "@/lib/db"
 import { assertMcpOrgOwnsProject } from "@/lib/mcp/assert-mcp-org-owns-project"
 
@@ -46,7 +45,7 @@ export const createRecordForMcp = async ({
       name: normalizedName,
       projectId,
       schemaVersion: initialSchemaVersion.version,
-      state: "active",
+      state: "inactive",
     })
     .returning({
       context: recordTable.context,
@@ -66,11 +65,6 @@ export const createRecordForMcp = async ({
       message: "Failed to create record.",
     })
   }
-
-  await backfillTaskRecordsForRecord({
-    projectId,
-    recordId: record.id,
-  })
 
   return record
 }

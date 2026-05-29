@@ -4,7 +4,6 @@ import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-acce
 import { recordTable } from "@/features/records/db"
 import { validateRecordImportCandidates } from "@/features/records/lib/validate-record-import-candidates"
 import type { RecordImportCommitInput } from "@/features/records/schemas/record-import"
-import { backfillTaskRecordsForRecord } from "@/features/task-records/lib/backfill-task-records-for-record"
 import { db } from "@/lib/db"
 
 type CommitRecordImportParams = {
@@ -81,7 +80,7 @@ export const commitRecordImport = async ({
             name: record.name,
             projectId: project.id,
             schemaVersion: initialSchemaVersion.version,
-            state: "active",
+            state: "inactive",
           })
           .returning({
             id: recordTable.id,
@@ -100,13 +99,6 @@ export const commitRecordImport = async ({
       code: "BAD_REQUEST",
       message:
         "Import failed due to duplicate record names. Refresh and run preview again.",
-    })
-  }
-
-  for (const createdRecord of createdRecords) {
-    await backfillTaskRecordsForRecord({
-      projectId: project.id,
-      recordId: createdRecord.id,
     })
   }
 

@@ -171,7 +171,7 @@ export const RecordsPage = () => {
                 Create first record
               </Button>
             }
-            description="New records automatically backfill task-record rows for all existing project tasks."
+            description="New records start inactive. Activate them to begin task processing."
             icon={<DatabaseIcon />}
             title="No records yet"
           />
@@ -182,8 +182,8 @@ export const RecordsPage = () => {
           <DialogHeader>
             <DialogTitle>Create record</DialogTitle>
             <DialogDescription>
-              Record creation starts at schema v1 and backfills the full task
-              timeline.
+              New records start inactive. Activate them from the record detail
+              page to begin task processing.
             </DialogDescription>
           </DialogHeader>
           <RecordForm

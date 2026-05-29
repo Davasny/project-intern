@@ -37,3 +37,8 @@ Task na znalezienie firmy w innym projekcie, jeśli jej nie ma to dodanie
 - relacje są zbyt skomplikowane
 - dodanie system msg do wiadomości w executions - przeprojektowanie na styl anthropica
 - draft taski nie powinny mieć buttona "trigger"
+
+---
+
+- opencode history page - dodanie refresha jak się da
+- trzymanie w linku zaznaczonego noda z historii żeby po odświeżeniu nie tracić kontekstu

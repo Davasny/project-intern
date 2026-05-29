@@ -1,8 +1,10 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import { activateRecord } from "@/features/records/lib/activate-record"
 import { commitRecordImport } from "@/features/records/lib/commit-record-import"
 import { createRecord } from "@/features/records/lib/create-record"
+import { deactivateRecord } from "@/features/records/lib/deactivate-record"
 import { deleteRecord } from "@/features/records/lib/delete-record"
 import { getRecordById } from "@/features/records/lib/get-record-by-id"
 import { listRecords } from "@/features/records/lib/list-records"
@@ -151,4 +153,46 @@ export const recordsRouter = router({
         userId: ctx.session.user.id,
       }),
     ),
+  activate: protectedProcedure
+    .input(projectScopeSchema.extend({ recordId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return activateRecord({
+        projectId: project.id,
+        recordId: input.recordId,
+      })
+    }),
+  deactivate: protectedProcedure
+    .input(projectScopeSchema.extend({ recordId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return deactivateRecord({
+        projectId: project.id,
+        recordId: input.recordId,
+      })
+    }),
 })

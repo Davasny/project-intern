@@ -14,7 +14,8 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 import { RelationEditorPanel } from "@/features/record-edges/components/relation-editor-panel"
 import type { RelationType } from "@/features/record-edges/lib/relation-type-rules"
 import { useTRPC } from "@/lib/trpc/client"
-import { RecordEdgeState } from "@/features/record-edges/lib/record-edge-machine";
+import { RecordEdgeState } from "@/features/record-edges/lib/record-edge-machine"
+import type { RecordState } from "@/features/records/schemas/record-state"
 
 type RecordRelationListItemProps = {
   recordId: string
@@ -33,7 +34,7 @@ type RecordRelationListItemProps = {
       projectDisplayName: string
       projectSlug: string
       schemaVersion: number
-      state: "active" | "archived" | "error" | "processing"
+      state: RecordState
     }
     relationType: string
     relationTypeLabel: string

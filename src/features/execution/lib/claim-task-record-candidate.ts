@@ -12,6 +12,7 @@ import { alias } from "drizzle-orm/pg-core"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { activeAgentRunStates } from "@/features/agent-runs/schemas/agent-run-state"
 import { projectTable } from "@/features/projects/db"
+import { recordTable } from "@/features/records/db"
 import { taskRecordTable } from "@/features/task-records/db"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import {
@@ -85,6 +86,13 @@ export const claimTaskRecordCandidate = async (
       })
       .from(taskRecordTable)
       .innerJoin(taskTable, eq(taskTable.id, taskRecordTable.taskId))
+      .innerJoin(
+        recordTable,
+        and(
+          eq(recordTable.id, taskRecordTable.recordId),
+          eq(recordTable.state, "active"),
+        ),
+      )
       .innerJoin(projectTable, eq(projectTable.id, taskTable.projectId))
       .leftJoin(
         maxAttemptNumberByTaskRecord,

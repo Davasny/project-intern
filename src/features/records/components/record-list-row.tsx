@@ -1,12 +1,15 @@
 "use client"
 
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { RecordStatusBadge } from "@/components/ui/status-badge/record-status-badge"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
+import { Switch } from "@/components/ui/switch"
 import { TableCell, TableRow } from "@/components/ui/table"
 import type { ProjectSchemaField } from "@/features/project-schema/schemas/project-schema-field"
 import { RecordContextValueCell } from "@/features/records/components/record-context-value-cell"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
+import { useTRPC } from "@/lib/trpc/client"
 
 type RecordListRowProps = {
   record: {
@@ -34,7 +37,7 @@ type RecordListRowProps = {
       activeCount: number
     }
     schemaVersion: number
-    state: "active" | "archived" | "error" | "processing"
+    state: "active" | "archived" | "error" | "inactive" | "processing"
     updatedAt: Date
     version: number
   }
@@ -48,6 +51,48 @@ export const RecordListRow = ({
   showContextValues,
 }: RecordListRowProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
+  const trpc = useTRPC()
+  const queryClient = useQueryClient()
+
+  const listFilter = trpc.records.list.queryFilter({
+    organizationSlug,
+    projectSlug,
+  })
+
+  const activateMutation = useMutation(
+    trpc.records.activate.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(listFilter)
+      },
+    }),
+  )
+
+  const deactivateMutation = useMutation(
+    trpc.records.deactivate.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(listFilter)
+      },
+    }),
+  )
+
+  const handleActiveToggle = (checked: boolean) => {
+    if (checked) {
+      activateMutation.mutateAsync({
+        organizationSlug,
+        projectSlug,
+        recordId: record.id,
+      })
+    } else {
+      deactivateMutation.mutateAsync({
+        organizationSlug,
+        projectSlug,
+        recordId: record.id,
+      })
+    }
+  }
+
+  const isTogglePending =
+    activateMutation.isPending || deactivateMutation.isPending
 
   return (
     <TableRow>
@@ -65,7 +110,16 @@ export const RecordListRow = ({
         </div>
       </TableCell>
       <TableCell>
-        <RecordStatusBadge state={record.state} />
+        <div className="flex items-center gap-2">
+          <RecordStatusBadge state={record.state} />
+          {record.state === "active" || record.state === "inactive" ? (
+            <Switch
+              checked={record.state === "active"}
+              disabled={isTogglePending}
+              onCheckedChange={handleActiveToggle}
+            />
+          ) : null}
+        </div>
       </TableCell>
       <TableCell>
         {record.progress.completedCount}/{record.progress.totalCount} completed

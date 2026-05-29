@@ -8,6 +8,7 @@ const recordStatusMap: Record<
   active: { label: "Active", tone: "success" },
   archived: { label: "Archived", tone: "muted" },
   error: { label: "Error", tone: "danger" },
+  inactive: { label: "Inactive", tone: "warning" },
   processing: { label: "Processing", tone: "info" },
 }
 

@@ -26,6 +26,7 @@ import { SectionCardContent } from "@/components/ui/section-card/section-card-co
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { RecordStatusBadge } from "@/components/ui/status-badge/record-status-badge"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
+import { Switch } from "@/components/ui/switch"
 import {
   TableBody,
   TableHead,
@@ -85,6 +86,40 @@ export const RecordDetailsPage = ({
     }),
   )
 
+  const activateMutation = useMutation(
+    trpc.records.activate.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.records.getById.queryFilter({
+            organizationSlug,
+            projectSlug,
+            recordId,
+          }),
+        )
+        await queryClient.invalidateQueries(
+          trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
+        )
+      },
+    }),
+  )
+
+  const deactivateMutation = useMutation(
+    trpc.records.deactivate.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.records.getById.queryFilter({
+            organizationSlug,
+            projectSlug,
+            recordId,
+          }),
+        )
+        await queryClient.invalidateQueries(
+          trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
+        )
+      },
+    }),
+  )
+
   const handleDelete = async () => {
     await deleteMutation.mutateAsync({
       organizationSlug,
@@ -92,6 +127,33 @@ export const RecordDetailsPage = ({
       recordId,
     })
   }
+
+  const handleActivate = async () => {
+    await activateMutation.mutateAsync({
+      organizationSlug,
+      projectSlug,
+      recordId,
+    })
+  }
+
+  const handleDeactivate = async () => {
+    await deactivateMutation.mutateAsync({
+      organizationSlug,
+      projectSlug,
+      recordId,
+    })
+  }
+
+  const handleActiveToggle = (checked: boolean) => {
+    if (checked) {
+      handleActivate()
+    } else {
+      handleDeactivate()
+    }
+  }
+
+  const isTogglePending =
+    activateMutation.isPending || deactivateMutation.isPending
 
   const nextWaitingSortOrder =
     recordQuery.data?.linkedTasks
@@ -118,6 +180,14 @@ export const RecordDetailsPage = ({
               {recordQuery.data.name}
             </h1>
             <RecordStatusBadge state={recordQuery.data.state} />
+            {recordQuery.data.state === "active" ||
+            recordQuery.data.state === "inactive" ? (
+              <Switch
+                checked={recordQuery.data.state === "active"}
+                disabled={isTogglePending}
+                onCheckedChange={handleActiveToggle}
+              />
+            ) : null}
             {recordQuery.data.activeRunSummary ? (
               <RunStatusBadge state={recordQuery.data.activeRunSummary.state} />
             ) : null}

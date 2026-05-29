@@ -28,7 +28,9 @@ export const fanOutTaskRecordsForTask = async ({
   const records = await database
     .select({ id: recordTable.id, schemaVersion: recordTable.schemaVersion })
     .from(recordTable)
-    .where(eq(recordTable.projectId, projectId))
+    .where(
+      and(eq(recordTable.projectId, projectId), eq(recordTable.state, "active")),
+    )
 
   const eligibleRecords =
     targetSchemaVersionId === null
