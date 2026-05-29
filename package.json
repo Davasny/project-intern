@@ -40,6 +40,8 @@
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.2",
     "hono": "4.12.23",
+    "jotai": "2.20.0",
+    "jotai-location": "0.6.2",
     "lucide-react": "1.16.0",
     "machin": "file:.yalc/machin",
     "next": "16.2.6",
