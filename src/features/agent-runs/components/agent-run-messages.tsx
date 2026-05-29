@@ -5,7 +5,8 @@ import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
-import { AgentRunMessageItem } from "@/features/agent-runs/components/agent-run-message-item"
+import { AgentRunHistoryExplorer } from "@/features/agent-runs/components/agent-run-history-explorer"
+import { mapSessionMessagesToHistoryEvents } from "@/features/agent-runs/lib/map-session-messages-to-history-events"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -63,29 +64,7 @@ export const AgentRunMessages = ({ agentRunId }: AgentRunMessagesProps) => {
     )
   }
 
-  return (
-    <SectionCard>
-      <SectionCardHeader>
-        <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold text-foreground">
-            OpenCode History
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Conversation view with tool activity inline.
-          </p>
-        </div>
-      </SectionCardHeader>
-      <SectionCardContent className="flex flex-col gap-6 bg-gradient-to-b from-muted to-card">
-        {messagesQuery.data.messages.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No OpenCode messages were returned for this run.
-          </p>
-        ) : (
-          messagesQuery.data.messages.map((message) => (
-            <AgentRunMessageItem key={message.id} message={message} />
-          ))
-        )}
-      </SectionCardContent>
-    </SectionCard>
-  )
+  const events = mapSessionMessagesToHistoryEvents(messagesQuery.data.messages)
+
+  return <AgentRunHistoryExplorer events={events} />
 }
