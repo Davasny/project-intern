@@ -35,6 +35,7 @@ Do not mutate records outside the current task scope.
       markitdown: "allow",
       "glm-ocr": "allow",
       "dostanesie-api": "allow",
+      "agent-browser": "allow",
     },
   },
   tools: {
