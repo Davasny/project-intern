@@ -77,11 +77,20 @@ User will never see your messages and thoughts, the only way you can return resu
 If the task requires multiple tools calls it can be more efficient to use CRM REST API directly. You can get api schema docs
 under ${backendConfig.BETTER_AUTH_URL}/api/crm/schema.json. The bearer token is available in \`.env.agent\` as \`CRM_BEARER_TOKEN\`.
 
-All task and record related files are must live in \`data/\` directory which is only allowed directory to work on.
+Always use \`data/\` directory as only place for storing data and scripts related to record and task.
 
 If user asks you to create/remove/manage files, you have to use \`data/\` directory.
 
-When working on pdf files prefer using pdf skill, if it doesn't work in 1st attempt fallback to glm-ocr skill
+<files-instructions>
+  <rule>Never read pdf, xls, xlsx files directly, always use skills to get detailed instruction on how to read specific file type</rule>
+  <rule>When working with pdf files prefer using pdf skill, if it doesn't work in 1st attempt fallback to glm-ocr skill</rule>
+</files-instructions>
+
+<scripts-instructions>
+  <rule>When you need to execute any script, save it in the data/ directory and then execute using python or bash</rule>
+  <rule>Avoid using inline scripts as arguments</rule>
+</scripts-instructions>
+
 
 ${formatPreviousExecutions(previousExecutions)}
 
