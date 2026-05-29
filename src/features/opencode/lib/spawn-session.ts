@@ -60,7 +60,10 @@ export const spawnSession = async ({
     projectSkillsDirectory: skillsDirectory,
   })
 
-  const started = await startInteractiveServer({ organizationId })
+  const started = await startInteractiveServer({
+    organizationId,
+    runtimeTemperature: null,
+  })
 
   const envAgentPath = path.join(directory, ".env.agent")
   await fs.writeFile(envAgentPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)

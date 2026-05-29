@@ -116,26 +116,30 @@ export const opencodeRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
+      let performed = false
+
       if (input.agentRunId && input.taskRecordId) {
         await stopDebugSession({
           agentRunId: input.agentRunId,
           taskRecordId: input.taskRecordId,
         })
-        return
+        performed = true
       }
 
       if (input.serverId) {
         await stopInteractiveServer({
           serverId: input.serverId,
         })
-        return
+        performed = true
       }
 
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message:
-          "Either serverId or (agentRunId and taskRecordId) must be provided.",
-      })
+      if (!performed) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Either serverId or (agentRunId and taskRecordId) must be provided.",
+        })
+      }
     }),
   listSessions: protectedProcedure.input(projectScopeSchema).query(async () => {
     const sessions = await listSessionsOnExternalServer()

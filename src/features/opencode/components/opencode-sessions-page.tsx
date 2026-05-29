@@ -69,24 +69,38 @@ export const OpencodeSessionsPage = () => {
     const data = spawnMutation.data
     if (!data) return
 
+    const payload: {
+      agentRunId?: string
+      serverId?: string
+      taskRecordId?: string
+    } = {}
+
+    if (
+      "agentRunId" in data &&
+      typeof data.agentRunId === "string"
+    ) {
+      payload.agentRunId = data.agentRunId
+    }
+
+    if (
+      "taskRecordId" in data &&
+      typeof data.taskRecordId === "string"
+    ) {
+      payload.taskRecordId = data.taskRecordId
+    }
+
+    if (
+      "serverId" in data &&
+      typeof data.serverId === "string" &&
+      data.serverId.length > 0
+    ) {
+      payload.serverId = data.serverId
+    }
+
+    if (Object.keys(payload).length === 0) return
+
     try {
-      if (
-        "agentRunId" in data &&
-        "taskRecordId" in data &&
-        typeof data.agentRunId === "string" &&
-        typeof data.taskRecordId === "string"
-      ) {
-        await stopMutation.mutateAsync({
-          agentRunId: data.agentRunId,
-          taskRecordId: data.taskRecordId,
-        })
-      } else if (
-        "serverId" in data &&
-        typeof data.serverId === "string" &&
-        data.serverId.length > 0
-      ) {
-        await stopMutation.mutateAsync({ serverId: data.serverId })
-      }
+      await stopMutation.mutateAsync(payload)
     } catch {
       // Error state captured by stopMutation.isError
     }

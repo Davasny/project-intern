@@ -14,7 +14,7 @@ import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-wo
 import { linkProjectSkillsToWorkspace } from "@/features/execution/lib/link-project-skills-to-workspace"
 import { prepareRecordWorkspaceData } from "@/features/execution/lib/prepare-record-workspace-data"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
-import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
+import { startInteractiveServer } from "@/features/opencode/lib/get-opencode-client"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { projectTable } from "@/features/projects/db"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
@@ -254,55 +254,59 @@ export const spawnDebugSession = async ({
     "Record workspace data prepared",
   )
 
-  debugLogger.info("Creating OpenCode session via withOpencodeForOrg")
+  debugLogger.info("Starting OpenCode server via startInteractiveServer")
 
-  return await withOpencodeForOrg({
-    fn: async ({ client, mcpToken }) => {
-      const envAgentPath = path.join(workspace.workspaceDirectory, ".env.agent")
-      await fs.writeFile(envAgentPath, `CRM_BEARER_TOKEN=${mcpToken}\n`)
-      debugLogger.info({ envAgentPath }, "Wrote .env.agent")
-      const sessionTitle = title || `${task.title} · ${record.name}`
+  const started = await startInteractiveServer({
+    organizationId,
+    runtimeTemperature: resolvedTemperature,
+  })
 
-      debugLogger.info(
-        { workspaceDirectory: workspace.workspaceDirectory },
-        "Creating OpenCode session",
-      )
+  const envAgentPath = path.join(workspace.workspaceDirectory, ".env.agent")
+  await fs.writeFile(envAgentPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)
+  debugLogger.info({ envAgentPath }, "Wrote .env.agent")
 
-      const session = await client.session.create({
-        body: { title: sessionTitle },
-        query: { directory: workspace.workspaceDirectory },
-      })
+  const sessionTitle = title || `${task.title} · ${record.name}`
 
-      if (!session.data) {
-        throw new Error("OpenCode session could not be created.")
-      }
+  debugLogger.info(
+    { workspaceDirectory: workspace.workspaceDirectory },
+    "Creating OpenCode session",
+  )
 
-      debugLogger.info(
-        { sessionId: session.data.id },
-        "OpenCode session created, transitioning to running",
-      )
+  const session = await started.client.session.create({
+    body: { title: sessionTitle },
+    query: { directory: workspace.workspaceDirectory },
+  })
 
-      await transitionToRunning({
-        agentRunId,
-        taskRecordId,
-        directory: workspace.workspaceDirectory,
-        model: resolvedModel,
-      })
+  if (!session.data) {
+    throw new Error("OpenCode session could not be created.")
+  }
 
-      debugLogger.info("Loading schema and relations for debug context")
+  debugLogger.info(
+    { sessionId: session.data.id },
+    "OpenCode session created, transitioning to running",
+  )
 
-      const [schema, relations, files] = await Promise.all([
-        getActiveProjectSchemaVersionByProjectId({ projectId }),
-        listRecordRelationsByProjectId({ projectId, recordId }),
-        listRecordFiles({
-          organizationId,
-          projectId,
-          recordId,
-        }),
-      ])
+  await transitionToRunning({
+    agentRunId,
+    taskRecordId,
+    directory: workspace.workspaceDirectory,
+    model: resolvedModel,
+  })
 
-      const agentsMdPath = path.join(workspace.workspaceDirectory, "AGENTS.md")
-      const agentsMd = `# Agent Debug Session
+  debugLogger.info("Loading schema and relations for debug context")
+
+  const [schema, relations, files] = await Promise.all([
+    getActiveProjectSchemaVersionByProjectId({ projectId }),
+    listRecordRelationsByProjectId({ projectId, recordId }),
+    listRecordFiles({
+      organizationId,
+      projectId,
+      recordId,
+    }),
+  ])
+
+  const agentsMdPath = path.join(workspace.workspaceDirectory, "AGENTS.md")
+  const agentsMd = `# Agent Debug Session
 
 ## Task
 **${task.title}**
@@ -346,37 +350,31 @@ ${JSON.stringify(
 - This is an interactive debug session
 - When done, use "Stop Server" in the UI to clean up
 `
-      await fs.writeFile(agentsMdPath, agentsMd)
-      debugLogger.info({ agentsMdPath }, "Wrote AGENTS.md")
+  await fs.writeFile(agentsMdPath, agentsMd)
+  debugLogger.info({ agentsMdPath }, "Wrote AGENTS.md")
 
-      const serverUrl =
-        backendConfig.CRM_OPENCODE_BASE_URL ??
-        `http://${backendConfig.CRM_OPENCODE_HOST}:${String(backendConfig.CRM_OPENCODE_PORT)}`
-      const cliCommand = buildAttachCommand(
-        serverUrl,
-        session.data.id,
-        workspace.workspaceDirectory,
-      )
+  const serverUrl = started.baseUrl
+  const cliCommand = buildAttachCommand(
+    serverUrl,
+    session.data.id,
+    workspace.workspaceDirectory,
+  )
 
-      debugLogger.info(
-        { sessionId: session.data.id, agentRunId, taskRecordId },
-        "Debug session spawned successfully",
-      )
+  debugLogger.info(
+    { sessionId: session.data.id, agentRunId, taskRecordId },
+    "Debug session spawned successfully",
+  )
 
-      return {
-        agentRunId,
-        baseUrl: serverUrl,
-        cliCommand,
-        directory: workspace.workspaceDirectory,
-        port: null,
-        serverId: null,
-        sessionId: session.data.id,
-        taskRecordId,
-      }
-    },
-    organizationId,
-    runtimeTemperature: resolvedTemperature,
-  })
+  return {
+    agentRunId,
+    baseUrl: serverUrl,
+    cliCommand,
+    directory: workspace.workspaceDirectory,
+    port: started.port,
+    serverId: started.serverId ?? null,
+    sessionId: session.data.id,
+    taskRecordId,
+  }
 }
 
 type StopDebugSessionParams = {

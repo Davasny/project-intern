@@ -224,8 +224,10 @@ const getInteractiveServersMap = (): Map<string, RunningInteractiveServer> => {
 
 export const startInteractiveServer = async ({
   organizationId,
+  runtimeTemperature,
 }: {
   organizationId: string
+  runtimeTemperature: number | null
 }) => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
     const client = createOpencodeClient({
@@ -242,7 +244,7 @@ export const startInteractiveServer = async ({
 
   const server = await startEmbeddedServer({
     organizationId,
-    runtimeTemperature: null,
+    runtimeTemperature,
   })
 
   const dbRow = await db
