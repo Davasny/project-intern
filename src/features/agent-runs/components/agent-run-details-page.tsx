@@ -311,7 +311,10 @@ export const AgentRunDetailsPage = ({
           </SectionCardContent>
         </SectionCard>
       ) : null}
-      <AgentRunMessages agentRunId={run.id} />
+      <AgentRunMessages
+        agentRunId={run.id}
+        isRunActive={isAgentRunStateActive(run.state)}
+      />
     </div>
   )
 }

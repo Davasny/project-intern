@@ -12,9 +12,13 @@ import { useTRPC } from "@/lib/trpc/client"
 
 type AgentRunMessagesProps = {
   agentRunId: string
+  isRunActive: boolean
 }
 
-export const AgentRunMessages = ({ agentRunId }: AgentRunMessagesProps) => {
+export const AgentRunMessages = ({
+  agentRunId,
+  isRunActive,
+}: AgentRunMessagesProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const messagesQuery = useQuery({
@@ -23,6 +27,8 @@ export const AgentRunMessages = ({ agentRunId }: AgentRunMessagesProps) => {
       organizationSlug,
       projectSlug,
     }),
+    refetchInterval: isRunActive ? 2000 : false,
+    refetchOnWindowFocus: true,
   })
 
   if (messagesQuery.isLoading) {
