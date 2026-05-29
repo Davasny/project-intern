@@ -2,7 +2,16 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
+import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import { TaskRecordRunStatusBadge } from "@/components/ui/status-badge/task-record-run-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
@@ -65,23 +74,52 @@ export const RecordLinkedTaskRow = ({
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
+
+  const invalidateRecordTaskQueries = async () => {
+    await queryClient.invalidateQueries(
+      trpc.records.getById.queryFilter({
+        organizationSlug,
+        projectSlug,
+        recordId,
+      }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.records.list.queryFilter({
+        organizationSlug,
+        projectSlug,
+      }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.tasks.getById.queryFilter({
+        organizationSlug,
+        projectSlug,
+        taskId: task.taskId,
+      }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.tasks.list.queryFilter({
+        organizationSlug,
+        projectSlug,
+      }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.projects.overview.queryFilter({
+        organizationSlug,
+        projectSlug,
+      }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.execution.getMonitor.queryFilter({
+        organizationSlug,
+        projectSlug,
+      }),
+    )
+  }
+
   const retryTaskRecordMutation = useMutation(
     trpc.records.retryTaskRecord.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries(
-          trpc.records.getById.queryFilter({
-            organizationSlug,
-            projectSlug,
-            recordId,
-          }),
-        )
-        await queryClient.invalidateQueries(
-          trpc.execution.getMonitor.queryFilter({
-            organizationSlug,
-            projectSlug,
-          }),
-        )
-      },
+      onSuccess: invalidateRecordTaskQueries,
     }),
   )
   const canRetry = isRetryableState(task.state)
@@ -104,21 +142,7 @@ export const RecordLinkedTaskRow = ({
 
   const triggerTaskRecordMutation = useMutation(
     trpc.records.triggerTaskRecord.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries(
-          trpc.records.getById.queryFilter({
-            organizationSlug,
-            projectSlug,
-            recordId,
-          }),
-        )
-        await queryClient.invalidateQueries(
-          trpc.execution.getMonitor.queryFilter({
-            organizationSlug,
-            projectSlug,
-          }),
-        )
-      },
+      onSuccess: invalidateRecordTaskQueries,
     }),
   )
 
@@ -134,15 +158,46 @@ export const RecordLinkedTaskRow = ({
     }
   }
 
+  const resetDownstreamTaskRecordMutation = useMutation(
+    trpc.records.resetDownstreamTaskRecord.mutationOptions({
+      onSuccess: async (result) => {
+        if (result.resetCount === 0) {
+          toast.info("No terminal downstream task-records to reset.")
+        } else {
+          toast.success(
+            `Reset ${result.resetCount} downstream task-record${result.resetCount === 1 ? "" : "s"} for this record.`,
+          )
+        }
+        await invalidateRecordTaskQueries()
+        setIsResetDialogOpen(false)
+      },
+      onError: () => {
+        toast.error("Failed to reset downstream task-records for this record.")
+      },
+    }),
+  )
+
+  const handleResetDownstream = async () => {
+    await resetDownstreamTaskRecordMutation.mutateAsync({
+      organizationSlug,
+      projectSlug,
+      recordId,
+      taskRecordId: task.taskRecordId,
+    })
+  }
+
   const actionError =
-    triggerTaskRecordMutation.error ?? retryTaskRecordMutation.error
+    triggerTaskRecordMutation.error ??
+    retryTaskRecordMutation.error ??
+    resetDownstreamTaskRecordMutation.error
   const latestAgentRun = task.latestAgentRun
   const latestRunHref = latestAgentRun
     ? `/app/${organizationSlug}/${projectSlug}/execution/runs/${latestAgentRun.id}`
     : null
 
   return (
-    <TableRow>
+    <>
+      <TableRow>
       <TableCell>
         <Link
           className="font-medium text-foreground hover:text-muted-foreground"
@@ -178,27 +233,34 @@ export const RecordLinkedTaskRow = ({
       </TableCell>
       <TableCell>
         <div className="flex flex-col gap-1">
-          {canTrigger ? (
+          <div className="flex flex-row gap-2">
+            {canTrigger ? (
+              <Button
+                disabled={triggerTaskRecordMutation.isPending}
+                onClick={handleTrigger}
+                variant="secondary"
+              >
+                {triggerTaskRecordMutation.isPending
+                  ? "Triggering..."
+                  : "Trigger"}
+              </Button>
+            ) : canRetry ? (
+              <Button
+                disabled={retryTaskRecordMutation.isPending}
+                onClick={handleRetry}
+                variant="secondary"
+              >
+                {retryTaskRecordMutation.isPending ? "Retrying..." : "Retry"}
+              </Button>
+            ) : null}
             <Button
-              disabled={triggerTaskRecordMutation.isPending}
-              onClick={handleTrigger}
-              variant="secondary"
+              disabled={resetDownstreamTaskRecordMutation.isPending}
+              onClick={() => setIsResetDialogOpen(true)}
+              variant="outline"
             >
-              {triggerTaskRecordMutation.isPending
-                ? "Triggering..."
-                : "Trigger"}
+              Reset downstream
             </Button>
-          ) : canRetry ? (
-            <Button
-              disabled={retryTaskRecordMutation.isPending}
-              onClick={handleRetry}
-              variant="secondary"
-            >
-              {retryTaskRecordMutation.isPending ? "Retrying..." : "Retry"}
-            </Button>
-          ) : (
-            <span className="text-sm text-muted-foreground">—</span>
-          )}
+          </div>
           {actionError ? (
             <span className="max-w-80 text-xs text-destructive">
               {actionError.message}
@@ -206,6 +268,37 @@ export const RecordLinkedTaskRow = ({
           ) : null}
         </div>
       </TableCell>
-    </TableRow>
+      </TableRow>
+      <Dialog onOpenChange={setIsResetDialogOpen} open={isResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset downstream tasks for this record</DialogTitle>
+            <DialogDescription>
+              This will reset completed and skipped task-records from “
+              {task.title}” onward back to waiting state for this record only.
+              Other records will not be affected.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-row justify-end gap-2">
+            <Button
+              onClick={() => setIsResetDialogOpen(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={resetDownstreamTaskRecordMutation.isPending}
+              onClick={handleResetDownstream}
+              type="button"
+            >
+              {resetDownstreamTaskRecordMutation.isPending
+                ? "Resetting..."
+                : "Reset downstream"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

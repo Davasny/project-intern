@@ -316,11 +316,17 @@ export const TaskDetailsPage = ({
                   <TableHeader>Model</TableHeader>
                   <TableHeader>Temperature</TableHeader>
                   <TableHeader>Last transition</TableHeader>
+                  <TableHeader>Actions</TableHeader>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {taskQuery.data.taskRecords.map((taskRecord) => (
-                  <TaskRecordRow key={taskRecord.id} taskRecord={taskRecord} />
+                  <TaskRecordRow
+                    key={taskRecord.id}
+                    taskId={taskQuery.data.id}
+                    taskRecord={taskRecord}
+                    taskTitle={taskQuery.data.title}
+                  />
                 ))}
               </TableBody>
             </DataTable>
@@ -374,8 +380,8 @@ export const TaskDetailsPage = ({
           <DialogHeader>
             <DialogTitle>Reset downstream tasks</DialogTitle>
             <DialogDescription>
-              This will reset all completed and skipped task-records for tasks
-              after this one back to waiting state. Active and in-progress
+              This will reset all completed and skipped task-records for this
+              task and later tasks back to waiting state. Active and in-progress
               task-records will not be affected. The scheduler will pick them up
               for re-execution.
             </DialogDescription>

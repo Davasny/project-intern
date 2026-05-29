@@ -18,6 +18,7 @@ import {
   recordInputSchema,
   recordUpdateInputSchema,
 } from "@/features/records/schemas/record-input"
+import { resetDownstreamTaskRecordsForRecord } from "@/features/task-records/lib/reset-downstream-task-records-for-record"
 import { retryTaskRecordForRecord } from "@/features/task-records/lib/retry-task-record-for-record"
 import { triggerTaskRecordForRecord } from "@/features/task-records/lib/trigger-task-record-for-record"
 import { protectedProcedure, router } from "@/lib/trpc/init"
@@ -107,6 +108,35 @@ export const recordsRouter = router({
       }
 
       return retryTaskRecordForRecord({
+        actorId: ctx.session.user.id,
+        organizationId: project.organizationId,
+        projectId: project.id,
+        recordId: input.recordId,
+        taskRecordId: input.taskRecordId,
+      })
+    }),
+  resetDownstreamTaskRecord: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        recordId: z.string().uuid(),
+        taskRecordId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return resetDownstreamTaskRecordsForRecord({
         actorId: ctx.session.user.id,
         organizationId: project.organizationId,
         projectId: project.id,

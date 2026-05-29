@@ -9,27 +9,42 @@ import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
-type ResetDownstreamTaskRecordsParams = {
+type ResetDownstreamTaskRecordsForRecordParams = {
+  actorId: string
   organizationId: string
   projectId: string
-  taskId: string
+  recordId: string
+  taskRecordId: string
 }
 
-export const resetDownstreamTaskRecords = async ({
+export const resetDownstreamTaskRecordsForRecord = async ({
+  actorId,
   organizationId,
   projectId,
-  taskId,
-}: ResetDownstreamTaskRecordsParams) => {
-  const targetTask = await db
-    .select({ sortOrder: taskTable.sortOrder, title: taskTable.title })
-    .from(taskTable)
-    .where(and(eq(taskTable.id, taskId), eq(taskTable.projectId, projectId)))
+  recordId,
+  taskRecordId,
+}: ResetDownstreamTaskRecordsForRecordParams) => {
+  const targetTaskRecord = await db
+    .select({
+      sortOrder: taskTable.sortOrder,
+      taskId: taskTable.id,
+      title: taskTable.title,
+    })
+    .from(taskRecordTable)
+    .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
+    .where(
+      and(
+        eq(taskRecordTable.id, taskRecordId),
+        eq(taskRecordTable.recordId, recordId),
+        eq(taskTable.projectId, projectId),
+      ),
+    )
     .then((rows) => rows[0] ?? null)
 
-  if (!targetTask) {
+  if (!targetTaskRecord) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "Task not found.",
+      message: "Task record was not found.",
     })
   }
 
@@ -42,23 +57,23 @@ export const resetDownstreamTaskRecords = async ({
     .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
     .where(
       and(
+        eq(taskRecordTable.recordId, recordId),
         eq(taskTable.projectId, projectId),
-        gte(taskTable.sortOrder, targetTask.sortOrder),
+        gte(taskTable.sortOrder, targetTaskRecord.sortOrder),
         inArray(taskRecordTable.state, terminalTaskRecordStates),
       ),
     )
 
   if (downstreamRecords.length === 0) {
     logger.info(
-      { taskId, projectId },
-      "No terminal downstream task-records to reset",
+      { projectId, recordId, taskRecordId },
+      "No terminal downstream task-records to reset for record",
     )
     return { affectedTaskIds: [], resetCount: 0 }
   }
 
   let resetCount = 0
   const affectedTaskIds = new Set<string>()
-
   const resetTimestamp = new Date()
 
   for (const record of downstreamRecords) {
@@ -71,16 +86,16 @@ export const resetDownstreamTaskRecords = async ({
 
         const scope = await getTaskRecordActivityScope(record.id)
         await createActivityLogEvent({
-          actorId: null,
-          actorType: "system",
+          actorId,
+          actorType: "user",
           agentRunId: null,
           database: db,
           entityId: record.id,
           entityType: "taskRecord",
-          eventType: "taskRecord.reset_downstream",
+          eventType: "taskRecord.reset_downstream_for_record",
           organizationId,
           payload: {
-            downstreamOfTaskTitle: targetTask.title,
+            downstreamOfTaskTitle: targetTaskRecord.title,
             recordName: scope.recordName,
             taskTitle: scope.taskTitle,
           },
@@ -95,7 +110,7 @@ export const resetDownstreamTaskRecords = async ({
     } catch (error) {
       logger.warn(
         { error, taskRecordId: record.id },
-        "Failed to reset downstream task-record",
+        "Failed to reset downstream task-record for record",
       )
     }
   }
@@ -104,10 +119,11 @@ export const resetDownstreamTaskRecords = async ({
     {
       affectedTaskIds: [...affectedTaskIds],
       projectId,
+      recordId,
       resetCount,
-      taskId,
+      taskRecordId,
     },
-    "Reset downstream task-records",
+    "Reset downstream task-records for record",
   )
 
   return {
