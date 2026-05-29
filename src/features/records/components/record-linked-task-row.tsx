@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
-import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-status-badge"
+import { TaskRecordRunStatusBadge } from "@/components/ui/status-badge/task-record-run-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import {
@@ -136,6 +136,10 @@ export const RecordLinkedTaskRow = ({
 
   const actionError =
     triggerTaskRecordMutation.error ?? retryTaskRecordMutation.error
+  const latestAgentRun = task.latestAgentRun
+  const latestRunHref = latestAgentRun
+    ? `/app/${organizationSlug}/${projectSlug}/execution/runs/${latestAgentRun.id}`
+    : null
 
   return (
     <TableRow>
@@ -149,12 +153,10 @@ export const RecordLinkedTaskRow = ({
       </TableCell>
       <TableCell>
         <div className="flex flex-col gap-1">
-          <Link
-            className="inline-flex w-fit rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            href={`/app/${organizationSlug}/${projectSlug}/records/${recordId}`}
-          >
-            <TaskRecordStatusBadge state={task.state} />
-          </Link>
+          <TaskRecordRunStatusBadge
+            runHref={latestRunHref}
+            state={task.state}
+          />
           {task.state === "failed" && getFailureMessage(task) ? (
             <span className="text-xs text-rose-700">
               {getFailureMessage(task)}
@@ -163,12 +165,12 @@ export const RecordLinkedTaskRow = ({
         </div>
       </TableCell>
       <TableCell>
-        {task.latestAgentRun ? (
+        {latestAgentRun ? (
           <Link
             className="cursor-pointer"
-            href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${task.latestAgentRun.id}`}
+            href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${latestAgentRun.id}`}
           >
-            <RunStatusBadge state={task.latestAgentRun.state} />
+            <RunStatusBadge state={latestAgentRun.state} />
           </Link>
         ) : (
           <span className="text-sm text-muted-foreground">No run</span>

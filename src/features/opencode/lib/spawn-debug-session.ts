@@ -240,7 +240,14 @@ export const spawnDebugSession = async ({
   debugLogger.info("Ensuring project Python environment")
   const pythonEnv = await ensureProjectPythonEnv({ projectId })
   debugLogger.info(
-    { pythonPath: pythonEnv.pythonPath },
+    {
+      installCount: pythonEnv.installCount,
+      isNew: pythonEnv.isNew,
+      pythonPath: pythonEnv.pythonPath,
+      requirementsPath: pythonEnv.requirementsPath,
+      skippedInstall: pythonEnv.skippedInstall,
+      venvPath: pythonEnv.venvPath,
+    },
     "Python environment ready",
   )
 

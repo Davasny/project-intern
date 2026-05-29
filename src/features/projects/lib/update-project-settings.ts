@@ -3,12 +3,14 @@ import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import { writeProjectAgentRequirements } from "@/features/projects/lib/write-project-agent-requirements"
 import { db } from "@/lib/db"
 import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
 import { validateRuntimeTemperature } from "@/lib/llm/validate-runtime-temperature"
 import { logger } from "@/lib/logger"
 
 const updateProjectSettingsInputSchema = z.object({
+  agentPythonRequirements: z.string(),
   defaultModel: z.string().trim().min(1),
   defaultTemperature: z.number(),
   isAutopickEnabled: z.boolean(),
@@ -64,23 +66,35 @@ export const updateProjectSettings = async ({
   const [updated] = await db
     .update(projectTable)
     .set({
+      agentPythonRequirements: input.agentPythonRequirements,
       defaultModel: validatedModel,
       defaultTemperature: validatedTemperature,
       isAutopickEnabled: input.isAutopickEnabled,
     })
     .where(eq(projectTable.id, project.id))
     .returning({
+      agentPythonRequirements: projectTable.agentPythonRequirements,
       defaultModel: projectTable.defaultModel,
       defaultTemperature: projectTable.defaultTemperature,
       isAutopickEnabled: projectTable.isAutopickEnabled,
     })
 
+  const requirementsFile = await writeProjectAgentRequirements({
+    projectId: project.id,
+    requirements: input.agentPythonRequirements,
+  })
+
   logger.info(
     {
+      agentPythonRequirementsBytes: Buffer.byteLength(
+        input.agentPythonRequirements,
+        "utf8",
+      ),
       defaultModel: validatedModel,
       defaultTemperature: validatedTemperature,
       isAutopickEnabled: input.isAutopickEnabled,
       projectId: project.id,
+      requirementsPath: requirementsFile.requirementsPath,
       userId,
     },
     "Updated project default runtime settings",

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
-import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-status-badge"
+import { TaskRecordRunStatusBadge } from "@/components/ui/status-badge/task-record-run-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
 import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
@@ -100,6 +100,10 @@ export const ExecutionMonitorRow = ({
   const canRetry = isRetryableState(taskRecord.state)
   const actionError =
     triggerTaskRecordMutation.error ?? retryTaskRecordMutation.error
+  const latestAgentRun = taskRecord.latestAgentRun
+  const latestRunHref = latestAgentRun
+    ? `/app/${organizationSlug}/${projectSlug}/execution/runs/${latestAgentRun.id}`
+    : null
 
   return (
     <TableRow>
@@ -123,20 +127,18 @@ export const ExecutionMonitorRow = ({
         </div>
       </TableCell>
       <TableCell>
-        <Link
-          className="inline-flex rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          href={`/app/${organizationSlug}/${projectSlug}/records/${taskRecord.recordId}`}
-        >
-          <TaskRecordStatusBadge state={taskRecord.state} />
-        </Link>
+        <TaskRecordRunStatusBadge
+          runHref={latestRunHref}
+          state={taskRecord.state}
+        />
       </TableCell>
       <TableCell>
-        {taskRecord.latestAgentRun ? (
+        {latestAgentRun ? (
           <Link
             className="cursor-pointer"
-            href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${taskRecord.latestAgentRun.id}`}
+            href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${latestAgentRun.id}`}
           >
-            <RunStatusBadge state={taskRecord.latestAgentRun.state} />
+            <RunStatusBadge state={latestAgentRun.state} />
           </Link>
         ) : (
           <span className="text-sm text-muted-foreground">No run yet</span>

@@ -1,5 +1,5 @@
 import { exec } from "node:child_process"
-import { access, mkdir } from "node:fs/promises"
+import { access, mkdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import { promisify } from "node:util"
 import {
@@ -20,6 +20,7 @@ type EnsureProjectPythonEnvResult = {
   requirementsPath: string
   isNew: boolean
   installCount: number
+  skippedInstall: boolean
 }
 
 const VENV_BIN = process.platform === "win32" ? "Scripts" : "bin"
@@ -50,10 +51,15 @@ const runPipInstall = async ({
 }) => {
   const pipPath = path.join(venvPath, VENV_BIN, "pip")
   const { stdout } = await execCommand(
-    `${pipPath} install -r "${requirementsPath}"`,
+    `"${pipPath}" install -r "${requirementsPath}"`,
     path.dirname(venvPath),
   )
   return stdout
+}
+
+const hasInstallableRequirements = async (requirementsPath: string) => {
+  const requirements = await readFile(requirementsPath, "utf8")
+  return requirements.trim().length > 0
 }
 
 const createVenv = async (projectDir: string) => {
@@ -93,11 +99,16 @@ export const ensureProjectPythonEnv = async ({
 
   const requirementsExist = await fileExists(requirementsPath)
   let installCount = 0
+  let skippedInstall = true
 
-  if (requirementsExist) {
+  if (
+    requirementsExist &&
+    (await hasInstallableRequirements(requirementsPath))
+  ) {
     await runPipInstall({ venvPath, requirementsPath })
     const packages = await getPipList(pipPath)
     installCount = packages.length
+    skippedInstall = false
   }
 
   return {
@@ -107,5 +118,6 @@ export const ensureProjectPythonEnv = async ({
     requirementsPath,
     isNew,
     installCount,
+    skippedInstall,
   }
 }

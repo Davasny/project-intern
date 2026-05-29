@@ -1,0 +1,1 @@
+ALTER TABLE "project" ADD COLUMN "agent_python_requirements" text DEFAULT '' NOT NULL;

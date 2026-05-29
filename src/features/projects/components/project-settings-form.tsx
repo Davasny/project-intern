@@ -22,10 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 const projectSettingsFormSchema = z.object({
+  agentPythonRequirements: z.string(),
   defaultModel: z.string().trim().min(1, "Default model is required."),
   defaultTemperature: z.string().trim().min(1, "Default temperature is required."),
   isAutopickEnabled: z.boolean(),
@@ -36,6 +38,7 @@ type ProjectSettingsFormValues = z.infer<typeof projectSettingsFormSchema>
 type ProjectSettingsFormProps = {
   approvedModels: string[]
   debugControlsEnabled: boolean
+  initialAgentPythonRequirements: string
   initialDefaultModel: string
   initialDefaultTemperature: number
   initialIsAutopickEnabled: boolean
@@ -48,6 +51,7 @@ const temperatureOptions = Array.from({ length: 11 }, (_, index) =>
 export const ProjectSettingsForm = ({
   approvedModels,
   debugControlsEnabled,
+  initialAgentPythonRequirements,
   initialDefaultModel,
   initialDefaultTemperature,
   initialIsAutopickEnabled,
@@ -57,6 +61,7 @@ export const ProjectSettingsForm = ({
   const queryClient = useQueryClient()
   const form = useForm<ProjectSettingsFormValues>({
     defaultValues: {
+      agentPythonRequirements: initialAgentPythonRequirements,
       defaultModel: initialDefaultModel,
       defaultTemperature: initialDefaultTemperature.toFixed(1),
       isAutopickEnabled: initialIsAutopickEnabled,
@@ -86,6 +91,7 @@ export const ProjectSettingsForm = ({
   const handleSubmit = form.handleSubmit(async (values) => {
     await updateSettingsMutation.mutateAsync({
       input: {
+        agentPythonRequirements: values.agentPythonRequirements,
         defaultModel: values.defaultModel,
         defaultTemperature: Number(values.defaultTemperature),
         isAutopickEnabled: values.isAutopickEnabled,
@@ -175,6 +181,27 @@ export const ProjectSettingsForm = ({
             )}
           />
         ) : null}
+        <FormField
+          control={form.control}
+          name="agentPythonRequirements"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Agent Python requirements</FormLabel>
+              <FormControl>
+                <Textarea
+                  className="min-h-48 font-mono"
+                  placeholder={"requests==2.32.5\npandas==2.3.3"}
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Written to requirements-agent.txt and installed into the project
+                venv before agents run.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="flex justify-end">
           <Button disabled={updateSettingsMutation.isPending} type="submit">
             {submitLabel}

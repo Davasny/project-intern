@@ -29,6 +29,9 @@ export const projectTable = pgTable(
     slug: text("slug").notNull(),
     displayName: text("display_name").notNull(),
     defaultModel: text("default_model").notNull(),
+    agentPythonRequirements: text("agent_python_requirements")
+      .notNull()
+      .default(""),
     defaultTemperature: numeric("default_temperature", {
       mode: "number",
       precision: 2,

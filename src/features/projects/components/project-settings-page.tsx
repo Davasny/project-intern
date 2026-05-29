@@ -47,6 +47,9 @@ export const ProjectSettingsPage = () => {
           <ProjectSettingsForm
             approvedModels={settingsQuery.data.approvedModels}
             debugControlsEnabled={settingsQuery.data.debugControlsEnabled}
+            initialAgentPythonRequirements={
+              settingsQuery.data.agentPythonRequirements
+            }
             initialDefaultModel={settingsQuery.data.defaultModel}
             initialDefaultTemperature={settingsQuery.data.defaultTemperature}
             initialIsAutopickEnabled={settingsQuery.data.isAutopickEnabled}

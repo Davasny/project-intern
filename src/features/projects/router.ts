@@ -67,6 +67,7 @@ export const projectsRouter = router({
         organizationSlug: z.string().trim().min(1),
         projectSlug: z.string().trim().min(1),
         input: z.object({
+          agentPythonRequirements: z.string(),
           defaultModel: z.string().trim().min(1),
           defaultTemperature: z.number(),
           isAutopickEnabled: z.boolean(),
