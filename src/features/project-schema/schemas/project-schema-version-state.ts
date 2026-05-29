@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const projectSchemaVersionStateSchema = z.enum([
+const projectSchemaVersionStateSchema = z.enum([
   "created",
   "accepted",
   "rejected",

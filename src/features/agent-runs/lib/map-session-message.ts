@@ -262,4 +262,4 @@ const toSessionMessage = ({
   } satisfies AgentRunSessionMessage
 }
 
-export { toMessageError, toPart, toSessionMessage, toTokens }
+export { toSessionMessage }

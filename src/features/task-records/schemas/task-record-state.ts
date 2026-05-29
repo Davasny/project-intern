@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const taskRecordStateSchema = z.enum([
+const taskRecordStateSchema = z.enum([
   "waiting",
   "picked_up",
   "picked_up_failed",

@@ -2,7 +2,7 @@ import { z } from "zod"
 import { taskFailureSchema } from "@/features/execution/schemas/task-failure"
 import { projectSchemaDefinitionSchema } from "@/features/project-schema/schemas/project-schema-version"
 
-export const executionScopeInputSchema = z.object({
+const executionScopeInputSchema = z.object({
   agentRunId: z.string().uuid(),
   projectId: z.string().uuid(),
   recordId: z.string().uuid(),
@@ -14,11 +14,7 @@ export const crmRecordReadInputSchema = executionScopeInputSchema
 
 export type CrmRecordReadInput = z.infer<typeof crmRecordReadInputSchema>
 
-export const crmProjectReadSchemaInputSchema = executionScopeInputSchema
-
-export type CrmProjectReadSchemaInput = z.infer<
-  typeof crmProjectReadSchemaInputSchema
->
+export type CrmProjectReadSchemaInput = z.infer<typeof crmRecordReadInputSchema>
 
 export const crmProjectSchemaProposeVersionInputSchema = z.object({
   projectId: z.string().uuid(),

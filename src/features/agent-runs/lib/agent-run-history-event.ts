@@ -6,7 +6,7 @@ export type AgentRunHistoryEventKind =
   | "reasoning"
   | "tool"
 
-export type AgentRunHistoryEventDetail = {
+type AgentRunHistoryEventDetail = {
   content: string | null
   error: string | null
   input: Record<string, unknown> | null
@@ -14,7 +14,7 @@ export type AgentRunHistoryEventDetail = {
   output: string | null
 }
 
-export type AgentRunHistoryEventTokens = {
+type AgentRunHistoryEventTokens = {
   cacheRead: number
   cacheWrite: number
   input: number

@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const taskSummaryStateSchema = z.enum([
+const taskSummaryStateSchema = z.enum([
   "not_started",
   "in_progress",
   "partially_completed",

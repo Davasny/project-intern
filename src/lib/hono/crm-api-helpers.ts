@@ -2,7 +2,7 @@ import { z } from "@hono/zod-openapi"
 import type { Context } from "hono"
 import type { CrmScope } from "@/lib/crm/types"
 
-export const envelopeSchema = z.object({
+const envelopeSchema = z.object({
   data: z.unknown().nullable(),
   ok: z.boolean(),
 })

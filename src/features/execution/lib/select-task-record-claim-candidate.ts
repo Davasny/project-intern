@@ -23,7 +23,7 @@ type SelectTaskRecordClaimCandidateInput =
       taskRecordId?: never
     }
 
-export type TaskRecordClaimCandidate = NonNullable<
+type TaskRecordClaimCandidate = NonNullable<
   Awaited<ReturnType<typeof claimTaskRecordCandidate>>
 >
 

@@ -1,4 +1,4 @@
-export const artifactStates = [
+const artifactStates = [
   "registered",
   "available",
   "invalidated",

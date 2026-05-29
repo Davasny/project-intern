@@ -4,7 +4,7 @@ export const recordImportPreviewInputSchema = z.object({
   csvContent: z.string().trim().min(1, "CSV content is required."),
 })
 
-export const recordImportCandidateSchema = z.object({
+const recordImportCandidateSchema = z.object({
   context: z.record(z.string(), z.unknown()),
   name: z.string().trim().min(1, "Record name is required."),
   rowNumber: z.number().int().positive(),
@@ -14,13 +14,13 @@ export const recordImportCommitInputSchema = z.object({
   records: z.array(recordImportCandidateSchema).min(1, "No records to import."),
 })
 
-export const recordImportErrorSchema = z.object({
+const recordImportErrorSchema = z.object({
   field: z.string().trim().min(1).nullable(),
   message: z.string().trim().min(1),
   rowNumber: z.number().int().positive().nullable(),
 })
 
-export const recordImportPreviewResultSchema = z.object({
+const recordImportPreviewResultSchema = z.object({
   errors: z.array(recordImportErrorSchema),
   proposedRecords: z.array(recordImportCandidateSchema),
   summary: z.object({
@@ -32,9 +32,6 @@ export const recordImportPreviewResultSchema = z.object({
 
 export type RecordImportCommitInput = z.infer<
   typeof recordImportCommitInputSchema
->
-export type RecordImportPreviewInput = z.infer<
-  typeof recordImportPreviewInputSchema
 >
 export type RecordImportError = z.infer<typeof recordImportErrorSchema>
 export type RecordImportPreviewResult = z.infer<

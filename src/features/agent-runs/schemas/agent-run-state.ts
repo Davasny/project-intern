@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const agentRunStateSchema = z.enum([
+const agentRunStateSchema = z.enum([
   "created",
   "booting",
   "running",
