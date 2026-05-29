@@ -25,18 +25,21 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 import { useTRPC } from "@/lib/trpc/client"
 
 type AgentRunDetailsPageProps = {
-  agentRunId: string
+  anchorAgentRunId: string
+  attemptNumber: number
 }
 
 export const AgentRunDetailsPage = ({
-  agentRunId,
+  anchorAgentRunId,
+  attemptNumber,
 }: AgentRunDetailsPageProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const runQuery = useQuery({
-    ...trpc.agentRuns.getById.queryOptions({
-      agentRunId,
+    ...trpc.agentRuns.getAttempt.queryOptions({
+      agentRunId: anchorAgentRunId,
+      attemptNumber,
       organizationSlug,
       projectSlug,
     }),
@@ -53,8 +56,9 @@ export const AgentRunDetailsPage = ({
     trpc.agentRuns.abort.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries(
-          trpc.agentRuns.getById.queryFilter({
-            agentRunId,
+          trpc.agentRuns.getAttempt.queryFilter({
+            agentRunId: anchorAgentRunId,
+            attemptNumber,
             organizationSlug,
             projectSlug,
           }),
@@ -163,7 +167,7 @@ export const AgentRunDetailsPage = ({
   const handleKill = async () => {
     try {
       await abortMutation.mutateAsync({
-        agentRunId,
+        agentRunId: run.id,
         organizationSlug,
         projectSlug,
       })
@@ -289,11 +293,11 @@ export const AgentRunDetailsPage = ({
                   <TableRow key={sibling.id}>
                     <TableCell>#{sibling.attemptNumber}</TableCell>
                     <TableCell>
-                      {sibling.id === agentRunId ? (
+                      {sibling.id === run.id ? (
                         <RunStatusBadge state={sibling.state} />
                       ) : (
                         <Link
-                          href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${sibling.id}`}
+                          href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${anchorAgentRunId}/attempts/${String(sibling.attemptNumber)}`}
                         >
                           <RunStatusBadge state={sibling.state} />
                         </Link>
@@ -307,7 +311,7 @@ export const AgentRunDetailsPage = ({
           </SectionCardContent>
         </SectionCard>
       ) : null}
-      <AgentRunMessages agentRunId={agentRunId} />
+      <AgentRunMessages agentRunId={run.id} />
     </div>
   )
 }

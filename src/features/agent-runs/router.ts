@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 import { abortAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
+import { getAgentRunAttemptByAnchorRunId } from "@/features/agent-runs/lib/get-agent-run-attempt-by-anchor-run-id"
 import { getAgentRunById } from "@/features/agent-runs/lib/get-agent-run-by-id"
 import { getAgentRunSessionMessages } from "@/features/agent-runs/lib/get-agent-run-session-messages"
 import { listAgentRuns } from "@/features/agent-runs/lib/list-agent-runs"
@@ -33,6 +34,22 @@ export const agentRunsRouter = router({
     .query(async ({ ctx, input }) =>
       getAgentRunById({
         agentRunId: input.agentRunId,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  getAttempt: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        agentRunId: z.string().uuid(),
+        attemptNumber: z.number().int().positive(),
+      }),
+    )
+    .query(async ({ ctx, input }) =>
+      getAgentRunAttemptByAnchorRunId({
+        agentRunId: input.agentRunId,
+        attemptNumber: input.attemptNumber,
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
         userId: ctx.session.user.id,
