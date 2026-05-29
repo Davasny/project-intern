@@ -28,10 +28,11 @@ export const getTaskRecordExecutionScope = async ({
     taskRecordId,
   }
 
-  const [agentRun, project, record, task, taskRecord] = await Promise.all([
+    const [agentRun, project, record, task, taskRecord] = await Promise.all([
     db
       .select({
         attemptNumber: agentRunTable.attemptNumber,
+        directory: agentRunTable.directory,
         id: agentRunTable.id,
         selectedAgent: agentRunTable.selectedAgent,
         selectedModel: agentRunTable.selectedModel,
@@ -192,6 +193,7 @@ export const getTaskRecordExecutionScope = async ({
   return {
     agentRun: {
       attemptNumber: agentRun.attemptNumber,
+      directory: agentRun.directory,
       id: agentRun.id,
       selectedAgent: agentRun.selectedAgent,
       selectedModel: agentRun.selectedModel,

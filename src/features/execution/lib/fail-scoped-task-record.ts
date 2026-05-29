@@ -2,6 +2,7 @@ import {
   completeAgentRunCommand,
   failAgentRunCommand,
 } from "@/features/agent-runs/lib/agent-run-commands"
+import { syncAgentRunMetricsFromSession } from "@/features/agent-runs/lib/sync-agent-run-metrics-from-session"
 import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
 import { mirrorRecordWorkspaceDataToStorage } from "@/features/execution/lib/mirror-record-workspace-data-to-storage"
 import type { TaskFailure } from "@/features/execution/schemas/task-failure"
@@ -77,6 +78,13 @@ export const failScopedTaskRecord = async ({
       },
     })
 
+    syncAgentRunMetricsFromSession({
+      agentRunId: scope.agentRun.id,
+      organizationId: scope.project.organizationId,
+    }).catch(() => {
+      // fire-and-forget: logged internally
+    })
+
     return getTaskRecordExecutionScope(executionScope)
   }
 
@@ -101,6 +109,13 @@ export const failScopedTaskRecord = async ({
       mirroredDataFrom: mirroredWorkspaceData.dataDirectory,
       mirroredDataTo: mirroredWorkspaceData.storageDirectory,
     },
+  })
+
+  syncAgentRunMetricsFromSession({
+    agentRunId: scope.agentRun.id,
+    organizationId: scope.project.organizationId,
+  }).catch(() => {
+    // fire-and-forget: logged internally
   })
 
   return getTaskRecordExecutionScope(executionScope)

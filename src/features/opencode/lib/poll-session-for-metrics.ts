@@ -54,7 +54,7 @@ export const pollSessionForMetrics = async ({
         const finish = (lastAssistantMsg.info as { finish?: string | null })
           .finish
 
-        if (finish) {
+        if (finish && finish !== "tool-calls") {
           log.info(
             { finish, assistantMessageCount: assistantMessages.length },
             "Session finished, fetching messages for metrics",
@@ -171,7 +171,7 @@ async function fetchAndUpdateMetrics({
       if (msg.parts) {
         for (const part of msg.parts) {
           const partType = (part as { type?: string }).type
-          if (partType === "tool_result") {
+          if (partType === "tool") {
             toolCallCount++
           }
         }

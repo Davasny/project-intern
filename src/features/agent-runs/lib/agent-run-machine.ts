@@ -174,17 +174,20 @@ const agentRunMachineDefinition = machine<AgentRunMachineContext>().define({
 
         return {
           ...context,
-          costUsd: event.costUsd,
-          estimatedCostUsd: event.estimatedCostUsd,
+          costUsd: event.costUsd ?? context.costUsd,
+          estimatedCostUsd: event.estimatedCostUsd ?? context.estimatedCostUsd,
           finishedAt: event.finishedAt,
-          inputTokens: event.inputTokens,
-          latencyMs: event.latencyMs,
-          outputTokens: event.outputTokens,
+          inputTokens: event.inputTokens ?? context.inputTokens,
+          latencyMs: event.latencyMs ?? context.latencyMs,
+          outputTokens: event.outputTokens ?? context.outputTokens,
           resultPayload: event.resultPayload,
-          tokenInput: event.tokenInput,
-          tokenOutput: event.tokenOutput,
+          tokenInput: event.tokenInput ?? context.tokenInput,
+          tokenOutput: event.tokenOutput ?? context.tokenOutput,
           toolActivitySummary: event.toolActivitySummary,
-          toolCallCount: event.toolCallCount,
+          toolCallCount:
+            (event.toolCallCount ?? 0) > 0
+              ? event.toolCallCount
+              : context.toolCallCount,
           toolSummary: event.toolSummary,
         }
       },
@@ -239,17 +242,20 @@ const agentRunMachineDefinition = machine<AgentRunMachineContext>().define({
 
         return {
           ...context,
-          costUsd: event.costUsd,
-          estimatedCostUsd: event.estimatedCostUsd,
+          costUsd: event.costUsd ?? context.costUsd,
+          estimatedCostUsd: event.estimatedCostUsd ?? context.estimatedCostUsd,
           failurePayload: event.failurePayload,
           finishedAt: event.finishedAt,
-          inputTokens: event.inputTokens,
-          latencyMs: event.latencyMs,
-          outputTokens: event.outputTokens,
-          tokenInput: event.tokenInput,
-          tokenOutput: event.tokenOutput,
+          inputTokens: event.inputTokens ?? context.inputTokens,
+          latencyMs: event.latencyMs ?? context.latencyMs,
+          outputTokens: event.outputTokens ?? context.outputTokens,
+          tokenInput: event.tokenInput ?? context.tokenInput,
+          tokenOutput: event.tokenOutput ?? context.tokenOutput,
           toolActivitySummary: event.toolActivitySummary,
-          toolCallCount: event.toolCallCount,
+          toolCallCount:
+            (event.toolCallCount ?? 0) > 0
+              ? event.toolCallCount
+              : context.toolCallCount,
           toolSummary: event.toolSummary,
         }
       },
