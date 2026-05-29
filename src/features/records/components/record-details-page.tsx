@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/ui/data-table/data-table"
 import {
   Dialog,
   DialogClose,
@@ -14,29 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
-import { MetadataList } from "@/components/ui/metadata-list/metadata-list"
-import { MetadataListItem } from "@/components/ui/metadata-list/metadata-list-item"
-import { PageHeader } from "@/components/ui/page-header/page-header"
-import { ProgressMetric } from "@/components/ui/progress-metric/progress-metric"
-import { ProgressMetricGrid } from "@/components/ui/progress-metric/progress-metric-grid"
-import { SectionCard } from "@/components/ui/section-card/section-card"
-import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
-import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
-import { RecordStatusBadge } from "@/components/ui/status-badge/record-status-badge"
-import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
-import { Switch } from "@/components/ui/switch"
-import {
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { ProgressStrip } from "@/components/ui/progress-strip/progress-strip"
 import { RecordFilePanel } from "@/features/files/components/record-file-panel"
 import { RecordRelationsSection } from "@/features/record-edges/components/record-relations-section"
-import { RecordForm } from "@/features/records/components/record-form"
-import { RecordLinkedTaskRow } from "@/features/records/components/record-linked-task-row"
+import { RecordConfiguration } from "@/features/records/components/record-configuration"
+import { RecordDetailsHeader } from "@/features/records/components/record-details-header"
+import { RecordLinkedTasksSection } from "@/features/records/components/record-linked-tasks-section"
+import { RecordPrimarySection } from "@/features/records/components/record-primary-section"
 import { useTRPC } from "@/lib/trpc/client"
 
 type RecordDetailsPageProps = {
@@ -173,122 +157,48 @@ export const RecordDetailsPage = ({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              {recordQuery.data.name}
-            </h1>
-            <RecordStatusBadge state={recordQuery.data.state} />
-            {recordQuery.data.state === "active" ||
-            recordQuery.data.state === "inactive" ? (
-              <Switch
-                checked={recordQuery.data.state === "active"}
-                disabled={isTogglePending}
-                onCheckedChange={handleActiveToggle}
-              />
-            ) : null}
-            {recordQuery.data.activeRunSummary ? (
-              <RunStatusBadge state={recordQuery.data.activeRunSummary.state} />
-            ) : null}
-          </div>
-        </div>
-      </PageHeader>
-      <ProgressMetricGrid>
-        <ProgressMetric
-          label="Waiting tasks"
-          value={recordQuery.data.progress.waitingCount}
+      <RecordDetailsHeader
+        activeRunState={recordQuery.data.activeRunSummary?.state ?? null}
+        deleteDisabled={hasActiveTasks}
+        deletePending={deleteMutation.isPending}
+        isTogglePending={isTogglePending}
+        name={recordQuery.data.name}
+        onActiveToggle={handleActiveToggle}
+        onDeleteRecord={() => setShowDeleteDialog(true)}
+        state={recordQuery.data.state}
+      />
+      <ProgressStrip
+        items={[
+          { label: "Waiting", value: recordQuery.data.progress.waitingCount },
+          { label: "Active", value: recordQuery.data.progress.inProgressCount },
+          {
+            label: "Completed",
+            value: recordQuery.data.progress.completedCount,
+          },
+          { label: "Failed", value: recordQuery.data.progress.failedCount },
+        ]}
+      />
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <RecordPrimarySection
+          context={recordQuery.data.context}
+          name={recordQuery.data.name}
+          recordId={recordQuery.data.id}
+          schemaDefinition={recordSchemaQuery.data.schemaDefinition}
+          version={recordQuery.data.version}
         />
-        <ProgressMetric
-          label="Active tasks"
-          value={recordQuery.data.progress.inProgressCount}
+        <RecordConfiguration
+          context={recordQuery.data.context}
+          createdAt={recordQuery.data.createdAt}
+          schemaVersion={recordQuery.data.schemaVersion}
+          updatedAt={recordQuery.data.updatedAt}
+          version={recordQuery.data.version}
         />
-        <ProgressMetric
-          label="Completed tasks"
-          value={recordQuery.data.progress.completedCount}
-        />
-        <ProgressMetric
-          label="Failed tasks"
-          value={recordQuery.data.progress.failedCount}
-        />
-      </ProgressMetricGrid>
-      <SectionCard>
-        <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-foreground">
-            Metadata
-          </h2>
-        </SectionCardHeader>
-        <SectionCardContent className="flex flex-col gap-6">
-          <MetadataList>
-            <MetadataListItem
-              label="Record version"
-              value={String(recordQuery.data.version)}
-            />
-            <MetadataListItem
-              label="Schema version"
-              value={String(recordQuery.data.schemaVersion)}
-            />
-            <MetadataListItem
-              label="Created"
-              value={recordQuery.data.createdAt.toLocaleString()}
-            />
-            <MetadataListItem
-              label="Updated"
-              value={recordQuery.data.updatedAt.toLocaleString()}
-            />
-          </MetadataList>
-          <JsonViewer value={recordQuery.data.context} />
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard>
-        <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-foreground">
-            Edit record
-          </h2>
-        </SectionCardHeader>
-        <SectionCardContent>
-          <RecordForm
-            initialContext={recordQuery.data.context}
-            initialName={recordQuery.data.name}
-            key={`${recordQuery.data.id}-${recordQuery.data.version}`}
-            onSubmitted={() => {}}
-            recordId={recordQuery.data.id}
-            recordVersion={recordQuery.data.version}
-            schemaDefinition={recordSchemaQuery.data.schemaDefinition}
-          />
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard>
-        <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-foreground">
-            Linked tasks
-          </h2>
-        </SectionCardHeader>
-        <SectionCardContent>
-          <DataTable>
-            <TableHead>
-              <TableRow>
-                <TableHeader>Task</TableHeader>
-                <TableHeader>Task record</TableHeader>
-                <TableHeader>Latest run</TableHeader>
-                <TableHeader>Actions</TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {recordQuery.data.linkedTasks
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((task) => (
-                  <RecordLinkedTaskRow
-                    key={task.taskRecordId}
-                    nextWaitingSortOrder={nextWaitingSortOrder}
-                    recordId={recordQuery.data.id}
-                    task={task}
-                  />
-                ))}
-            </TableBody>
-          </DataTable>
-        </SectionCardContent>
-      </SectionCard>
+      </div>
+      <RecordLinkedTasksSection
+        nextWaitingSortOrder={nextWaitingSortOrder}
+        recordId={recordQuery.data.id}
+        tasks={recordQuery.data.linkedTasks}
+      />
       <RecordFilePanel
         organizationSlug={organizationSlug}
         projectSlug={projectSlug}
@@ -299,18 +209,6 @@ export const RecordDetailsPage = ({
         projectSlug={projectSlug}
         recordId={recordQuery.data.id}
       />
-      <div className="flex justify-end pt-4">
-        <Button
-          disabled={hasActiveTasks || deleteMutation.isPending}
-          onClick={() => setShowDeleteDialog(true)}
-          type="button"
-          variant="destructive"
-        >
-          {deleteMutation.isPending
-            ? "Deleting record..."
-            : "Delete this record"}
-        </Button>
-      </div>
       <Dialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <DialogContent>
           <DialogHeader>

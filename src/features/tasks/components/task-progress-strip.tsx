@@ -1,3 +1,5 @@
+import { ProgressStrip } from "@/components/ui/progress-strip/progress-strip"
+
 type TaskProgressStripProps = {
   activeCount: number
   completedCount: number
@@ -16,19 +18,10 @@ const progressItems: {
 ]
 
 export const TaskProgressStrip = (props: TaskProgressStripProps) => (
-  <div className="flex flex-row flex-wrap rounded-xl border border-border bg-card">
-    {progressItems.map((item) => (
-      <div
-        className="flex min-w-28 flex-1 flex-row items-center justify-between gap-3 border-border px-4 py-3 not-last:border-r"
-        key={item.key}
-      >
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {item.label}
-        </span>
-        <span className="text-base font-semibold tabular-nums text-foreground">
-          {props[item.key]}
-        </span>
-      </div>
-    ))}
-  </div>
+  <ProgressStrip
+    items={progressItems.map((item) => ({
+      label: item.label,
+      value: props[item.key],
+    }))}
+  />
 )
