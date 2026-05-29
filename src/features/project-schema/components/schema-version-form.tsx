@@ -3,50 +3,18 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useFieldArray, useForm } from "react-hook-form"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
-import {
-  SchemaFieldForm,
-  type SchemaVersionFormValues,
-} from "@/features/project-schema/components/schema-field-form"
+import { SchemaFieldTable } from "@/features/project-schema/components/schema-field-table"
+import { SchemaVersionFormFooter } from "@/features/project-schema/components/schema-version-form-footer"
 import { formatProjectSchemaDefaultValue } from "@/features/project-schema/lib/format-project-schema-default-value"
 import { parseProjectSchemaDefaultValue } from "@/features/project-schema/lib/parse-project-schema-default-value"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
+import {
+  schemaVersionFormSchema,
+  type SchemaVersionFormValues,
+} from "@/features/project-schema/schemas/schema-version-form-schema"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
-
-const schemaVersionFormSchema = z.object({
-  fields: z.array(
-    z.object({
-      config: z.object({
-        enumOptions: z.string(),
-        max: z.string(),
-        min: z.string(),
-        multilineRows: z.string(),
-      }),
-      defaultValue: z.string(),
-      description: z.string(),
-      key: z.string().trim().min(1),
-      label: z.string().trim().min(1),
-      required: z.boolean(),
-      type: z.enum([
-        "text",
-        "long_text",
-        "number",
-        "boolean",
-        "date",
-        "datetime",
-        "url",
-        "email",
-        "enum",
-        "json",
-        "string_array",
-        "number_array",
-      ]),
-    }),
-  ),
-})
 
 type SchemaVersionFormProps = {
   initialSchemaDefinition: ProjectSchemaDefinition
@@ -179,27 +147,31 @@ export const SchemaVersionForm = ({
   }
 
   const buildCustomFieldsPayload = (values: SchemaVersionFormValues) =>
-    values.fields.map((field) => ({
-      config: {
-        enumOptions: field.config.enumOptions
-          .split(",")
-          .map((option) => option.trim())
-          .filter((option) => option.length > 0),
-        max: parseNumberValue(field.config.max),
-        min: parseNumberValue(field.config.min),
-        multilineRows: parseNumberValue(field.config.multilineRows),
-      },
-      defaultValue: parseProjectSchemaDefaultValue({
+    values.fields.map((field) => {
+      const isSystem: false = false
+
+      return {
+        config: {
+          enumOptions: field.config.enumOptions
+            .split(",")
+            .map((option) => option.trim())
+            .filter((option) => option.length > 0),
+          max: parseNumberValue(field.config.max),
+          min: parseNumberValue(field.config.min),
+          multilineRows: parseNumberValue(field.config.multilineRows),
+        },
+        defaultValue: parseProjectSchemaDefaultValue({
+          type: field.type,
+          value: field.defaultValue,
+        }),
+        description: field.description,
+        isSystem,
+        key: field.key,
+        label: field.label,
+        required: field.required,
         type: field.type,
-        value: field.defaultValue,
-      }),
-      description: field.description,
-      isSystem: false as const,
-      key: field.key,
-      label: field.label,
-      required: field.required,
-      type: field.type,
-    }))
+      }
+    })
 
   const handleCreateVersion = form.handleSubmit(async (values) => {
     await createVersionMutation.mutateAsync({
@@ -222,55 +194,20 @@ export const SchemaVersionForm = ({
 
   return (
     <Form {...form}>
-      <form className="flex flex-col gap-4" onSubmit={handleCreateVersion}>
-        <Button
-          className="self-start"
-          onClick={handleAddField}
-          type="button"
-          variant="secondary"
-        >
-          Add field
-        </Button>
-        {fieldArray.fields.length > 0 ? (
-          fieldArray.fields.map((field, index) => (
-            <SchemaFieldForm
-              control={form.control}
-              form={form}
-              index={index}
-              key={field.id}
-              onRemove={() => fieldArray.remove(index)}
-            />
-          ))
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No custom fields yet. System fields are always included.
-          </p>
-        )}
-        <div className="flex flex-row gap-2">
-          <Button
-            disabled={isSubmitting}
-            onClick={handleCreateDraft}
-            type="button"
-            variant="outline"
-          >
-            {createDraftMutation.isPending
-              ? totalRecordCount === 0
-                ? "Saving draft..."
-                : "Creating draft..."
-              : totalRecordCount === 0
-                ? "Save draft"
-                : "Create draft"}
-          </Button>
-          <Button disabled={isSubmitting} type="submit">
-            {createVersionMutation.isPending
-              ? totalRecordCount === 0
-                ? "Applying changes..."
-                : "Creating schema version..."
-              : totalRecordCount === 0
-                ? "Apply changes"
-                : "Create schema version"}
-          </Button>
-        </div>
+      <form className="flex min-h-0 flex-col gap-4" onSubmit={handleCreateVersion}>
+        <SchemaFieldTable
+          fields={fieldArray.fields}
+          form={form}
+          onAddField={handleAddField}
+          onRemoveField={fieldArray.remove}
+        />
+        <SchemaVersionFormFooter
+          createDraftPending={createDraftMutation.isPending}
+          createVersionPending={createVersionMutation.isPending}
+          isSubmitting={isSubmitting}
+          onCreateDraft={handleCreateDraft}
+          totalRecordCount={totalRecordCount}
+        />
       </form>
     </Form>
   )

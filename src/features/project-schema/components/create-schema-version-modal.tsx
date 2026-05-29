@@ -32,8 +32,8 @@ export const CreateSchemaVersionModal = ({
           {totalRecordCount > 0 ? "Create new version" : "Edit schema"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] max-w-6xl gap-4 overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-6 pt-6 pb-4">
           <DialogTitle>
             {totalRecordCount > 0 ? "Create schema version" : "Edit schema"}
           </DialogTitle>
@@ -43,12 +43,14 @@ export const CreateSchemaVersionModal = ({
               : "Save changes as draft for review, or apply them immediately to the active schema."}
           </DialogDescription>
         </DialogHeader>
-        <SchemaVersionForm
-          initialSchemaDefinition={initialSchemaDefinition}
-          key={initialSchemaDefinition.fields.map((f) => f.key).join(",")}
-          onSuccess={() => setIsOpen(false)}
-          totalRecordCount={totalRecordCount}
-        />
+        <div className="min-h-0 overflow-y-auto px-6">
+          <SchemaVersionForm
+            initialSchemaDefinition={initialSchemaDefinition}
+            key={initialSchemaDefinition.fields.map((field) => field.key).join(",")}
+            onSuccess={() => setIsOpen(false)}
+            totalRecordCount={totalRecordCount}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   )
