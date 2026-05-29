@@ -1,6 +1,9 @@
 "use client"
 
+import { useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { GripVertical } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
@@ -60,6 +63,20 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
   const invalidateTaskQueries = async () => {
     await queryClient.invalidateQueries(
       trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
@@ -104,7 +121,20 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
   }
 
   return (
-    <TableRow>
+    <TableRow
+      ref={setNodeRef}
+      className={
+        isDragging ? "opacity-50 z-10 relative shadow-lg" : "group"
+      }
+      style={style}
+    >
+      <TableCell className="w-10">
+        <GripVertical
+          className="size-4 cursor-grab opacity-0 group-hover:opacity-100 text-muted-foreground"
+          {...attributes}
+          {...listeners}
+        />
+      </TableCell>
       <TableCell className="font-medium text-foreground">
         {task.sortOrder}
       </TableCell>

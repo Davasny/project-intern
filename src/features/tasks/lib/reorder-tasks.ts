@@ -1,8 +1,9 @@
 import { TRPCError } from "@trpc/server"
-import { and, eq, inArray, sql } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { taskTable } from "@/features/tasks/db"
+import { applyTaskOrder } from "@/features/tasks/lib/apply-task-order"
 import type { TaskReorderInput } from "@/features/tasks/schemas/task-input"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
@@ -55,27 +56,10 @@ export const reorderTasks = async ({
     })
   }
 
-  await db.transaction(async (tx) => {
-    await tx
-      .update(taskTable)
-      .set({
-        sortOrder: sql`${taskTable.sortOrder} + ${input.orderedTaskIds.length + 10}`,
-      })
-      .where(
-        and(
-          eq(taskTable.projectId, project.id),
-          inArray(taskTable.id, input.orderedTaskIds),
-        ),
-      )
-
-    for (const [index, taskId] of input.orderedTaskIds.entries()) {
-      await tx
-        .update(taskTable)
-        .set({ sortOrder: index + 1 })
-        .where(
-          and(eq(taskTable.id, taskId), eq(taskTable.projectId, project.id)),
-        )
-    }
+  await applyTaskOrder({
+    database: db,
+    orderedTaskIds: input.orderedTaskIds,
+    projectId: project.id,
   })
 
   await createActivityLogEvent({

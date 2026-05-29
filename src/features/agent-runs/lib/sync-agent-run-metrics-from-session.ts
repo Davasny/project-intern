@@ -1,6 +1,6 @@
 import type { OpencodeClient } from "@opencode-ai/sdk"
-import type { Logger } from "pino"
 import { eq } from "drizzle-orm"
+import type { Logger } from "pino"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { updateAgentRunMetrics } from "@/features/agent-runs/lib/update-agent-run-metrics"
 import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
@@ -113,8 +113,8 @@ async function fetchAndPersistMetrics({
 
     const firstTime = firstMsg.info.time?.created
     const lastTime =
-      (lastMsg.info as { time?: { created?: number; completed?: number } })
-        .time?.completed ?? lastMsg.info.time?.created
+      (lastMsg.info as { time?: { created?: number; completed?: number } }).time
+        ?.completed ?? lastMsg.info.time?.created
 
     let latencyMs: number | null = null
     if (firstTime && lastTime) {

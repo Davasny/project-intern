@@ -1,8 +1,9 @@
 import { TRPCError } from "@trpc/server"
-import { eq } from "drizzle-orm"
+import { asc, eq } from "drizzle-orm"
 import { getActiveProjectSchemaVersion } from "@/features/project-schema/lib/get-active-project-schema-version"
 import { taskTable } from "@/features/tasks/db"
 import { acceptTaskDraft } from "@/features/tasks/lib/accept-task-draft"
+import { applyTaskOrder } from "@/features/tasks/lib/apply-task-order"
 import { createTaskDraft } from "@/features/tasks/lib/create-task-draft"
 import type {
   TaskCreateIntent,
@@ -13,6 +14,7 @@ import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-mode
 import { validateRuntimeTemperature } from "@/lib/llm/validate-runtime-temperature"
 
 type CreateTaskParams = {
+  insertAfterTaskId: string | null
   intent: TaskCreateIntent
   input: TaskInput
   organizationSlug: string
@@ -21,6 +23,7 @@ type CreateTaskParams = {
 }
 
 export const createTask = async ({
+  insertAfterTaskId,
   intent,
   input,
   organizationSlug,
@@ -65,6 +68,13 @@ export const createTask = async ({
   }
 
   if (intent === "create_draft") {
+    if (insertAfterTaskId) {
+      await repositionTaskAfter({
+        newTaskId: draftTask.id,
+        insertAfterTaskId,
+        projectId: activeSchemaVersion.project.id,
+      })
+    }
     return draftTask
   }
 
@@ -79,6 +89,14 @@ export const createTask = async ({
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Task draft could not be accepted.",
+    })
+  }
+
+  if (insertAfterTaskId) {
+    await repositionTaskAfter({
+      newTaskId: acceptedTask.id,
+      insertAfterTaskId,
+      projectId: activeSchemaVersion.project.id,
     })
   }
 
@@ -100,4 +118,39 @@ export const createTask = async ({
     .from(taskTable)
     .where(eq(taskTable.id, acceptedTask.id))
     .then((rows) => rows[0] ?? null)
+}
+
+type RepositionTaskAfterParams = {
+  insertAfterTaskId: string
+  newTaskId: string
+  projectId: string
+}
+
+const repositionTaskAfter = async ({
+  insertAfterTaskId,
+  newTaskId,
+  projectId,
+}: RepositionTaskAfterParams) => {
+  const tasks = await db
+    .select({ id: taskTable.id })
+    .from(taskTable)
+    .where(eq(taskTable.projectId, projectId))
+    .orderBy(asc(taskTable.sortOrder))
+
+  const insertIndex = tasks.findIndex((task) => task.id === insertAfterTaskId)
+
+  if (insertIndex === -1) {
+    return
+  }
+
+  const orderedIds = tasks.map((task) => task.id)
+  const newIndex = insertIndex + 1
+  const filteredIds = orderedIds.filter((id) => id !== newTaskId)
+  filteredIds.splice(newIndex, 0, newTaskId)
+
+  await applyTaskOrder({
+    database: db,
+    orderedTaskIds: filteredIds,
+    projectId,
+  })
 }

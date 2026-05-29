@@ -26,6 +26,7 @@ const taskFormSchema = z.object({
     .string()
     .trim()
     .min(1, "Task description is required."),
+  insertAfterTaskId: z.string().trim(),
   model: z.string().trim(),
   temperature: z.string().trim(),
   schemaVersion: z.number().int().min(1),
@@ -43,6 +44,7 @@ type TaskFormProps = {
   onSubmitted: () => void
   schemaVersionOptions: number[]
   taskId: string | null
+  tasks: Array<{ id: string; title: string; state: string }>
 }
 
 const temperatureOptions = Array.from({ length: 11 }, (_, index) =>
@@ -58,6 +60,7 @@ export const TaskForm = ({
   onSubmitted,
   schemaVersionOptions,
   taskId,
+  tasks,
 }: TaskFormProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
@@ -68,6 +71,7 @@ export const TaskForm = ({
   const form = useForm<TaskFormValues>({
     defaultValues: {
       descriptionMarkdown: initialDescriptionMarkdown,
+      insertAfterTaskId: "",
       model: initialModel ?? "",
       temperature:
         initialTemperature === null ? "" : initialTemperature.toFixed(1),
@@ -151,6 +155,7 @@ export const TaskForm = ({
     }
 
     await createTaskMutation.mutateAsync({
+      insertAfterTaskId: values.insertAfterTaskId.length > 0 ? values.insertAfterTaskId : undefined,
       intent: createIntent,
       input: {
         descriptionMarkdown: values.descriptionMarkdown,
@@ -278,6 +283,34 @@ export const TaskForm = ({
             )}
           />
         </div>
+        {!taskId ? (
+          <FormField
+            control={form.control}
+            name="insertAfterTaskId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Position</FormLabel>
+                <FormControl>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    onChange={(event) => field.onChange(event.target.value)}
+                    value={field.value}
+                  >
+                    <option value="">Append to end</option>
+                    {tasks
+                      .filter((task) => task.state === "accepted")
+                      .map((task) => (
+                        <option key={task.id} value={task.id}>
+                          Insert after {task.title}
+                        </option>
+                      ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
         {taskId ? (
           <Button
             disabled={

@@ -4,6 +4,7 @@ import type {
   TdHTMLAttributes,
   ThHTMLAttributes,
 } from "react"
+import { forwardRef } from "react"
 import { cn } from "@/lib/utils"
 
 export const Table = ({
@@ -30,12 +31,12 @@ export const TableBody = ({
   <tbody className={cn(className)} {...props} />
 )
 
-export const TableRow = ({
-  className,
-  ...props
-}: HTMLAttributes<HTMLTableRowElement>) => (
-  <tr className={cn("border-b border-border", className)} {...props} />
-)
+export const TableRow = forwardRef<
+  HTMLTableRowElement,
+  HTMLAttributes<HTMLTableRowElement>
+>(({ className, ...props }, ref) => (
+  <tr ref={ref} className={cn("border-b border-border", className)} {...props} />
+))
 
 export const TableHeader = ({
   className,

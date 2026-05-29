@@ -1,10 +1,13 @@
+import { TRPCError } from "@trpc/server"
 import { z } from "zod"
+import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { acceptTaskDraftById } from "@/features/tasks/lib/accept-task-draft-by-id"
 import { createTask } from "@/features/tasks/lib/create-task"
 import { getTaskById } from "@/features/tasks/lib/get-task-by-id"
 import { listTasks } from "@/features/tasks/lib/list-tasks"
 import { rejectTaskDraftById } from "@/features/tasks/lib/reject-task-draft-by-id"
 import { reorderTasks } from "@/features/tasks/lib/reorder-tasks"
+import { resetDownstreamTaskRecords } from "@/features/tasks/lib/reset-downstream-task-records"
 import { updateTask } from "@/features/tasks/lib/update-task"
 import {
   taskCreateIntentSchema,
@@ -25,10 +28,12 @@ export const tasksRouter = router({
       projectScopeSchema.extend({
         input: taskInputSchema,
         intent: taskCreateIntentSchema,
+        insertAfterTaskId: z.string().uuid().optional(),
       }),
     )
     .mutation(({ ctx, input }) =>
       createTask({
+        insertAfterTaskId: input.insertAfterTaskId ?? null,
         intent: input.intent,
         input: input.input,
         organizationSlug: input.organizationSlug,
@@ -93,4 +98,26 @@ export const tasksRouter = router({
         userId: ctx.session.user.id,
       }),
     ),
+  resetDownstream: protectedProcedure
+    .input(projectScopeSchema.extend({ taskId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return resetDownstreamTaskRecords({
+        organizationId: project.organizationId,
+        projectId: project.id,
+        taskId: input.taskId,
+      })
+    }),
 })

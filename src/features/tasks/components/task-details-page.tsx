@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+import { toast } from "sonner"
 import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-timeline"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
@@ -51,6 +52,7 @@ export const TaskDetailsPage = ({
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
   const schemaVersionsQuery = useQuery(
     trpc.projectSchema.listVersions.queryOptions({
       organizationSlug,
@@ -91,6 +93,33 @@ export const TaskDetailsPage = ({
   const rejectDraftMutation = useMutation(
     trpc.tasks.rejectDraft.mutationOptions({ onSuccess: invalidateTaskQueries }),
   )
+
+  const resetDownstreamMutation = useMutation(
+    trpc.tasks.resetDownstream.mutationOptions({
+      onSuccess: (result) => {
+        if (result.resetCount === 0) {
+          toast.info("No terminal downstream task-records to reset.")
+        } else {
+          toast.success(
+            `Reset ${result.resetCount} task-record${result.resetCount === 1 ? "" : "s"} across ${result.affectedTaskIds.length} downstream task${result.affectedTaskIds.length === 1 ? "" : "s"}.`,
+          )
+        }
+        invalidateTaskQueries()
+        setIsResetDialogOpen(false)
+      },
+      onError: () => {
+        toast.error("Failed to reset downstream task-records.")
+      },
+    }),
+  )
+
+  const handleResetDownstream = async () => {
+    await resetDownstreamMutation.mutateAsync({
+      organizationSlug,
+      projectSlug,
+      taskId,
+    })
+  }
 
   const handleAcceptDraft = async () => {
     await acceptDraftMutation.mutateAsync({
@@ -196,6 +225,15 @@ export const TaskDetailsPage = ({
             <Button onClick={() => setIsEditOpen(true)} type="button">
               Edit task
             </Button>
+            {taskQuery.data.state === "accepted" ? (
+              <Button
+                onClick={() => setIsResetDialogOpen(true)}
+                type="button"
+                variant="outline"
+              >
+                Reset downstream
+              </Button>
+            ) : null}
           </PageHeaderActions>
         </PageHeader>
         <ProgressMetricGrid>
@@ -327,7 +365,39 @@ export const TaskDetailsPage = ({
                 : [taskQuery.data.schemaVersion]
             }
             taskId={taskQuery.data.id}
+            tasks={[]}
           />
+        </DialogContent>
+      </Dialog>
+      <Dialog onOpenChange={setIsResetDialogOpen} open={isResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset downstream tasks</DialogTitle>
+            <DialogDescription>
+              This will reset all completed and skipped task-records for tasks
+              after this one back to waiting state. Active and in-progress
+              task-records will not be affected. The scheduler will pick them up
+              for re-execution.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-row gap-2 justify-end">
+            <Button
+              onClick={() => setIsResetDialogOpen(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={resetDownstreamMutation.isPending}
+              onClick={handleResetDownstream}
+              type="button"
+            >
+              {resetDownstreamMutation.isPending
+                ? "Resetting..."
+                : "Reset downstream"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>

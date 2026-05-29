@@ -136,6 +136,9 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
       onSuccess: { target: "in_progress" },
     },
     completed: {
+      on: {
+        reset: { target: "waiting" },
+      },
       entry: async (context, event: CompleteEvent) => {
         const taskRecordInfo = await lookupTaskRecordInfo(context)
 
@@ -254,6 +257,7 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
         lastTransitionAt: event.lastTransitionAt,
       }),
       on: {
+        reset: { target: "waiting" },
         retry: { target: "waiting" },
       },
       onSuccess: { target: "skipped" },

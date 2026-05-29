@@ -1,8 +1,11 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { type DragEndEvent, closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ListTodoIcon } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { DataTableEmptyState } from "@/components/ui/data-table/data-table-empty-state"
@@ -32,6 +35,7 @@ import { useTRPC } from "@/lib/trpc/client"
 export const TasksPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
+  const queryClient = useQueryClient()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const schemaVersionsQuery = useQuery(
     trpc.projectSchema.listVersions.queryOptions({
@@ -41,6 +45,83 @@ export const TasksPage = () => {
   )
   const tasksQuery = useQuery(
     trpc.tasks.list.queryOptions({ organizationSlug, projectSlug }),
+  )
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
+
+  const invalidateTaskQueries = async () => {
+    await queryClient.invalidateQueries(
+      trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.projects.overview.queryFilter({ organizationSlug, projectSlug }),
+    )
+    await queryClient.invalidateQueries(
+      trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
+    )
+  }
+
+  const previousOrderRef = useRef<string[]>([])
+
+  const reorderMutation = useMutation(
+    trpc.tasks.reorder.mutationOptions({
+      onMutate: async (variables) => {
+        await queryClient.cancelQueries(
+          trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
+        )
+        const previous = queryClient.getQueryData(
+          trpc.tasks.list.queryKey({ organizationSlug, projectSlug }),
+        )
+        if (previous) {
+          type TaskData = (typeof previous)[number]
+          const idMap = new Map(previous.map((t: TaskData) => [t.id, t]))
+          const reordered = variables.input.orderedTaskIds
+            .map((id: string) => idMap.get(id))
+            .filter((t): t is TaskData => t !== undefined)
+          queryClient.setQueryData(
+            trpc.tasks.list.queryKey({ organizationSlug, projectSlug }),
+            reordered,
+          )
+          previousOrderRef.current = previous.map((t: TaskData) => t.id)
+        }
+        return { previous }
+      },
+      onSuccess: (_data, variables) => {
+        const taskCount = variables.input.orderedTaskIds.length
+        toast("Tasks reordered", {
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              if (previousOrderRef.current.length > 0) {
+                await reorderMutation.mutateAsync({
+                  input: { orderedTaskIds: previousOrderRef.current },
+                  organizationSlug,
+                  projectSlug,
+                })
+              }
+            },
+          },
+          description:
+            `${taskCount} tasks updated. Existing task-record execution states are preserved — completed tasks will not re-run automatically. To re-execute downstream tasks after inserting a task mid-pipeline, use the Reset downstream action on that task.`,
+          duration: 8000,
+        })
+      },
+      onError: (_error, _variables, context) => {
+        if (context?.previous) {
+          queryClient.setQueryData(
+            trpc.tasks.list.queryKey({ organizationSlug, projectSlug }),
+            context.previous,
+          )
+        }
+        toast.error("Failed to reorder tasks.")
+      },
+      onSettled: invalidateTaskQueries,
+    }),
   )
 
   if (schemaVersionsQuery.isLoading || tasksQuery.isLoading) {
@@ -60,6 +141,22 @@ export const TasksPage = () => {
     (version) => version.version,
   )
   const latestSchemaVersion = schemaVersionOptions[0] ?? 1
+  const taskIds = tasksQuery.data.map((task) => task.id)
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) {
+      return
+    }
+    const oldIndex = taskIds.indexOf(active.id as string)
+    const newIndex = taskIds.indexOf(over.id as string)
+    const newOrder = arrayMove(taskIds, oldIndex, newIndex)
+    await reorderMutation.mutateAsync({
+      input: { orderedTaskIds: newOrder },
+      organizationSlug,
+      projectSlug,
+    })
+  }
 
   return (
     <>
@@ -84,12 +181,12 @@ export const TasksPage = () => {
           <div className="text-sm text-muted-foreground">
             {tasksQuery.data.length} tasks ordered for this project queue.
           </div>
-
         </FilterBar>
         {tasksQuery.data.length > 0 ? (
           <DataTable>
             <TableHead>
               <TableRow>
+                <TableHeader className="w-10" />
                 <TableHeader>Order</TableHeader>
                 <TableHeader>Task</TableHeader>
                 <TableHeader>Temperature</TableHeader>
@@ -101,11 +198,22 @@ export const TasksPage = () => {
                 <TableHeader>Actions</TableHeader>
               </TableRow>
             </TableHead>
-            <TableBody>
-              {tasksQuery.data.map((task) => (
-                <TaskListRow key={task.id} task={task} />
-              ))}
-            </TableBody>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={taskIds}
+                strategy={verticalListSortingStrategy}
+              >
+                <TableBody>
+                  {tasksQuery.data.map((task) => (
+                    <TaskListRow key={task.id} task={task} />
+                  ))}
+                </TableBody>
+              </SortableContext>
+            </DndContext>
           </DataTable>
         ) : (
           <DataTableEmptyState
@@ -139,6 +247,7 @@ export const TasksPage = () => {
               schemaVersionOptions.length > 0 ? schemaVersionOptions : [1]
             }
             taskId={null}
+            tasks={tasksQuery.data ?? []}
           />
         </DialogContent>
       </Dialog>
