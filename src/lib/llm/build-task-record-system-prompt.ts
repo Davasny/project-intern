@@ -1,5 +1,13 @@
 import { backendConfig } from "@/lib/config/backend"
 
+type PreviousTaskExecution = {
+  taskTitle: string
+  state: string
+  resultSummary: string | null
+  finishedAt: string | null
+  attemptNumber: number
+}
+
 type BuildTaskRecordSystemPromptParams = {
   executionScope: {
     agentRunId: string
@@ -13,6 +21,34 @@ type BuildTaskRecordSystemPromptParams = {
   projectDisplayName: string
   recordName: string
   taskTitle: string
+  previousExecutions: PreviousTaskExecution[]
+}
+
+const formatPreviousExecutions = (
+  executions: PreviousTaskExecution[],
+): string => {
+  if (executions.length === 0) {
+    return "<previous_task_executions>\nNo previous task executions found for this record.\n</previous_task_executions>"
+  }
+
+  const entries = executions.map((exec) => {
+    const summary = exec.resultSummary ?? "(no summary)"
+    const timestamp = exec.finishedAt ?? "unknown"
+
+    return `
+<execution>
+  <taskTitle>${exec.taskTitle}</taskTitle>
+  <attempt>#${exec.attemptNumber}</attempt>
+  <state>${exec.state}</state>
+  <resultSummary>${summary}</resultSummary>
+  <finishedAt>${timestamp}</finishedAt>
+</execution>`
+  })
+
+  return `
+<previous_task_executions>
+  ${entries.join("\n")}
+</previous_task_executions>`
 }
 
 export const buildTaskRecordSystemPrompt = ({
@@ -20,6 +56,7 @@ export const buildTaskRecordSystemPrompt = ({
   projectDisplayName,
   recordName,
   taskTitle,
+  previousExecutions,
 }: BuildTaskRecordSystemPromptParams) =>
   `
 You are an automated headless task executor working in context of record. Your job is to complete task provided by user
@@ -43,6 +80,10 @@ under ${backendConfig.BETTER_AUTH_URL}/api/crm/schema.json. The bearer token is 
 All task and record related files are must live in \`data/\` directory which is only allowed directory to work on.
 
 If user asks you to create/remove/manage files, you have to use \`data/\` directory.
+
+
+
+${formatPreviousExecutions(previousExecutions)}
 
 <context>
 Project name: ${projectDisplayName}

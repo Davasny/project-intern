@@ -12,6 +12,7 @@ const eventKindClasses = {
   error: "bg-tone-danger-foreground/80",
   file: "bg-muted-foreground/35",
   reasoning: "bg-tone-info-foreground/75",
+  system: "bg-tone-info-foreground/75",
   tool: "bg-foreground/55",
 }
 

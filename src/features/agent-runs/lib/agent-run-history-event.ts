@@ -4,6 +4,7 @@ export type AgentRunHistoryEventKind =
   | "file"
   | "metadata"
   | "reasoning"
+  | "system"
   | "tool"
 
 type AgentRunHistoryEventDetail = {

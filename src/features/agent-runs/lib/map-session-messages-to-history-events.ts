@@ -58,8 +58,13 @@ const createTextEvent = ({
   part: Extract<AgentRunSessionMessagePart, { type: "text" }>
 }): AgentRunHistoryEvent => ({
   id: `${message.id}:${part.id}`,
-  kind: "agent",
-  title: message.role === "assistant" ? "Agent message" : "User message",
+  kind: message.role === "system" ? "system" : "agent",
+  title:
+    message.role === "assistant"
+      ? "Agent message"
+      : message.role === "system"
+        ? "System prompt"
+        : "User message",
   summary: compactText(part.text) || "Empty message",
   timestamp: message.createdAt,
   metadata: getMessageMetadata(message),
@@ -251,6 +256,31 @@ const createMessageErrorEvent = (
   }
 }
 
+const createSystemEvent = (
+  message: AgentRunSessionMessage,
+): AgentRunHistoryEvent | null => {
+  if (!message.system) {
+    return null
+  }
+
+  return {
+    id: `${message.id}:system`,
+    kind: "system",
+    title: "System prompt",
+    summary: compactText(message.system) || "System prompt",
+    timestamp: message.createdAt,
+    metadata: getMessageMetadata(message),
+    metrics: getMessageMetrics(message),
+    detail: {
+      content: message.system,
+      error: null,
+      input: null,
+      metadata: null,
+      output: null,
+    },
+  }
+}
+
 export const mapSessionMessagesToHistoryEvents = (
   messages: Array<AgentRunSessionMessage>,
 ) =>
@@ -259,6 +289,16 @@ export const mapSessionMessagesToHistoryEvents = (
       mapPartToHistoryEvent({ message, part }),
     )
     const errorEvent = createMessageErrorEvent(message)
+    const systemEvent = createSystemEvent(message)
 
-    return errorEvent ? [...partEvents, errorEvent] : partEvents
+    const events: Array<AgentRunHistoryEvent> = []
+    if (systemEvent) {
+      events.push(systemEvent)
+    }
+    events.push(...partEvents)
+    if (errorEvent) {
+      events.push(errorEvent)
+    }
+
+    return events
   })

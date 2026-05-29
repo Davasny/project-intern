@@ -13,6 +13,7 @@ const eventKindTone = {
   file: "muted",
   metadata: "muted",
   reasoning: "info",
+  system: "info",
   tool: "info",
 } satisfies Record<AgentRunHistoryEvent["kind"], "danger" | "info" | "muted" | "success" | "warning">
 

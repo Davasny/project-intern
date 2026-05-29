@@ -8,6 +8,7 @@ import {
   createAgentRunCommand,
   runAgentRunCommand,
 } from "@/features/agent-runs/lib/agent-run-commands"
+import { getPreviousTaskExecutionsForRecord } from "@/features/agent-runs/lib/get-previous-task-executions-for-record"
 import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
 import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
@@ -305,6 +306,40 @@ export const spawnDebugSession = async ({
     }),
   ])
 
+  let previousExecutions: Awaited<
+    ReturnType<typeof getPreviousTaskExecutionsForRecord>
+  > = []
+
+  try {
+    previousExecutions = await getPreviousTaskExecutionsForRecord({
+      recordId,
+      excludeAgentRunId: agentRunId,
+    })
+
+    debugLogger.info(
+      { previousExecutionCount: previousExecutions.length },
+      "Fetched previous task executions for record",
+    )
+  } catch (error) {
+    debugLogger.warn(
+      {
+        error,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      },
+      "Failed to fetch previous task executions, proceeding without history",
+    )
+  }
+
+  const previousExecutionsSection =
+    previousExecutions.length === 0
+      ? "No previous task executions found for this record."
+      : previousExecutions
+          .map(
+            (exec) =>
+              `- **${exec.taskTitle}** (${exec.state}, attempt #${exec.attemptNumber}): ${exec.resultSummary ?? "(no summary)"}`,
+          )
+          .join("\n")
+
   const agentsMdPath = path.join(workspace.workspaceDirectory, "AGENTS.md")
   const agentsMd = `# Agent Debug Session
 
@@ -321,6 +356,9 @@ When calling MCP tools, use these IDs:
 
 ## CRM REST API
 For better efficiency (avoiding MCP tool call overhead), you can call the REST API directly from scripts. The bearer token is available in \`.env.agent\` as \`CRM_BEARER_TOKEN\`. CRM API base URL: \`${backendConfig.BETTER_AUTH_URL}/api/crm\`. Fetch the OpenAPI spec at \`GET {CRM API base URL}/schema.json\` to discover all endpoints. All REST endpoints mirror MCP tools with the same request/response shape.
+
+## Previous Task Executions
+${previousExecutionsSection}
 
 ## Execution Context
 \`\`\`json

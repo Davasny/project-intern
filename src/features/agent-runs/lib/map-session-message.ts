@@ -239,6 +239,26 @@ const toSessionMessage = ({
       path: null,
       providerId: info.model.providerID,
       role: info.role,
+      system: info.system ?? null,
+      tokens: null,
+    } satisfies AgentRunSessionMessage
+  }
+
+  if ((info as { role: string }).role === "system") {
+    const msg = info as { id: string; time: { created: number } }
+    return {
+      agent: null,
+      completedAt: null,
+      cost: null,
+      createdAt: msg.time.created,
+      error: null,
+      id: msg.id,
+      modelId: null,
+      parts: parts.map(toPart),
+      path: null,
+      providerId: null,
+      role: "system",
+      system: null,
       tokens: null,
     } satisfies AgentRunSessionMessage
   }
@@ -258,6 +278,7 @@ const toSessionMessage = ({
     },
     providerId: info.providerID,
     role: info.role,
+    system: null,
     tokens: toTokens(info.tokens),
   } satisfies AgentRunSessionMessage
 }

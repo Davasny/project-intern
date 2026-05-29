@@ -103,7 +103,8 @@ export type AgentRunSessionMessage = {
     root: string | null
   } | null
   providerId: string | null
-  role: "assistant" | "user"
+  role: "assistant" | "system" | "user"
+  system: string | null
   tokens: AgentRunSessionTokens | null
 }
 

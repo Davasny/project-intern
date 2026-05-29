@@ -4,6 +4,7 @@ import {
   bootAgentRunCommand,
   runAgentRunCommand,
 } from "@/features/agent-runs/lib/agent-run-commands"
+import { getPreviousTaskExecutionsForRecord } from "@/features/agent-runs/lib/get-previous-task-executions-for-record"
 import { pollSessionForMetrics } from "@/features/opencode/lib/poll-session-for-metrics"
 import { startTaskRecord } from "@/features/task-records/lib/start-task-record"
 import { recordWorkerAgent } from "@/lib/llm/agents"
@@ -111,6 +112,30 @@ export const runOpencodeExecution = async ({
     "Marked agent run booting",
   )
 
+  let previousExecutions: Awaited<
+    ReturnType<typeof getPreviousTaskExecutionsForRecord>
+  > = []
+
+  try {
+    previousExecutions = await getPreviousTaskExecutionsForRecord({
+      recordId: initialScope.record.id,
+      excludeAgentRunId: initialScope.agentRun.id,
+    })
+
+    executionLogger.info(
+      { previousExecutionCount: previousExecutions.length },
+      "Fetched previous task executions for record",
+    )
+  } catch (error) {
+    executionLogger.warn(
+      {
+        error,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      },
+      "Failed to fetch previous task executions, proceeding without history",
+    )
+  }
+
   const promptText = buildTaskRecordAgentPrompt({
     taskTitle: initialScope.task.title,
     taskDescription: initialScope.task.descriptionMarkdown,
@@ -130,6 +155,7 @@ export const runOpencodeExecution = async ({
     projectDisplayName: initialScope.project.displayName,
     recordName: initialScope.record.name,
     taskTitle: initialScope.task.title,
+    previousExecutions,
   })
 
   executionLogger.info(
