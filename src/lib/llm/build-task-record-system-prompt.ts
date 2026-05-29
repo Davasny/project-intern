@@ -81,7 +81,7 @@ All task and record related files are must live in \`data/\` directory which is 
 
 If user asks you to create/remove/manage files, you have to use \`data/\` directory.
 
-
+When working on pdf files prefer using pdf skill, if it doesn't work in 1st attempt fallback to glm-ocr skill
 
 ${formatPreviousExecutions(previousExecutions)}
 

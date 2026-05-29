@@ -24,6 +24,18 @@ Do not mutate records outside the current task scope.
     edit: "allow",
     external_directory: "deny",
     webfetch: "allow",
+    // @ts-expect-error for some reason it's supported by opencode, but not in ts
+    websearch: "allow",
+    skill: {
+      // todo: we should get list of available skills from project and then allow them here in the loop
+      "*": "deny",
+      docx: "allow",
+      pdf: "allow",
+      xlsx: "allow",
+      markitdown: "allow",
+      "glm-ocr": "allow",
+      "dostanesie-api": "allow",
+    },
   },
   tools: {
     edit: true,
