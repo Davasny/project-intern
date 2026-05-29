@@ -19,17 +19,11 @@ export const ensureRecordWorkspace = async ({
   await Promise.all([
     ensureDirectory(workspaceDirectory),
     ensureDirectory(path.join(workspaceDirectory, "data")),
-    ensureDirectory(path.join(workspaceDirectory, "artifacts")),
-    ensureDirectory(path.join(workspaceDirectory, "logs")),
-    ensureDirectory(path.join(workspaceDirectory, "scratch")),
     ensureDirectory(path.join(workspaceDirectory, ".opencode", "skills")),
   ])
 
   return {
-    artifactsDirectory: path.join(workspaceDirectory, "artifacts"),
     dataDirectory: path.join(workspaceDirectory, "data"),
-    logsDirectory: path.join(workspaceDirectory, "logs"),
-    scratchDirectory: path.join(workspaceDirectory, "scratch"),
     workspaceDirectory,
     opencodeSkillsDirectory: path.join(
       workspaceDirectory,
