@@ -219,11 +219,11 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
           )}
         </TableCell>
         <TableCell>
-          {task.progress.completedCount}/{task.progress.totalCount} completed
+          {task.progress.completedCount}/{task.progress.totalCount}
         </TableCell>
-        <TableCell>{task.progress.inProgressCount} active</TableCell>
-        <TableCell>{task.progress.failedCount} failed</TableCell>
-        <TableCell>{task.progress.waitingCount} waiting</TableCell>
+        <TableCell>{task.progress.inProgressCount}</TableCell>
+        <TableCell>{task.progress.failedCount}</TableCell>
+        <TableCell>{task.progress.waitingCount}</TableCell>
         <TableCell>
           <div className="flex flex-row gap-2">
             {task.state === "created" ? (
