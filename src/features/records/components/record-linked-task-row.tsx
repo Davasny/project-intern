@@ -15,10 +15,9 @@ import {
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import { TaskRecordRunStatusBadge } from "@/components/ui/status-badge/task-record-run-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
+import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
-import {
-  type TaskRecordState,
-} from "@/features/task-records/schemas/task-record-state"
+import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import { useTRPC } from "@/lib/trpc/client"
 
 type RecordLinkedTaskRowProps = {
@@ -28,14 +27,7 @@ type RecordLinkedTaskRowProps = {
     latestAgentRun: {
       id: string
       failurePayload: Record<string, unknown> | null
-      state:
-        | "aborted"
-        | "booting"
-        | "completed"
-        | "created"
-        | "failed"
-        | "persisting_outputs"
-        | "running"
+      state: AgentRunState
     } | null
     sortOrder: number
     state: TaskRecordState

@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
 import { TaskRecordRow } from "@/features/tasks/components/task-record-row"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 
@@ -22,14 +23,7 @@ type TaskRecordsSectionProps = {
       failurePayload: Record<string, unknown> | null
       selectedModel: string | null
       selectedTemperature: number | null
-      state:
-        | "aborted"
-        | "booting"
-        | "completed"
-        | "created"
-        | "failed"
-        | "persisting_outputs"
-        | "running"
+      state: AgentRunState
     } | null
     recordId: string
     recordName: string
