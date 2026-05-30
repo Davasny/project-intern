@@ -22,7 +22,7 @@ export const ProjectScopeShell = ({
       projectSlug={projectSlug}
     >
       <AppShell user={user}>
-        <main className="flex flex-col gap-6">{children}</main>
+        <main className="flex min-w-0 flex-col gap-6">{children}</main>
       </AppShell>
     </ProjectScopeProvider>
   )

@@ -86,7 +86,7 @@ export const RecordsPage = () => {
 
   return (
     <>
-      <div className="flex flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-6">
         <PageHeader>
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
@@ -130,7 +130,7 @@ export const RecordsPage = () => {
 
         </FilterBar>
         {recordsQuery.data && recordsQuery.data.length > 0 ? (
-          <DataTable>
+          <DataTable tableClassName="min-w-max">
             <TableHead>
               <TableRow>
                 <TableHeader>Record</TableHeader>
@@ -149,6 +149,7 @@ export const RecordsPage = () => {
                 <TableHeader>Updated</TableHeader>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {recordsQuery.data.map((record) => (
                 <RecordListRow

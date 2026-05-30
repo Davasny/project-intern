@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { desc, eq, inArray } from "drizzle-orm"
+import { asc, eq, inArray, sql } from "drizzle-orm"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { listRecordRelationSummaries } from "@/features/record-edges/lib/list-record-relation-summaries"
@@ -45,7 +45,11 @@ export const listRecords = async ({
     })
     .from(recordTable)
     .where(eq(recordTable.projectId, project.id))
-    .orderBy(desc(recordTable.updatedAt))
+    .orderBy(
+      asc(sql`lower(${recordTable.name})`),
+      asc(recordTable.name),
+      asc(recordTable.id),
+    )
 
   const recordIds = records.map((record) => record.id)
 

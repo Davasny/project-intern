@@ -1,3 +1,5 @@
+import type { ReactNode } from "react"
+
 type ProgressStripItem = {
   label: string
   value: number
@@ -5,9 +7,10 @@ type ProgressStripItem = {
 
 type ProgressStripProps = {
   items: ProgressStripItem[]
+  children?: ReactNode
 }
 
-export const ProgressStrip = ({ items }: ProgressStripProps) => (
+export const ProgressStrip = ({ items, children }: ProgressStripProps) => (
   <div className="flex flex-row flex-wrap rounded-xl border border-border bg-card">
     {items.map((item) => (
       <div
@@ -22,5 +25,6 @@ export const ProgressStrip = ({ items }: ProgressStripProps) => (
         </span>
       </div>
     ))}
+    {children}
   </div>
 )

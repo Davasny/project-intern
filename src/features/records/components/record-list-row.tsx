@@ -116,11 +116,11 @@ export const RecordListRow = ({
         </div>
       </TableCell>
       <TableCell>
-        {record.progress.completedCount}/{record.progress.totalCount} completed
+        {record.progress.completedCount}/{record.progress.totalCount}
       </TableCell>
-      <TableCell>{record.progress.inProgressCount} active</TableCell>
-      <TableCell>{record.progress.failedCount} failed</TableCell>
-      <TableCell>{record.progress.waitingCount} waiting</TableCell>
+      <TableCell>{record.progress.inProgressCount}</TableCell>
+      <TableCell>{record.progress.failedCount}</TableCell>
+      <TableCell>{record.progress.waitingCount}</TableCell>
       <TableCell>
         {record.activeRun ? (
           <RunStatusBadge state={record.activeRun.state} />
@@ -128,7 +128,7 @@ export const RecordListRow = ({
           "—"
         )}
       </TableCell>
-      <TableCell>{record.relationSummary.activeCount} relations</TableCell>
+      <TableCell>{record.relationSummary.activeCount}</TableCell>
       {showContextValues
         ? contextColumns.map((field) => (
             <RecordContextValueCell

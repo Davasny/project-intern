@@ -1,7 +1,10 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { RefreshCwIcon, SettingsIcon } from "lucide-react"
+import Link from "next/link"
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -19,6 +22,7 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 import { RecordForm } from "@/features/records/components/record-form"
 import { TaskForm } from "@/features/tasks/components/task-form"
 import { useTRPC } from "@/lib/trpc/client"
+import { cn } from "@/lib/utils"
 
 export const ExecutionMatrixPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
@@ -86,18 +90,45 @@ export const ExecutionMatrixPage = () => {
     <>
       <div className="flex flex-col gap-6">
         <PageHeader>
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Dashboard
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Record-by-task execution grid with latest run results, queue
-              summary, and controls.
-            </p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                Dashboard
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Record-by-task execution grid with latest run results, queue
+                summary, and controls.
+              </p>
+            </div>
+            <div className="flex flex-row gap-2">
+              <Button
+                disabled={executionQuery.isFetching}
+                onClick={invalidateMonitor}
+                size="icon"
+                variant="outline"
+              >
+                <RefreshCwIcon
+                  className={cn(
+                    "size-4",
+                    executionQuery.isFetching ? "animate-spin" : "",
+                  )}
+                />
+                <span className="sr-only">Refresh Dashboard</span>
+              </Button>
+              <Button variant="outline" size="icon" asChild>
+                <Link href={`/app/${organizationSlug}/${projectSlug}/settings`}>
+                  <SettingsIcon className="size-4" />
+                  <span className="sr-only">Project Settings</span>
+                </Link>
+              </Button>
+            </div>
           </div>
         </PageHeader>
 
-        <ExecutionSummaryStrip summary={executionQuery.data.summary} />
+        <ExecutionSummaryStrip
+          isAutopickEnabled={executionQuery.data.isAutopickEnabled}
+          summary={executionQuery.data.summary}
+        />
         <ExecutionMatrixSection
           debugControlsEnabled={executionQuery.data.debugControlsEnabled}
           isAutopickEnabled={executionQuery.data.isAutopickEnabled}
