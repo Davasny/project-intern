@@ -29,7 +29,7 @@ const sanitizePathSegment = (value: string) =>
     .slice(0, 80)
 
 const buildTaskDirectoryName = (run: SessionDumpRun) =>
-  `${sanitizePathSegment(run.taskTitle) || "task"}-${run.taskId}`
+  `${String(run.taskSortOrder).padStart(3, "0")}-${sanitizePathSegment(run.taskTitle) || "task"}-${run.taskId}`
 
 const buildRecordDirectoryName = (run: SessionDumpRun) =>
   `${sanitizePathSegment(run.recordName) || "record"}-${run.recordId}`

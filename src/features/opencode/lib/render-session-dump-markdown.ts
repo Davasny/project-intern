@@ -94,7 +94,7 @@ export const renderRunMarkdown = ({
 
       if (parts.length === 0) return null
 
-      return `<message id="${escapeAttribute(message.id)}" role="${message.role}" created_at="${new Date(message.createdAt).toISOString()}">\n${parts.join("\n\n")}\n</message>`
+      return `<message role="${message.role}">\n${parts.join("\n\n")}\n</message>`
     })
     .filter((message) => message !== null)
 

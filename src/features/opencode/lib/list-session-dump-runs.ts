@@ -46,6 +46,7 @@ export const listSessionDumpRuns = async ({
       taskDescriptionMarkdown: taskTable.descriptionMarkdown,
       taskId: taskTable.id,
       taskRecordId: taskRecordTable.id,
+      taskSortOrder: taskTable.sortOrder,
       taskTitle: taskTable.title,
       toolCallCount: agentRunTable.toolCallCount,
     })
