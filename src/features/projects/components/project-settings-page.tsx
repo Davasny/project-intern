@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header/page-header"
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import { ImportExportSection } from "@/features/projects/components/import-export-section"
 import { ProjectSettingsForm } from "@/features/projects/components/project-settings-form"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
@@ -54,6 +55,16 @@ export const ProjectSettingsPage = () => {
             initialDefaultTemperature={settingsQuery.data.defaultTemperature}
             initialIsAutopickEnabled={settingsQuery.data.isAutopickEnabled}
           />
+        </SectionCardContent>
+      </SectionCard>
+      <SectionCard>
+        <SectionCardHeader>
+          <h2 className="text-lg font-semibold text-foreground">
+            Import / Export
+          </h2>
+        </SectionCardHeader>
+        <SectionCardContent>
+          <ImportExportSection />
         </SectionCardContent>
       </SectionCard>
     </div>
