@@ -1,7 +1,6 @@
 import { z } from "zod"
 import { createRecordEdge } from "@/features/record-edges/lib/create-record-edge"
 import { deactivateRecordEdge } from "@/features/record-edges/lib/deactivate-record-edge"
-import { listRecordEdgeActivityForRecord } from "@/features/record-edges/lib/list-record-edge-activity-for-record"
 import { listRecordEdgesForRecord } from "@/features/record-edges/lib/list-record-edges-for-record"
 import { updateRecordEdge } from "@/features/record-edges/lib/update-record-edge"
 import {
@@ -34,16 +33,6 @@ export const recordEdgesRouter = router({
         input: input.input,
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
-        userId: ctx.session.user.id,
-      }),
-    ),
-  listActivity: protectedProcedure
-    .input(projectScopeSchema.extend({ recordId: z.string().uuid() }))
-    .query(({ ctx, input }) =>
-      listRecordEdgeActivityForRecord({
-        organizationSlug: input.organizationSlug,
-        projectSlug: input.projectSlug,
-        recordId: input.recordId,
         userId: ctx.session.user.id,
       }),
     ),

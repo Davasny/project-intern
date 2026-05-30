@@ -3,7 +3,6 @@ import { artifactsRouter } from "@/features/artifacts/router"
 import { authRouter } from "@/features/auth/router"
 import { executionRouter } from "@/features/execution/router"
 import { filesRouter } from "@/features/files/router"
-import { observabilityRouter } from "@/features/observability/router"
 import { opencodeRouter } from "@/features/opencode/router"
 import { organizationsRouter } from "@/features/organizations/router"
 import { projectSchemaRouter } from "@/features/project-schema/router"
@@ -19,7 +18,6 @@ export const appRouter = router({
   auth: authRouter,
   execution: executionRouter,
   files: filesRouter,
-  observability: observabilityRouter,
   opencode: opencodeRouter,
   organizations: organizationsRouter,
   projectSchema: projectSchemaRouter,

@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
-import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-timeline"
 import { Button } from "@/components/ui/button"
 import { DataTableEmptyState } from "@/components/ui/data-table/data-table-empty-state"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
@@ -13,7 +12,6 @@ import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { RecordRelationListItem } from "@/features/record-edges/components/record-relation-list-item"
-import { RelationActivityItem } from "@/features/record-edges/components/relation-activity-item"
 import { RelationEditorPanel } from "@/features/record-edges/components/relation-editor-panel"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -37,19 +35,12 @@ export const RecordRelationsSection = ({
       recordId,
     }),
   )
-  const activityQuery = useQuery(
-    trpc.recordEdges.listActivity.queryOptions({
-      organizationSlug,
-      projectSlug,
-      recordId,
-    }),
-  )
 
-  if (relationsQuery.isLoading || activityQuery.isLoading) {
+  if (relationsQuery.isLoading) {
     return <LoadingState label="Loading relations..." />
   }
 
-  if (!relationsQuery.data || !activityQuery.data) {
+  if (!relationsQuery.data) {
     return <LoadingState label="Relations could not be loaded." />
   }
 
@@ -129,28 +120,6 @@ export const RecordRelationsSection = ({
             onSubmitted={() => setIsCreateOpen(false)}
             recordId={recordId}
           />
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard>
-        <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-foreground">
-            Relation activity
-          </h2>
-        </SectionCardHeader>
-        <SectionCardContent>
-          {activityQuery.data.length > 0 ? (
-            <ActivityTimeline>
-              {activityQuery.data.map((activity) => (
-                <RelationActivityItem activity={activity} key={activity.id} />
-              ))}
-            </ActivityTimeline>
-          ) : (
-            <DataTableEmptyState
-              action={null}
-              description="Create, edit, or deactivate a relation to see events here."
-              title="No relation activity yet"
-            />
-          )}
         </SectionCardContent>
       </SectionCard>
     </div>

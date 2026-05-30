@@ -1,6 +1,5 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq, inArray, sql } from "drizzle-orm"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
@@ -130,27 +129,6 @@ export const collapseProjectSchemaHistory = async ({
       .update(projectTable)
       .set({ activeSchemaVersionId: activeSchemaVersion.id })
       .where(eq(projectTable.id, project.id))
-
-    await createActivityLogEvent({
-      actorId: userId,
-      actorType: "user",
-      agentRunId: null,
-      database: tx,
-      entityId: activeSchemaVersion.id,
-      entityType: "projectSchemaVersion",
-      eventType: "schema.history_merged_to_v1",
-      organizationId: project.organizationId,
-      payload: {
-        previousVersionCount: allVersions.length,
-        removedVersionIds: removableVersionIds,
-      },
-      projectId: project.id,
-      recordId: null,
-      relatedProjectId: null,
-      relatedRecordId: null,
-      taskId: null,
-      taskRecordId: null,
-    })
 
     return { success: true, merged: true }
   })

@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { SchemaActiveFieldsSection } from "@/features/project-schema/components/schema-active-fields-section"
-import { SchemaActivitySection } from "@/features/project-schema/components/schema-activity-section"
 import { SchemaDiffModal } from "@/features/project-schema/components/schema-diff-modal"
 import { SchemaHistorySection } from "@/features/project-schema/components/schema-history-section"
 import { SchemaMigrationProgressStrip } from "@/features/project-schema/components/schema-migration-progress-strip"
@@ -20,7 +19,6 @@ export const SchemaVersionBrowser = () => {
     string | null
   >(null)
   const [isVersionsExpanded, setIsVersionsExpanded] = useState(false)
-  const [isActivityExpanded, setIsActivityExpanded] = useState(false)
   const settingsQuery = useQuery(
     trpc.projectSchema.getSettings.queryOptions({
       organizationSlug,
@@ -80,12 +78,6 @@ export const SchemaVersionBrowser = () => {
         onToggle={() => setIsVersionsExpanded(!isVersionsExpanded)}
         taskHrefBase={taskHrefBase}
         versions={settingsQuery.data.versions}
-      />
-
-      <SchemaActivitySection
-        events={settingsQuery.data.latestSchemaActivity}
-        isExpanded={isActivityExpanded}
-        onToggle={() => setIsActivityExpanded(!isActivityExpanded)}
       />
 
       {selectedPreviousVersion ? (

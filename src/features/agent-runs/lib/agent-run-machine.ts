@@ -1,8 +1,6 @@
 import { machine } from "machin"
 import { withDrizzlePg } from "machin/drizzle/pg"
 import { agentRunTable } from "@/features/agent-runs/db"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
-import { getAgentRunActivityScope } from "@/features/observability/lib/get-agent-run-activity-scope"
 import { completeTaskRecord } from "@/features/task-records/lib/complete-task-record"
 import { failTaskRecord } from "@/features/task-records/lib/fail-task-record"
 import { skipTaskRecord } from "@/features/task-records/lib/skip-task-record"
@@ -29,33 +27,6 @@ const agentRunMachineDefinition = machine<AgentRunMachineContext>().define({
     },
     booting: {
       entry: async (context, event: BootingEvent) => {
-        const activityScope = await getAgentRunActivityScope(event.agentRunId)
-
-        await createActivityLogEvent({
-          actorId: event.agentRunId,
-          actorType: "executor",
-          agentRunId: event.agentRunId,
-          database: db,
-          entityId: event.agentRunId,
-          entityType: "agentRun",
-          eventType: "agentRun.started",
-          organizationId: activityScope.organizationId,
-          payload: {
-            attemptNumber: activityScope.attemptNumber,
-            directory: event.directory,
-            model: event.model,
-            provider: event.provider,
-            sessionReference: event.sessionReference,
-            startedAt: event.startedAt,
-          },
-          projectId: activityScope.projectId,
-          recordId: activityScope.recordId,
-          relatedProjectId: null,
-          relatedRecordId: null,
-          taskId: activityScope.taskId,
-          taskRecordId: activityScope.taskRecordId,
-        })
-
         logger.info(
           {
             agentRunId: event.agentRunId,
@@ -142,31 +113,6 @@ const agentRunMachineDefinition = machine<AgentRunMachineContext>().define({
           taskRecordId: event.taskRecordId,
         })
 
-        const activityScope = await getAgentRunActivityScope(event.agentRunId)
-
-        await createActivityLogEvent({
-          actorId: event.agentRunId,
-          actorType: "executor",
-          agentRunId: event.agentRunId,
-          database: db,
-          entityId: event.agentRunId,
-          entityType: "agentRun",
-          eventType: "agentRun.completed",
-          organizationId: activityScope.organizationId,
-          payload: {
-            attemptNumber: activityScope.attemptNumber,
-            estimatedCostUsd: event.estimatedCostUsd,
-            finishedAt: event.finishedAt,
-            latencyMs: event.latencyMs,
-          },
-          projectId: activityScope.projectId,
-          recordId: activityScope.recordId,
-          relatedProjectId: null,
-          relatedRecordId: null,
-          taskId: activityScope.taskId,
-          taskRecordId: activityScope.taskRecordId,
-        })
-
         logger.info(
           { agentRunId: event.agentRunId, taskRecordId: event.taskRecordId },
           "Agent run completed",
@@ -203,32 +149,6 @@ const agentRunMachineDefinition = machine<AgentRunMachineContext>().define({
           agentRunId: event.agentRunId,
           errorCode: event.errorCode,
           taskRecordId: event.taskRecordId,
-        })
-
-        const activityScope = await getAgentRunActivityScope(event.agentRunId)
-
-        await createActivityLogEvent({
-          actorId: event.agentRunId,
-          actorType: "executor",
-          agentRunId: event.agentRunId,
-          database: db,
-          entityId: event.agentRunId,
-          entityType: "agentRun",
-          eventType: "agentRun.failed",
-          organizationId: activityScope.organizationId,
-          payload: {
-            attemptNumber: activityScope.attemptNumber,
-            errorCode: event.errorCode,
-            failurePayload: event.failurePayload,
-            finishedAt: event.finishedAt,
-            latencyMs: event.latencyMs,
-          },
-          projectId: activityScope.projectId,
-          recordId: activityScope.recordId,
-          relatedProjectId: null,
-          relatedRecordId: null,
-          taskId: activityScope.taskId,
-          taskRecordId: activityScope.taskRecordId,
         })
 
         logger.warn(

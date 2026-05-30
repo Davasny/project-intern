@@ -108,8 +108,6 @@ export const recordsRouter = router({
       }
 
       return retryTaskRecordForRecord({
-        actorId: ctx.session.user.id,
-        organizationId: project.organizationId,
         projectId: project.id,
         recordId: input.recordId,
         taskRecordId: input.taskRecordId,
@@ -137,8 +135,6 @@ export const recordsRouter = router({
       }
 
       return resetDownstreamTaskRecordsForRecord({
-        actorId: ctx.session.user.id,
-        organizationId: project.organizationId,
         projectId: project.id,
         recordId: input.recordId,
         taskRecordId: input.taskRecordId,
@@ -166,8 +162,6 @@ export const recordsRouter = router({
       }
 
       return triggerTaskRecordForRecord({
-        actorId: ctx.session.user.id,
-        organizationId: project.organizationId,
         projectId: project.id,
         recordId: input.recordId,
         taskRecordId: input.taskRecordId,

@@ -15,7 +15,6 @@ type CreateProjectTaskParams = {
   descriptionMarkdown: string
   model: string | null
   temperature: number | null
-  organizationId: string
   projectId: string
   schemaVersion: number
   sourceSchemaVersionId: string | null
@@ -29,7 +28,6 @@ export const createProjectTask = async ({
   descriptionMarkdown,
   model,
   temperature,
-  organizationId,
   projectId,
   schemaVersion,
   sourceSchemaVersionId,
@@ -82,7 +80,6 @@ export const createProjectTask = async ({
   const publishedTask = await publishTask({
     createdByUserId,
     database,
-    organizationId,
     task,
   })
 

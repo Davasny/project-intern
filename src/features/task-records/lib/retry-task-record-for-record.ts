@@ -3,8 +3,6 @@ import { and, eq } from "drizzle-orm"
 import { releaseClaimedTaskRecord } from "@/features/execution/lib/execution-claim-service"
 import { executionLogger } from "@/features/execution/lib/execution-logger"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
-import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
 import { taskRecordTable } from "@/features/task-records/db"
 import { getTaskRecordActor } from "@/features/task-records/lib/get-task-record-actor"
 import { launchTaskRecordExecution } from "@/features/task-records/lib/launch-task-record-execution"
@@ -14,16 +12,12 @@ import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
 type RetryTaskRecordForRecordParams = {
-  actorId: string
-  organizationId: string
   projectId: string
   recordId: string
   taskRecordId: string
 }
 
 export const retryTaskRecordForRecord = async ({
-  actorId,
-  organizationId,
   projectId,
   recordId,
   taskRecordId,
@@ -85,54 +79,6 @@ export const retryTaskRecordForRecord = async ({
       message: "Task record could not be scheduled for retry.",
     })
   }
-
-  const activityScope = await getTaskRecordActivityScope(
-    claimedTaskRecord.taskRecordId,
-  )
-
-  await createActivityLogEvent({
-    actorId,
-    actorType: "user",
-    agentRunId: null,
-    database: db,
-    entityId: claimedTaskRecord.taskRecordId,
-    entityType: "taskRecord",
-    eventType: "taskRecord.retried",
-    organizationId,
-    payload: {
-      recordName: activityScope.recordName,
-      taskTitle: activityScope.taskTitle,
-    },
-    projectId,
-    recordId,
-    relatedProjectId: null,
-    relatedRecordId: null,
-    taskId: activityScope.taskId,
-    taskRecordId: activityScope.taskRecordId,
-  })
-
-  await createActivityLogEvent({
-    actorId: claimedTaskRecord.agentRunId,
-    actorType: "executor",
-    agentRunId: claimedTaskRecord.agentRunId,
-    database: db,
-    entityId: claimedTaskRecord.taskRecordId,
-    entityType: "taskRecord",
-    eventType: "taskRecord.claimed",
-    organizationId: claimedTaskRecord.organizationId,
-    payload: {
-      manualTrigger: true,
-      recordId: claimedTaskRecord.recordId,
-      retry: true,
-      taskId: claimedTaskRecord.taskId,
-    },
-    projectId: claimedTaskRecord.projectId,
-    recordId: claimedTaskRecord.recordId,
-    relatedProjectId: null,
-    relatedRecordId: null,
-    taskId: claimedTaskRecord.taskId,
-    taskRecordId: claimedTaskRecord.taskRecordId,
-  })
 
   const jobId = await executionQueueService.enqueueTaskRecordExecution({
     agentRunId: claimedTaskRecord.agentRunId,

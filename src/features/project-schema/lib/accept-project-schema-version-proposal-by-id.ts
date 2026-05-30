@@ -33,7 +33,6 @@ export const acceptProjectSchemaVersionProposalById = async ({
     acceptProjectSchemaVersionProposal({
       acceptedByUserId: userId,
       database: transaction,
-      organizationId: project.organizationId,
       projectId: project.id,
       schemaVersionId,
     }),

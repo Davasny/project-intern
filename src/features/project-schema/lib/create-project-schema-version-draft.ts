@@ -54,8 +54,6 @@ export const createProjectSchemaVersionDraft = async ({
       )
 
       const updatedActor = await actor.send("update", {
-        actorId: userId,
-        organizationId: project.organizationId,
         schemaDefinition,
         schemaVersionId: writeMode.activeVersion.id,
       })

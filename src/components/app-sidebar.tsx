@@ -5,7 +5,6 @@ import {
   BotIcon,
   BrainCircuitIcon,
   BrainIcon,
-  ClipboardClockIcon,
   CogIcon,
   DatabaseIcon,
   FolderIcon,
@@ -43,7 +42,6 @@ const iconMap: Record<string, ReactNode> = {
   Records: <DatabaseIcon />,
   "Schema settings": <SettingsIcon />,
   "Project settings": <CogIcon />,
-  "Activity log": <ClipboardClockIcon />,
   "Execution monitor": <ActivityIcon />,
 }
 
@@ -75,11 +73,6 @@ export const AppSidebar = () => {
       href: `/app/${organizationSlug}/${projectSlug}/settings`,
       label: "Project settings",
       icon: iconMap["Project settings"],
-    },
-    {
-      href: `/app/${organizationSlug}/${projectSlug}/activity`,
-      label: "Activity log",
-      icon: iconMap["Activity log"],
     },
     {
       href: `/app/${organizationSlug}/${projectSlug}/execution`,

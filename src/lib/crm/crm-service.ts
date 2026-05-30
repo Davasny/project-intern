@@ -111,7 +111,6 @@ export const proposeProjectTaskDrafts = async (
           temperature: null,
           title: taskInput.title,
         },
-        organizationId: scope.organizationId,
         projectId: input.projectId,
         proposedByUserId: null,
       })

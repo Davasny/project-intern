@@ -115,7 +115,6 @@ export const tasksRouter = router({
       }
 
       return resetDownstreamTaskRecords({
-        organizationId: project.organizationId,
         projectId: project.id,
         taskId: input.taskId,
       })

@@ -59,18 +59,4 @@ export const invalidateRelationQueries = async ({
       recordId: targetRecordId,
     }),
   )
-  await queryClient.invalidateQueries(
-    trpc.recordEdges.listActivity.queryFilter({
-      organizationSlug,
-      projectSlug,
-      recordId,
-    }),
-  )
-  await queryClient.invalidateQueries(
-    trpc.recordEdges.listActivity.queryFilter({
-      organizationSlug,
-      projectSlug: targetProjectSlug,
-      recordId: targetRecordId,
-    }),
-  )
 }

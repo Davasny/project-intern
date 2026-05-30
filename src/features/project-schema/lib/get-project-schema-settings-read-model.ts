@@ -1,5 +1,4 @@
 import { and, desc, eq, inArray, or } from "drizzle-orm"
-import { activityLogTable } from "@/features/observability/db"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
@@ -141,63 +140,12 @@ export const getProjectSchemaSettingsReadModel = async ({
           .from(taskRecordTable)
           .where(inArray(taskRecordTable.taskId, migrationTaskIds))
 
-  const latestSchemaActivity =
-    versions.length === 0 && migrationTaskIds.length === 0
-      ? []
-      : migrationTaskIds.length === 0
-        ? await db
-            .select({
-              createdAt: activityLogTable.createdAt,
-              entityId: activityLogTable.entityId,
-              entityType: activityLogTable.entityType,
-              eventType: activityLogTable.eventType,
-              id: activityLogTable.id,
-              payload: activityLogTable.payload,
-              taskId: activityLogTable.taskId,
-              taskTitle: taskTable.title,
-            })
-            .from(activityLogTable)
-            .leftJoin(taskTable, eq(activityLogTable.taskId, taskTable.id))
-            .where(
-              and(
-                eq(activityLogTable.projectId, project.id),
-                eq(activityLogTable.entityType, "projectSchemaVersion"),
-              ),
-            )
-            .orderBy(desc(activityLogTable.createdAt))
-            .limit(10)
-        : await db
-            .select({
-              createdAt: activityLogTable.createdAt,
-              entityId: activityLogTable.entityId,
-              entityType: activityLogTable.entityType,
-              eventType: activityLogTable.eventType,
-              id: activityLogTable.id,
-              payload: activityLogTable.payload,
-              taskId: activityLogTable.taskId,
-              taskTitle: taskTable.title,
-            })
-            .from(activityLogTable)
-            .leftJoin(taskTable, eq(activityLogTable.taskId, taskTable.id))
-            .where(
-              and(
-                eq(activityLogTable.projectId, project.id),
-                or(
-                  eq(activityLogTable.entityType, "projectSchemaVersion"),
-                  inArray(activityLogTable.taskId, migrationTaskIds),
-                ),
-              ),
-            )
-            .orderBy(desc(activityLogTable.createdAt))
-            .limit(10)
-
   const activeVersion = versions.find(
     (version) => version.id === project.activeSchemaVersionId,
   )
 
   return {
     activeVersion,
-    latestSchemaActivity,
     pendingProposals,
     totalRecordCount: records.length,
     versions: versions.map((version) => {

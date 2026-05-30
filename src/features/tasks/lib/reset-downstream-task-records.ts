@@ -1,7 +1,5 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq, gte, inArray } from "drizzle-orm"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
-import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
 import { taskRecordTable } from "@/features/task-records/db"
 import { getTaskRecordActor } from "@/features/task-records/lib/get-task-record-actor"
 import { terminalTaskRecordStates } from "@/features/task-records/schemas/task-record-state"
@@ -10,13 +8,11 @@ import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
 type ResetDownstreamTaskRecordsParams = {
-  organizationId: string
   projectId: string
   taskId: string
 }
 
 export const resetDownstreamTaskRecords = async ({
-  organizationId,
   projectId,
   taskId,
 }: ResetDownstreamTaskRecordsParams) => {
@@ -69,28 +65,6 @@ export const resetDownstreamTaskRecords = async ({
         resetCount++
         affectedTaskIds.add(record.taskId)
 
-        const scope = await getTaskRecordActivityScope(record.id)
-        await createActivityLogEvent({
-          actorId: null,
-          actorType: "system",
-          agentRunId: null,
-          database: db,
-          entityId: record.id,
-          entityType: "taskRecord",
-          eventType: "taskRecord.reset_downstream",
-          organizationId,
-          payload: {
-            downstreamOfTaskTitle: targetTask.title,
-            recordName: scope.recordName,
-            taskTitle: scope.taskTitle,
-          },
-          projectId,
-          recordId: scope.recordId,
-          relatedProjectId: null,
-          relatedRecordId: null,
-          taskId: record.taskId,
-          taskRecordId: record.id,
-        })
       }
     } catch (error) {
       logger.warn(

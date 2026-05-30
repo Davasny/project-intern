@@ -3,7 +3,6 @@ import { Pool } from "pg"
 import { agentRunTable } from "@/features/agent-runs/db"
 import { artifactTable } from "@/features/artifacts/db"
 import { authSchema } from "@/features/auth/schema"
-import { activityLogTable } from "@/features/observability/db"
 import { opencodeServerTable } from "@/features/opencode/db"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
@@ -17,7 +16,6 @@ const schema = {
   ...authSchema,
   artifactTable,
   agentRunTable,
-  activityLogTable,
   projectTable,
   projectSchemaVersionTable,
   recordTable,

@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm"
 import { type InferStates, machine } from "machin"
 import { withDrizzlePg } from "machin/drizzle/pg"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectTable } from "@/features/projects/db"
 import { taskTable } from "@/features/tasks/db"
 import { publishTask } from "@/features/tasks/lib/publish-task"
@@ -60,7 +59,7 @@ const taskMachineDefinition = machine<TaskMachineContext>().define({
         }
 
         const project = await db
-          .select({ organizationId: projectTable.organizationId })
+          .select({ id: projectTable.id })
           .from(projectTable)
           .where(eq(projectTable.id, context.projectId))
           .then((rows) => rows[0] ?? null)
@@ -77,7 +76,6 @@ const taskMachineDefinition = machine<TaskMachineContext>().define({
         await publishTask({
           createdByUserId: acceptedByUserId,
           database: db,
-          organizationId: project.organizationId,
           task: {
             descriptionMarkdown: context.descriptionMarkdown,
             id: event.taskId,
@@ -89,27 +87,6 @@ const taskMachineDefinition = machine<TaskMachineContext>().define({
             targetSchemaVersionId: context.targetSchemaVersionId,
             title: context.title,
           },
-        })
-
-        await createActivityLogEvent({
-          actorId: acceptedByUserId,
-          actorType: "user",
-          agentRunId: null,
-          database: db,
-          entityId: event.taskId,
-          entityType: "task",
-          eventType: "task.draft_accepted",
-          organizationId: project.organizationId,
-          payload: {
-            schemaVersion: context.schemaVersion,
-            title: context.title,
-          },
-          projectId: context.projectId,
-          recordId: null,
-          relatedProjectId: null,
-          relatedRecordId: null,
-          taskId: event.taskId,
-          taskRecordId: null,
         })
 
         return {
@@ -139,7 +116,7 @@ const taskMachineDefinition = machine<TaskMachineContext>().define({
         }
 
         const project = await db
-          .select({ organizationId: projectTable.organizationId })
+          .select({ id: projectTable.id })
           .from(projectTable)
           .where(eq(projectTable.id, context.projectId))
           .then((rows) => rows[0] ?? null)
@@ -147,27 +124,6 @@ const taskMachineDefinition = machine<TaskMachineContext>().define({
         if (!project) {
           throw new Error("Task project was not found.")
         }
-
-        await createActivityLogEvent({
-          actorId: rejectedByUserId,
-          actorType: "user",
-          agentRunId: null,
-          database: db,
-          entityId: event.taskId,
-          entityType: "task",
-          eventType: "task.draft_rejected",
-          organizationId: project.organizationId,
-          payload: {
-            schemaVersion: context.schemaVersion,
-            title: context.title,
-          },
-          projectId: context.projectId,
-          recordId: null,
-          relatedProjectId: null,
-          relatedRecordId: null,
-          taskId: event.taskId,
-          taskRecordId: null,
-        })
 
         return {
           ...context,

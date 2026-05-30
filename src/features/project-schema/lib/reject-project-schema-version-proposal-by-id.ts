@@ -32,7 +32,6 @@ export const rejectProjectSchemaVersionProposalById = async ({
   return db.transaction((transaction) =>
     rejectProjectSchemaVersionProposal({
       database: transaction,
-      organizationId: project.organizationId,
       projectId: project.id,
       rejectedByUserId: userId,
       schemaVersionId,

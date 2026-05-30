@@ -55,8 +55,6 @@ export const createProjectSchemaVersion = async ({
       )
 
       const updatedActor = await actor.send("update", {
-        actorId: userId,
-        organizationId: project.organizationId,
         schemaDefinition,
         schemaVersionId: writeMode.activeVersion.id,
       })
@@ -110,7 +108,6 @@ export const createProjectSchemaVersion = async ({
     return acceptProjectSchemaVersionProposal({
       acceptedByUserId: userId,
       database: tx,
-      organizationId: project.organizationId,
       projectId: project.id,
       schemaVersionId: createdProposal.id,
     })

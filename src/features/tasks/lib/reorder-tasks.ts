@@ -1,6 +1,5 @@
 import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { taskTable } from "@/features/tasks/db"
 import { applyTaskOrder } from "@/features/tasks/lib/apply-task-order"
@@ -60,26 +59,6 @@ export const reorderTasks = async ({
     database: db,
     orderedTaskIds: input.orderedTaskIds,
     projectId: project.id,
-  })
-
-  await createActivityLogEvent({
-    actorId: userId,
-    actorType: "user",
-    agentRunId: null,
-    database: db,
-    entityId: null,
-    entityType: "taskList",
-    eventType: "task.reordered",
-    organizationId: project.organizationId,
-    payload: {
-      orderedTaskIds: input.orderedTaskIds,
-    },
-    projectId: project.id,
-    recordId: null,
-    relatedProjectId: null,
-    relatedRecordId: null,
-    taskId: null,
-    taskRecordId: null,
   })
 
   logger.info(

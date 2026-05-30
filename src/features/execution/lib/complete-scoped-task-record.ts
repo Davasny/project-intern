@@ -4,10 +4,8 @@ import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-r
 import { getTaskRecordPatchSchemaVersion } from "@/features/execution/lib/get-task-record-patch-schema-version"
 import { mirrorRecordWorkspaceDataToStorage } from "@/features/execution/lib/mirror-record-workspace-data-to-storage"
 import type { PatchProposal } from "@/features/execution/schemas/patch-proposal"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { applyRecordPatch } from "@/features/records/lib/apply-record-patch"
 import { syncRecordSchemaVersion } from "@/features/records/lib/sync-record-schema-version"
-import { db } from "@/lib/db"
 
 type CompleteScopedTaskRecordParams = {
   executionScope: {
@@ -43,27 +41,6 @@ export const completeScopedTaskRecord = async ({
       schemaVersion: patchSchemaVersion,
     })
 
-    await createActivityLogEvent({
-      actorId: scope.agentRun.id,
-      actorType: "executor",
-      agentRunId: scope.agentRun.id,
-      database: db,
-      entityId: scope.record.id,
-      entityType: "record",
-      eventType: "record.patch_applied",
-      organizationId: scope.project.organizationId,
-      payload: {
-        baseVersion: patch.baseVersion,
-        changeCount: patch.changes.length,
-        taskTitle: scope.task.title,
-      },
-      projectId: scope.project.id,
-      recordId: scope.record.id,
-      relatedProjectId: null,
-      relatedRecordId: null,
-      taskId: scope.task.id,
-      taskRecordId: scope.taskRecord.id,
-    })
   }
 
   if (scope.task.targetSchemaVersionId !== null) {

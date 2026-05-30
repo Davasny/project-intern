@@ -55,7 +55,6 @@ export const createTask = async ({
       model,
       temperature,
     },
-    organizationId: activeSchemaVersion.project.organizationId,
     projectId: activeSchemaVersion.project.id,
     proposedByUserId: userId,
   })

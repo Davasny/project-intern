@@ -1,6 +1,4 @@
 import { and, eq } from "drizzle-orm"
-import { activityLogTable } from "@/features/observability/db"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { fanOutTaskRecordsForTask } from "@/features/task-records/lib/fan-out-task-records-for-task"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import type { db } from "@/lib/db"
@@ -14,7 +12,6 @@ type DatabaseClient = Pick<
 type PublishTaskParams = {
   createdByUserId: string | null
   database: DatabaseClient
-  organizationId: string
   task: {
     descriptionMarkdown: string
     id: string
@@ -31,7 +28,6 @@ type PublishTaskParams = {
 export const publishTask = async ({
   createdByUserId,
   database,
-  organizationId,
   task,
 }: PublishTaskParams) => {
   const firstRevision = await database
@@ -61,44 +57,6 @@ export const publishTask = async ({
     targetSchemaVersionId: task.targetSchemaVersionId,
     taskId: task.id,
   })
-
-  const createdEvent = await database
-    .select({ id: activityLogTable.id })
-    .from(activityLogTable)
-    .where(
-      and(
-        eq(activityLogTable.projectId, task.projectId),
-        eq(activityLogTable.taskId, task.id),
-        eq(activityLogTable.eventType, "task.created"),
-      ),
-    )
-    .then((rows) => rows[0] ?? null)
-
-  if (!createdEvent) {
-    await createActivityLogEvent({
-      actorId: createdByUserId,
-      actorType: createdByUserId === null ? "system" : "user",
-      agentRunId: null,
-      database,
-      entityId: task.id,
-      entityType: "task",
-      eventType: "task.created",
-      organizationId,
-      payload: {
-        schemaVersion: task.schemaVersion,
-        sortOrder: task.sortOrder,
-        sourceSchemaVersionId: task.sourceSchemaVersionId,
-        targetSchemaVersionId: task.targetSchemaVersionId,
-        title: task.title,
-      },
-      projectId: task.projectId,
-      recordId: null,
-      relatedProjectId: null,
-      relatedRecordId: null,
-      taskId: task.id,
-      taskRecordId: null,
-    })
-  }
 
   logger.info({ projectId: task.projectId, taskId: task.id }, "Published task")
 

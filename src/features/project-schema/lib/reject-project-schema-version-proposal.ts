@@ -8,7 +8,6 @@ type DatabaseClient = Pick<typeof db, "select">
 
 type RejectProjectSchemaVersionProposalParams = {
   database: DatabaseClient
-  organizationId: string
   projectId: string
   rejectedByUserId: string
   schemaVersionId: string
@@ -16,7 +15,6 @@ type RejectProjectSchemaVersionProposalParams = {
 
 export const rejectProjectSchemaVersionProposal = async ({
   database,
-  organizationId,
   projectId,
   rejectedByUserId,
   schemaVersionId,
@@ -53,7 +51,6 @@ export const rejectProjectSchemaVersionProposal = async ({
   const actor = await getProjectSchemaVersionActor(schemaVersionId)
 
   const rejectedActor = await actor.send("reject", {
-    organizationId,
     rejectedByUserId,
     schemaVersionId,
   })

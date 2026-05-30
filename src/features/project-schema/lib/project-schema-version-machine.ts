@@ -1,7 +1,6 @@
 import { and, eq, sql } from "drizzle-orm"
 import { machine } from "machin"
 import { withDrizzlePg } from "machin/drizzle/pg"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { buildSchemaMigrationTaskDescription } from "@/features/project-schema/lib/build-schema-migration-task-description"
 import type { ProjectSchemaDefinition } from "@/features/project-schema/schemas/project-schema-version"
@@ -20,7 +19,6 @@ type ProjectSchemaVersionMachineContext = {
 
 type AcceptedEvent = {
   acceptedByUserId: string
-  organizationId: string
   previousVersionId: string | null
   previousVersionNumber: number | null
   previousSchemaDefinition: ProjectSchemaDefinition | null
@@ -28,14 +26,11 @@ type AcceptedEvent = {
 }
 
 type RejectedEvent = {
-  organizationId: string
   rejectedByUserId: string
   schemaVersionId: string
 }
 
 type UpdatingEvent = {
-  actorId: string
-  organizationId: string
   schemaDefinition: ProjectSchemaDefinition
   schemaVersionId: string
 }
@@ -72,7 +67,6 @@ const projectSchemaVersionMachineDefinition =
                   }),
                   model: null,
                   temperature: null,
-                  organizationId: event.organizationId,
                   projectId: context.projectId,
                   schemaVersion: context.version,
                   sourceSchemaVersionId: event.previousVersionId,
@@ -80,27 +74,6 @@ const projectSchemaVersionMachineDefinition =
                   title: `Adopt schema v${context.version}`,
                 })
               : null
-
-          await createActivityLogEvent({
-            actorId: event.acceptedByUserId,
-            actorType: "user",
-            agentRunId: null,
-            database: db,
-            entityId: event.schemaVersionId,
-            entityType: "projectSchemaVersion",
-            eventType: "schema.version_created",
-            organizationId: event.organizationId,
-            payload: {
-              migrationTaskId: migrationTask?.id ?? null,
-              version: context.version,
-            },
-            projectId: context.projectId,
-            recordId: null,
-            relatedProjectId: null,
-            relatedRecordId: null,
-            taskId: migrationTask?.id ?? null,
-            taskRecordId: null,
-          })
 
           return context
         },
@@ -120,29 +93,7 @@ const projectSchemaVersionMachineDefinition =
         },
       },
       rejected: {
-        entry: async (context, event: RejectedEvent) => {
-          await createActivityLogEvent({
-            actorId: event.rejectedByUserId,
-            actorType: "user",
-            agentRunId: null,
-            database: db,
-            entityId: event.schemaVersionId,
-            entityType: "projectSchemaVersion",
-            eventType: "schema.version_rejected",
-            organizationId: event.organizationId,
-            payload: {
-              version: context.version,
-            },
-            projectId: context.projectId,
-            recordId: null,
-            relatedProjectId: null,
-            relatedRecordId: null,
-            taskId: null,
-            taskRecordId: null,
-          })
-
-          return context
-        },
+        entry: (context, _event: RejectedEvent) => context,
         onSuccess: { target: "rejected" },
         onError: { target: "rejected_failed" },
       },
@@ -165,26 +116,6 @@ const projectSchemaVersionMachineDefinition =
           if (!updated) {
             throw new Error("Schema version could not be updated.")
           }
-
-          await createActivityLogEvent({
-            actorId: event.actorId,
-            actorType: "user",
-            agentRunId: null,
-            database: db,
-            entityId: updated.id,
-            entityType: "projectSchemaVersion",
-            eventType: "schema.version_edited_in_place",
-            organizationId: event.organizationId,
-            payload: {
-              version: updated.version,
-            },
-            projectId: updated.projectId,
-            recordId: null,
-            relatedProjectId: null,
-            relatedRecordId: null,
-            taskId: null,
-            taskRecordId: null,
-          })
 
           return {
             ...context,

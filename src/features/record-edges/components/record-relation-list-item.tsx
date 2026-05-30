@@ -79,13 +79,6 @@ export const RecordRelationListItem = ({
           }),
         )
         await queryClient.invalidateQueries(
-          trpc.recordEdges.listActivity.queryFilter({
-            organizationSlug,
-            projectSlug,
-            recordId,
-          }),
-        )
-        await queryClient.invalidateQueries(
           trpc.records.list.queryFilter({
             organizationSlug,
             projectSlug: relation.relatedRecord.projectSlug,
@@ -100,13 +93,6 @@ export const RecordRelationListItem = ({
         )
         await queryClient.invalidateQueries(
           trpc.recordEdges.listForRecord.queryFilter({
-            organizationSlug,
-            projectSlug: relation.relatedRecord.projectSlug,
-            recordId: relation.relatedRecord.id,
-          }),
-        )
-        await queryClient.invalidateQueries(
-          trpc.recordEdges.listActivity.queryFilter({
             organizationSlug,
             projectSlug: relation.relatedRecord.projectSlug,
             recordId: relation.relatedRecord.id,

@@ -9,7 +9,6 @@ type DatabaseClient = Pick<typeof db, "select">
 type AcceptProjectSchemaVersionProposalParams = {
   acceptedByUserId: string
   database: DatabaseClient
-  organizationId: string
   projectId: string
   schemaVersionId: string
 }
@@ -17,7 +16,6 @@ type AcceptProjectSchemaVersionProposalParams = {
 export const acceptProjectSchemaVersionProposal = async ({
   acceptedByUserId,
   database,
-  organizationId,
   projectId,
   schemaVersionId,
 }: AcceptProjectSchemaVersionProposalParams) => {
@@ -70,7 +68,6 @@ export const acceptProjectSchemaVersionProposal = async ({
 
   const acceptedActor = await actor.send("accept", {
     acceptedByUserId,
-    organizationId,
     previousSchemaDefinition: previousVersion?.schemaDefinition ?? null,
     previousVersionId: previousVersion?.id ?? null,
     previousVersionNumber: previousVersion?.version ?? null,

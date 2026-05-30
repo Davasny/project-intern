@@ -1,5 +1,4 @@
 import { eq, sql } from "drizzle-orm"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
 import { taskTable } from "@/features/tasks/db"
 import { createTaskActor } from "@/features/tasks/lib/task-machine"
 import type { TaskInput } from "@/features/tasks/schemas/task-input"
@@ -11,7 +10,6 @@ type DatabaseClient = Pick<typeof db, "execute" | "insert" | "select">
 type CreateTaskDraftParams = {
   database: DatabaseClient
   input: TaskInput
-  organizationId: string
   projectId: string
   proposedByUserId: string | null
 }
@@ -19,7 +17,6 @@ type CreateTaskDraftParams = {
 export const createTaskDraft = async ({
   database,
   input,
-  organizationId,
   projectId,
   proposedByUserId,
 }: CreateTaskDraftParams) => {
@@ -52,28 +49,6 @@ export const createTaskDraft = async ({
     sourceSchemaVersionId: null,
     targetSchemaVersionId: null,
     title: input.title,
-  })
-
-  await createActivityLogEvent({
-    actorId: proposedByUserId,
-    actorType: proposedByUserId === null ? "system" : "user",
-    agentRunId: null,
-    database,
-    entityId: taskId,
-    entityType: "task",
-    eventType: "task.draft_created",
-    organizationId,
-    payload: {
-      schemaVersion: input.schemaVersion,
-      sortOrder: nextSortOrder,
-      title: input.title,
-    },
-    projectId,
-    recordId: null,
-    relatedProjectId: null,
-    relatedRecordId: null,
-    taskId,
-    taskRecordId: null,
   })
 
   return database

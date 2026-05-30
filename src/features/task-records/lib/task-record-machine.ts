@@ -1,11 +1,7 @@
-import { and, eq } from "drizzle-orm"
 import { machine } from "machin"
 import { withDrizzlePg } from "machin/drizzle/pg"
-import { createActivityLogEvent } from "@/features/observability/lib/create-activity-log-event"
-import { getTaskRecordActivityScope } from "@/features/observability/lib/get-task-record-activity-scope"
 import { finalizeProjectSchemaMigration } from "@/features/project-schema/lib/finalize-project-schema-migration"
 import { taskRecordTable } from "@/features/task-records/db"
-import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
@@ -15,31 +11,6 @@ type TaskRecordMachineContext = {
   lastTransitionAt: Date
   recordId: string
   taskId: string
-}
-
-const lookupTaskRecordInfo = async (context: TaskRecordMachineContext) => {
-  const info = await db
-    .select({
-      id: taskRecordTable.id,
-      projectId: taskTable.projectId,
-    })
-    .from(taskRecordTable)
-    .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
-    .where(
-      and(
-        eq(taskRecordTable.taskId, context.taskId),
-        eq(taskRecordTable.recordId, context.recordId),
-      ),
-    )
-    .then((rows) => rows[0] ?? null)
-
-  if (!info) {
-    throw new Error(
-      `Task record not found for taskId=${context.taskId}, recordId=${context.recordId}`,
-    )
-  }
-
-  return info
 }
 
 type ClaimEvent = {
@@ -140,33 +111,6 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
         reset: { target: "waiting" },
       },
       entry: async (context, event: CompleteEvent) => {
-        const taskRecordInfo = await lookupTaskRecordInfo(context)
-
-        const activityScope = await getTaskRecordActivityScope(
-          taskRecordInfo.id,
-        )
-
-        await createActivityLogEvent({
-          actorId: event.agentRunId,
-          actorType: "executor",
-          agentRunId: event.agentRunId,
-          database: db,
-          entityId: activityScope.taskRecordId,
-          entityType: "taskRecord",
-          eventType: "taskRecord.completed",
-          organizationId: activityScope.organizationId,
-          payload: {
-            recordName: activityScope.recordName,
-            taskTitle: activityScope.taskTitle,
-          },
-          projectId: activityScope.projectId,
-          recordId: activityScope.recordId,
-          relatedProjectId: null,
-          relatedRecordId: null,
-          taskId: activityScope.taskId,
-          taskRecordId: activityScope.taskRecordId,
-        })
-
         await finalizeProjectSchemaMigration({ taskId: context.taskId })
 
         return {
@@ -191,34 +135,6 @@ const taskRecordMachineDefinition = machine<TaskRecordMachineContext>().define({
     },
     failed: {
       entry: async (context, event: FailEvent) => {
-        const taskRecordInfo = await lookupTaskRecordInfo(context)
-
-        const activityScope = await getTaskRecordActivityScope(
-          taskRecordInfo.id,
-        )
-
-        await createActivityLogEvent({
-          actorId: event.agentRunId,
-          actorType: "executor",
-          agentRunId: event.agentRunId,
-          database: db,
-          entityId: activityScope.taskRecordId,
-          entityType: "taskRecord",
-          eventType: "taskRecord.failed",
-          organizationId: activityScope.organizationId,
-          payload: {
-            errorCode: event.errorCode,
-            recordName: activityScope.recordName,
-            taskTitle: activityScope.taskTitle,
-          },
-          projectId: activityScope.projectId,
-          recordId: activityScope.recordId,
-          relatedProjectId: null,
-          relatedRecordId: null,
-          taskId: activityScope.taskId,
-          taskRecordId: activityScope.taskRecordId,
-        })
-
         logger.warn(
           { agentRunId: event.agentRunId, taskId: context.taskId },
           "Failed task record",
