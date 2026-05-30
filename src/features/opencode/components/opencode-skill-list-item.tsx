@@ -10,6 +10,7 @@ import { useTRPC } from "@/lib/trpc/client"
 type OpencodeSkillListItemProps = {
   skill: {
     description: string
+    directoryName: string
     enabled: boolean
     name: string
   }

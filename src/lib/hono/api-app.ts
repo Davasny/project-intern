@@ -4,6 +4,7 @@ import { auth } from "@/features/auth/lib/auth"
 import { crmApiApp } from "@/lib/hono/crm-api-app"
 import { sessionGuard } from "@/lib/hono/middleware/session-guard"
 import { uploadRecordFilesHandler } from "@/lib/hono/routes/upload"
+import { uploadSkillFilesHandler } from "@/lib/hono/routes/upload-skill"
 import { logger } from "@/lib/logger"
 import { mcpApp } from "@/lib/mcp/mcp-app"
 import { createTrpcContext } from "@/lib/trpc/create-context"
@@ -40,6 +41,12 @@ apiApp.post(
   "/api/upload/record/:recordId",
   sessionGuard,
   uploadRecordFilesHandler,
+)
+
+apiApp.post(
+  "/api/upload/skill/:organizationSlug/:projectSlug",
+  sessionGuard,
+  uploadSkillFilesHandler,
 )
 
 apiApp.route("/api/mcp", mcpApp)
