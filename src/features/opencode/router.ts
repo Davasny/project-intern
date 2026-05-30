@@ -1,6 +1,10 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
-import { stopInteractiveServer } from "@/features/opencode/lib/get-opencode-client"
+import { dumpDebugSessions } from "@/features/opencode/lib/dump-debug-sessions"
+import {
+  stopInteractiveServer,
+  withOpencodeForOrg,
+} from "@/features/opencode/lib/get-opencode-client"
 import { getProjectDisabledSkillNames } from "@/features/opencode/lib/get-project-disabled-skill-names"
 import { listDiskSkills } from "@/features/opencode/lib/list-disk-skills"
 import {
@@ -12,6 +16,10 @@ import {
   spawnSession,
 } from "@/features/opencode/lib/spawn-session"
 import { updateProjectSkillEnabled } from "@/features/opencode/lib/update-project-skill-enabled"
+import {
+  resolveSessionDumpScope,
+  sessionDumpScopeSchema,
+} from "@/features/opencode/schemas/session-dump-scope"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { getProjectSkillsDirectory } from "@/lib/config/backend"
 import { protectedProcedure, router } from "@/lib/trpc/init"
@@ -172,6 +180,36 @@ export const opencodeRouter = router({
             "Either serverId or (agentRunId and taskRecordId) must be provided.",
         })
       }
+    }),
+  dumpSessions: protectedProcedure
+    .input(projectScopeSchema.extend({ scope: sessionDumpScopeSchema }))
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      const scope = resolveSessionDumpScope(input.scope)
+
+      return withOpencodeForOrg({
+        fn: async ({ client }) =>
+          dumpDebugSessions({
+            client,
+            projectId: project.id,
+            scope,
+          }),
+        organizationId: project.organizationId,
+        projectId: project.id,
+        runtimeTemperature: null,
+      })
     }),
   listSessions: protectedProcedure.input(projectScopeSchema).query(async () => {
     const sessions = await listSessionsOnExternalServer()

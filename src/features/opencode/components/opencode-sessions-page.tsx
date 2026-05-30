@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -30,6 +31,8 @@ export const OpencodeSessionsPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const [copied, setCopied] = useState(false)
+  const [copiedDumpPath, setCopiedDumpPath] = useState(false)
+  const [dumpSessions, setDumpSessions] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>()
   const [selectedRecordId, setSelectedRecordId] = useState<string | undefined>()
 
@@ -43,6 +46,7 @@ export const OpencodeSessionsPage = () => {
   const spawnMutation = useMutation(
     trpc.opencode.spawnSession.mutationOptions(),
   )
+  const dumpMutation = useMutation(trpc.opencode.dumpSessions.mutationOptions())
 
   const stopMutation = useMutation(
     trpc.opencode.stopSession.mutationOptions({
@@ -54,14 +58,26 @@ export const OpencodeSessionsPage = () => {
 
   const handleSpawn = async () => {
     try {
-      await spawnMutation.mutateAsync({
+      const spawnedSession = await spawnMutation.mutateAsync({
         organizationSlug,
         projectSlug,
         taskId: selectedTaskId,
         recordId: selectedRecordId,
       })
+
+      if (dumpSessions) {
+        await dumpMutation.mutateAsync({
+          organizationSlug,
+          projectSlug,
+          scope: {
+            recordId: selectedRecordId,
+            taskId: selectedTaskId,
+          },
+        })
+      }
+
+      return spawnedSession
     } catch {
-      // Error state captured by spawnMutation.isError
     }
   }
 
@@ -113,7 +129,16 @@ export const OpencodeSessionsPage = () => {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleCopyDumpPath = async () => {
+    if (!dumpMutation.data) return
+    await navigator.clipboard.writeText(dumpMutation.data.directory)
+    setCopiedDumpPath(true)
+    setTimeout(() => setCopiedDumpPath(false), 2000)
+  }
+
   const isLoading = tasksQuery.isLoading || recordsQuery.isLoading
+  const shouldWarnDumpingEverything =
+    dumpSessions && !selectedTaskId && !selectedRecordId
 
   return (
     <div className="flex flex-col gap-6">
@@ -141,22 +166,6 @@ export const OpencodeSessionsPage = () => {
             </span>
           </div>
           <div className="flex flex-row gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleSpawn}
-              disabled={
-                spawnMutation.isPending || !!spawnMutation.data || isLoading
-              }
-              className="gap-2"
-            >
-              {spawnMutation.isPending ? (
-                <RefreshCwIcon className="size-3.5 animate-spin" />
-              ) : (
-                <PlusIcon className="size-3.5" />
-              )}
-              {spawnMutation.isPending ? "Spawning..." : "Spawn Session"}
-            </Button>
             {spawnMutation.data ? (
               <Button
                 variant="destructive"
@@ -178,6 +187,24 @@ export const OpencodeSessionsPage = () => {
 
         <SectionCardContent>
           <div className="flex flex-col gap-4">
+            <div className="flex flex-row items-start gap-3 rounded-md border border-border bg-muted/30 p-3">
+              <Switch
+                aria-label="Dump sessions"
+                checked={dumpSessions}
+                onCheckedChange={setDumpSessions}
+              />
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-foreground">
+                  Dump sessions
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Write bounded markdown transcripts and task/record context to
+                  the project debug-sessions directory after spawning the
+                  interactive debug session.
+                </span>
+              </div>
+            </div>
+
             <div className="flex flex-row gap-4">
               <div className="flex flex-col gap-1.5 min-w-48">
                 <label
@@ -238,6 +265,81 @@ export const OpencodeSessionsPage = () => {
                 </Select>
               </div>
             </div>
+
+            {shouldWarnDumpingEverything ? (
+              <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+                No task or record selected. Dump Sessions will export all task
+                and record run histories for this project, capped by dump
+                limits.
+              </p>
+            ) : null}
+
+            <div className="flex flex-row items-center gap-2">
+              <Button
+                className="gap-2"
+                disabled={
+                  spawnMutation.isPending ||
+                  dumpMutation.isPending ||
+                  !!spawnMutation.data ||
+                  isLoading
+                }
+                onClick={handleSpawn}
+                type="button"
+                variant="default"
+              >
+                {spawnMutation.isPending || dumpMutation.isPending ? (
+                  <RefreshCwIcon className="size-4 animate-spin" />
+                ) : (
+                  <PlusIcon className="size-4" />
+                )}
+                {dumpSessions
+                  ? spawnMutation.isPending
+                    ? "Spawning..."
+                    : dumpMutation.isPending
+                      ? "Dumping..."
+                      : "Spawn + Dump"
+                  : spawnMutation.isPending
+                    ? "Spawning..."
+                    : "Spawn Session"}
+              </Button>
+            </div>
+
+            {dumpMutation.data ? (
+              <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3">
+                <div className="flex items-center gap-2">
+                  <code className="rounded bg-muted px-2 py-1 font-mono text-xs text-foreground">
+                    {dumpMutation.data.runCount.toString()} runs dumped
+                  </code>
+                  <Button
+                    className="gap-2"
+                    onClick={handleCopyDumpPath}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {copiedDumpPath ? (
+                      <CheckIcon className="size-3.5" />
+                    ) : (
+                      <CopyIcon className="size-3.5" />
+                    )}
+                    {copiedDumpPath ? "Copied" : "Copy path"}
+                  </Button>
+                </div>
+                <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs text-muted-foreground">
+                  {dumpMutation.data.directory}
+                </pre>
+                {dumpMutation.data.truncatedRunCount > 0 ||
+                dumpMutation.data.failedRunCount > 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    {dumpMutation.data.truncatedRunCount > 0
+                      ? `${dumpMutation.data.truncatedRunCount.toString()} runs skipped by limit. `
+                      : ""}
+                    {dumpMutation.data.failedRunCount > 0
+                      ? `${dumpMutation.data.failedRunCount.toString()} runs had transcript load errors.`
+                      : ""}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             {spawnMutation.data ? (
               <div className="flex flex-col gap-3">
