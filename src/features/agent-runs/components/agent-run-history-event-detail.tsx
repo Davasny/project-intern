@@ -2,7 +2,7 @@ import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import { AgentRunHistoryMetricList } from "@/features/agent-runs/components/agent-run-history-metric-list"
 import type { AgentRunHistoryEvent } from "@/features/agent-runs/lib/agent-run-history-event"
-import { agentRunHistoryEventKindTone } from "@/features/agent-runs/lib/agent-run-history-event-kind-tone"
+import { getAgentRunHistoryEventTone } from "@/features/agent-runs/lib/get-agent-run-history-event-tone"
 
 type AgentRunHistoryEventDetailProps = {
   event: AgentRunHistoryEvent | null
@@ -37,7 +37,7 @@ export const AgentRunHistoryEventDetail = ({
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
               label={event.kind}
-              tone={agentRunHistoryEventKindTone[event.kind]}
+              tone={getAgentRunHistoryEventTone(event)}
             />
             <span className="text-xs text-muted-foreground">
               {new Date(event.timestamp).toLocaleString()}

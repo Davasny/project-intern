@@ -46,6 +46,9 @@
   --color-tone-muted: var(--tone-muted);
   --color-tone-muted-foreground: var(--tone-muted-foreground);
   --color-tone-muted-bg: var(--tone-muted-bg);
+  --color-tone-skill: var(--tone-skill);
+  --color-tone-skill-foreground: var(--tone-skill-foreground);
+  --color-tone-skill-bg: var(--tone-skill-bg);
   --color-tone-success: var(--tone-success);
   --color-tone-success-foreground: var(--tone-success-foreground);
   --color-tone-success-bg: var(--tone-success-bg);
@@ -105,6 +108,9 @@
   --tone-muted: oklch(0.9 0 0);
   --tone-muted-foreground: oklch(0.45 0 0);
   --tone-muted-bg: oklch(0.97 0 0);
+  --tone-skill: oklch(0.8 0.1 305);
+  --tone-skill-foreground: oklch(0.45 0.2 305);
+  --tone-skill-bg: oklch(0.97 0.025 305);
   --tone-success: oklch(0.82 0.08 149);
   --tone-success-foreground: oklch(0.5 0.18 149);
   --tone-success-bg: oklch(0.97 0.02 149);
@@ -164,6 +170,9 @@
   --tone-muted: oklch(0.5 0 0);
   --tone-muted-foreground: oklch(0.78 0 0);
   --tone-muted-bg: oklch(0.27 0 0);
+  --tone-skill: oklch(0.68 0.16 305);
+  --tone-skill-foreground: oklch(0.82 0.1 305);
+  --tone-skill-bg: oklch(0.28 0.05 305);
   --tone-success: oklch(0.7 0.14 149);
   --tone-success-foreground: oklch(0.82 0.08 149);
   --tone-success-bg: oklch(0.27 0.04 149);

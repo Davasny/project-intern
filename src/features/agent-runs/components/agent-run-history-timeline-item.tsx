@@ -1,6 +1,6 @@
 import type { StatusBadgeTone } from "@/components/ui/status-badge/status-badge"
 import type { AgentRunHistoryEvent } from "@/features/agent-runs/lib/agent-run-history-event"
-import { agentRunHistoryEventKindTone } from "@/features/agent-runs/lib/agent-run-history-event-kind-tone"
+import { getAgentRunHistoryEventTone } from "@/features/agent-runs/lib/get-agent-run-history-event-tone"
 import { cn } from "@/lib/utils"
 
 type AgentRunHistoryTimelineItemProps = {
@@ -23,6 +23,10 @@ const timelineToneClasses = {
     default: "border-tone-muted bg-tone-muted-bg hover:bg-tone-muted-bg/80",
     selected: "border-tone-muted bg-tone-muted-foreground/75",
   },
+  skill: {
+    default: "border-tone-skill bg-tone-skill-bg hover:bg-tone-skill-bg/80",
+    selected: "border-tone-skill bg-tone-skill-foreground/75",
+  },
   success: {
     default: "border-tone-success bg-tone-success-bg hover:bg-tone-success-bg/80",
     selected: "border-tone-success bg-tone-success-foreground/75",
@@ -34,7 +38,7 @@ const timelineToneClasses = {
 } satisfies Record<StatusBadgeTone, { default: string; selected: string }>
 
 const getTimelineEventClasses = (event: AgentRunHistoryEvent) => {
-  const tone = agentRunHistoryEventKindTone[event.kind]
+  const tone = getAgentRunHistoryEventTone(event)
 
   return timelineToneClasses[tone]
 }
