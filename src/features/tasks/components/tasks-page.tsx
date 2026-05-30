@@ -176,26 +176,26 @@ export const TasksPage = () => {
         </PageHeader>
 
         {tasksQuery.data.length > 0 ? (
-          <DataTable>
-            <TableHead>
-              <TableRow>
-                <TableHeader className="w-10" />
-                <TableHeader>Order</TableHeader>
-                <TableHeader>Task</TableHeader>
-                <TableHeader>Temperature</TableHeader>
-                <TableHeader>Status</TableHeader>
-                <TableHeader>Completed</TableHeader>
-                <TableHeader>Active</TableHeader>
-                <TableHeader>Failed</TableHeader>
-                <TableHeader>Waiting</TableHeader>
-                <TableHeader>Actions</TableHeader>
-              </TableRow>
-            </TableHead>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <DataTable>
+              <TableHead>
+                <TableRow>
+                  <TableHeader className="w-10" />
+                  <TableHeader>Order</TableHeader>
+                  <TableHeader>Task</TableHeader>
+                  <TableHeader>Temperature</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Completed</TableHeader>
+                  <TableHeader>Active</TableHeader>
+                  <TableHeader>Failed</TableHeader>
+                  <TableHeader>Waiting</TableHeader>
+                  <TableHeader>Actions</TableHeader>
+                </TableRow>
+              </TableHead>
               <SortableContext
                 items={taskIds}
                 strategy={verticalListSortingStrategy}
@@ -206,8 +206,8 @@ export const TasksPage = () => {
                   ))}
                 </TableBody>
               </SortableContext>
-            </DndContext>
-          </DataTable>
+            </DataTable>
+          </DndContext>
         ) : (
           <DataTableEmptyState
             action={
