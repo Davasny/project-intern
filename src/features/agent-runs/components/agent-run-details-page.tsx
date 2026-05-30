@@ -178,13 +178,6 @@ export const AgentRunDetailsPage = ({
 
   const isAbortable = isAgentRunStateActive(run.state)
 
-  const hasToolActivity =
-    run.taskActivitySummary !== null &&
-    Object.keys(run.taskActivitySummary).length > 0
-
-  const hasToolSummary =
-    run.toolSummary !== null && Object.keys(run.toolSummary).length > 0
-
   return (
     <div className="flex flex-col gap-6">
       <PageHeader>
@@ -223,30 +216,6 @@ export const AgentRunDetailsPage = ({
         </div>
       </PageHeader>
       <StatsBar stats={stats} details={details} />
-      {hasToolActivity ? (
-        <SectionCard>
-          <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-foreground">
-              Tool Activity Summary
-            </h2>
-          </SectionCardHeader>
-          <SectionCardContent>
-            <JsonViewer value={run.taskActivitySummary} />
-          </SectionCardContent>
-        </SectionCard>
-      ) : null}
-      {hasToolSummary ? (
-        <SectionCard>
-          <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-foreground">
-              Tool Summary
-            </h2>
-          </SectionCardHeader>
-          <SectionCardContent>
-            <JsonViewer value={run.toolSummary} />
-          </SectionCardContent>
-        </SectionCard>
-      ) : null}
       {run.resultPayload ? (
         <SectionCard>
           <SectionCardHeader>

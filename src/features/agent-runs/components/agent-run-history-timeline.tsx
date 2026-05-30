@@ -1,41 +1,10 @@
+import { AgentRunHistoryTimelineItem } from "@/features/agent-runs/components/agent-run-history-timeline-item"
 import type { AgentRunHistoryEvent } from "@/features/agent-runs/lib/agent-run-history-event"
-import { cn } from "@/lib/utils"
 
 type AgentRunHistoryTimelineProps = {
   events: Array<AgentRunHistoryEvent>
   selectedEventId: string | null
   onSelectEvent: (eventId: string) => void
-}
-
-const eventKindClasses = {
-  agent: {
-    default: "bg-tone-success-foreground/35 hover:bg-tone-success-foreground/55",
-    selected: "bg-tone-success-foreground/85",
-  },
-  error: {
-    default: "bg-tone-danger-foreground/35 hover:bg-tone-danger-foreground/55",
-    selected: "bg-tone-danger-foreground/90",
-  },
-  file: {
-    default: "bg-muted-foreground/20 hover:bg-muted-foreground/35",
-    selected: "bg-muted-foreground/55",
-  },
-  metadata: {
-    default: "bg-muted-foreground/15 hover:bg-muted-foreground/25",
-    selected: "bg-muted-foreground/45",
-  },
-  reasoning: {
-    default: "bg-tone-info-foreground/35 hover:bg-tone-info-foreground/55",
-    selected: "bg-tone-info-foreground/85",
-  },
-  system: {
-    default: "bg-tone-info-foreground/35 hover:bg-tone-info-foreground/55",
-    selected: "bg-tone-info-foreground/85",
-  },
-  tool: {
-    default: "bg-foreground/25 hover:bg-foreground/40",
-    selected: "bg-foreground/65",
-  },
 }
 
 export const AgentRunHistoryTimeline = ({
@@ -52,26 +21,14 @@ export const AgentRunHistoryTimeline = ({
     </div>
     <div className="grid grid-flow-col auto-cols-[minmax(0,3.75rem)] justify-start gap-1.5 px-0.5 py-1.5">
       {events.map((event, index) => (
-          <button
-            aria-label={`Select event ${String(index + 1)}: ${event.title}`}
-            className={cn(
-              "group relative h-8 min-w-0 overflow-hidden rounded-md border border-border/50 transition hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              selectedEventId === event.id
-                ? cn(
-                    eventKindClasses[event.kind].selected,
-                    "border-foreground/65 ring-2 ring-ring ring-offset-1 ring-offset-card",
-                  )
-                : eventKindClasses[event.kind].default,
-            )}
-            key={event.id}
-            onClick={() => onSelectEvent(event.id)}
-            title={`${event.kind}: ${event.summary}`}
-            type="button"
-          >
-            <span className="absolute inset-x-1 top-1 h-0.5 rounded-full bg-background/35" />
-            <span className="sr-only">{event.title}</span>
-          </button>
-        ))}
+        <AgentRunHistoryTimelineItem
+          event={event}
+          index={index}
+          key={event.id}
+          onSelectEvent={onSelectEvent}
+          selectedEventId={selectedEventId}
+        />
+      ))}
     </div>
   </div>
 )

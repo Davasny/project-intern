@@ -1,6 +1,7 @@
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import { AgentRunHistoryMetricList } from "@/features/agent-runs/components/agent-run-history-metric-list"
 import type { AgentRunHistoryEvent } from "@/features/agent-runs/lib/agent-run-history-event"
+import { agentRunHistoryEventKindTone } from "@/features/agent-runs/lib/agent-run-history-event-kind-tone"
 import { cn } from "@/lib/utils"
 
 type AgentRunHistoryEventListProps = {
@@ -8,16 +9,6 @@ type AgentRunHistoryEventListProps = {
   selectedEventId: string | null
   onSelectEvent: (eventId: string) => void
 }
-
-const eventKindTone = {
-  agent: "success",
-  error: "danger",
-  file: "muted",
-  metadata: "muted",
-  reasoning: "info",
-  system: "info",
-  tool: "info",
-} satisfies Record<AgentRunHistoryEvent["kind"], "danger" | "info" | "muted" | "success" | "warning">
 
 export const AgentRunHistoryEventList = ({
   events,
@@ -42,7 +33,10 @@ export const AgentRunHistoryEventList = ({
         </div>
         <div className="min-w-0 space-y-1">
           <div className="flex min-w-0 items-center gap-2">
-            <StatusBadge label={event.kind} tone={eventKindTone[event.kind]} />
+            <StatusBadge
+              label={event.kind}
+              tone={agentRunHistoryEventKindTone[event.kind]}
+            />
             <span className="truncate text-sm font-medium text-foreground">
               {event.title}
             </span>
@@ -64,7 +58,7 @@ export const AgentRunHistoryEventList = ({
               second: "2-digit",
             })}
           </span>
-          <AgentRunHistoryMetricList metrics={event.metrics} />
+          <AgentRunHistoryMetricList alignment="end" metrics={event.metrics} />
         </div>
       </button>
     ))}

@@ -2,8 +2,10 @@ import { Badge } from "@/components/ui/badge"
 
 type StatusBadgeProps = {
   label: string
-  tone: "danger" | "info" | "muted" | "success" | "warning"
+  tone: StatusBadgeTone
 }
+
+export type StatusBadgeTone = "danger" | "info" | "muted" | "success" | "warning"
 
 const toneClasses = {
   danger: "border-tone-danger bg-tone-danger-bg text-tone-danger-foreground",

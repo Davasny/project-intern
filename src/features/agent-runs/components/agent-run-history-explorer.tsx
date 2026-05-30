@@ -91,7 +91,7 @@ export const AgentRunHistoryExplorer = ({
                   selectedEventId={visibleSelectedEventId}
                 />
               </div>
-              <div className="min-w-0 bg-background/40">
+              <div className="min-w-0 bg-card">
                 <AgentRunHistoryEventDetail event={selectedEvent} />
               </div>
             </div>
