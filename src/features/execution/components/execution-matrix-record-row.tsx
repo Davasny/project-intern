@@ -55,5 +55,6 @@ export const ExecutionMatrixRecordRow = ({
         />
       </TableCell>
     ))}
+    <TableCell className="min-w-40 border-l-2 border-dashed border-border" />
   </TableRow>
 )

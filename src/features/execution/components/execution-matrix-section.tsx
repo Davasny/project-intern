@@ -1,11 +1,12 @@
 import { DataTable } from "@/components/ui/data-table/data-table"
 import {
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ExecutionMatrixAddRecordRow } from "@/features/execution/components/execution-matrix-add-record-row"
+import { ExecutionMatrixAddTaskHeader } from "@/features/execution/components/execution-matrix-add-task-header"
 import { ExecutionMatrixHeaderCell } from "@/features/execution/components/execution-matrix-header-cell"
 import { ExecutionMatrixRecordRow } from "@/features/execution/components/execution-matrix-record-row"
 import type { ExecutionTaskRecordCell } from "@/features/execution/lib/build-execution-matrix"
@@ -25,6 +26,8 @@ type ExecutionMatrixSectionProps = {
       title: string
     }>
   }
+  onAddRecord: () => void
+  onAddTask: () => void
   organizationSlug: string
   projectSlug: string
 }
@@ -33,6 +36,8 @@ export const ExecutionMatrixSection = ({
   debugControlsEnabled,
   isAutopickEnabled,
   matrix,
+  onAddRecord,
+  onAddTask,
   organizationSlug,
   projectSlug,
 }: ExecutionMatrixSectionProps) => (
@@ -50,32 +55,26 @@ export const ExecutionMatrixSection = ({
             task={task}
           />
         ))}
+        <ExecutionMatrixAddTaskHeader onAddTask={onAddTask} />
       </TableRow>
     </TableHead>
     <TableBody>
-      {matrix.records.length > 0 ? (
-        matrix.records.map((record) => (
-          <ExecutionMatrixRecordRow
-            debugControlsEnabled={debugControlsEnabled}
-            isAutopickEnabled={isAutopickEnabled}
-            key={record.id}
-            organizationSlug={organizationSlug}
-            projectSlug={projectSlug}
-            record={record}
-            recordCells={matrix.taskRecordsByRecordId.get(record.id) ?? null}
-            tasks={matrix.tasks}
-          />
-        ))
-      ) : (
-        <TableRow>
-          <TableCell
-            className="text-sm text-muted-foreground"
-            colSpan={Math.max(matrix.tasks.length + 1, 2)}
-          >
-            No task-record executions yet.
-          </TableCell>
-        </TableRow>
-      )}
+      {matrix.records.map((record) => (
+        <ExecutionMatrixRecordRow
+          debugControlsEnabled={debugControlsEnabled}
+          isAutopickEnabled={isAutopickEnabled}
+          key={record.id}
+          organizationSlug={organizationSlug}
+          projectSlug={projectSlug}
+          record={record}
+          recordCells={matrix.taskRecordsByRecordId.get(record.id) ?? null}
+          tasks={matrix.tasks}
+        />
+      ))}
+      <ExecutionMatrixAddRecordRow
+        onAddRecord={onAddRecord}
+        taskCount={matrix.tasks.length}
+      />
     </TableBody>
   </DataTable>
 )
