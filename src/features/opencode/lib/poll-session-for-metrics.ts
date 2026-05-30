@@ -1,7 +1,11 @@
 import type { OpencodeClient } from "@opencode-ai/sdk"
+import { eq } from "drizzle-orm"
 import type pino from "pino"
+import { agentRunTable } from "@/features/agent-runs/db"
 import { failAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
 import { updateAgentRunMetrics } from "@/features/agent-runs/lib/update-agent-run-metrics"
+import { isAgentRunStateActive } from "@/features/agent-runs/schemas/agent-run-state"
+import { db } from "@/lib/db"
 import { logger as rootLogger } from "@/lib/logger"
 
 type PollSessionForMetricsParams = {
@@ -15,6 +19,44 @@ type PollSessionForMetricsParams = {
 
 const DEFAULT_INTERVAL_MS = 2000
 const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000
+
+const isAgentRunStillActive = async (agentRunId: string) => {
+  const rows = await db
+    .select({ state: agentRunTable.state })
+    .from(agentRunTable)
+    .where(eq(agentRunTable.id, agentRunId))
+    .limit(1)
+
+  const agentRun = rows[0]
+
+  return agentRun ? isAgentRunStateActive(agentRun.state) : false
+}
+
+const abortOpencodeSession = async ({
+  client,
+  log,
+  sessionId,
+}: {
+  client: OpencodeClient
+  log: pino.Logger
+  sessionId: string
+}) => {
+  try {
+    await client.session.abort({
+      path: { id: sessionId },
+    })
+
+    log.info("Aborted OpenCode session after agent run became inactive")
+  } catch (error) {
+    log.warn(
+      {
+        error,
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      "Failed to abort OpenCode session after agent run became inactive",
+    )
+  }
+}
 
 export const pollSessionForMetrics = async ({
   sessionId,
@@ -34,6 +76,14 @@ export const pollSessionForMetrics = async ({
 
   while (Date.now() - startTime <= timeoutMs) {
     try {
+      const stillActive = await isAgentRunStillActive(agentRunId)
+
+      if (!stillActive) {
+        log.info("Agent run is no longer active, stopping session polling")
+        await abortOpencodeSession({ client, log, sessionId })
+        return
+      }
+
       const messagesResult = await client.session.messages({
         path: { id: sessionId },
       })
