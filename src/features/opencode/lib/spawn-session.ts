@@ -62,6 +62,7 @@ export const spawnSession = async ({
 
   const started = await startInteractiveServer({
     organizationId,
+    projectId,
     runtimeTemperature: null,
   })
 

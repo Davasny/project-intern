@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header/page-header"
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
+import { OpencodeSkillListItem } from "@/features/opencode/components/opencode-skill-list-item"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -107,17 +108,7 @@ export const OpencodeSkillsPage = () => {
           ) : (
             <ul className="flex flex-col gap-3">
               {skills.map((skill) => (
-                <li
-                  key={skill.name}
-                  className="flex flex-col gap-1 border-b border-border pb-3 last:border-0 last:pb-0 last:mb-0"
-                >
-                  <span className="text-sm font-medium text-foreground">
-                    {skill.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {skill.description}
-                  </span>
-                </li>
+                <OpencodeSkillListItem key={skill.name} skill={skill} />
               ))}
             </ul>
           )}

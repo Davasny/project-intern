@@ -266,6 +266,7 @@ export const spawnDebugSession = async ({
 
   const started = await startInteractiveServer({
     organizationId,
+    projectId,
     runtimeTemperature: resolvedTemperature,
   })
 

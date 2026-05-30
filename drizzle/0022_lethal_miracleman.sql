@@ -1,0 +1,1 @@
+ALTER TABLE "project" ADD COLUMN "disabled_skill_names" text[] DEFAULT '{}'::text[] NOT NULL;

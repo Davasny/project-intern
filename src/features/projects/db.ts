@@ -39,6 +39,10 @@ export const projectTable = pgTable(
     })
       .notNull()
       .default(0.5),
+    disabledSkillNames: text("disabled_skill_names")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     activeSchemaVersionId: uuid("active_schema_version_id"),
     isAutopickEnabled: boolean("is_autopick_enabled").notNull().default(true),
     createdAt: createdAtColumn(),

@@ -44,7 +44,9 @@ type GetPreviousTaskExecutionsForRecordParams = {
 export const getPreviousTaskExecutionsForRecord = async ({
   recordId,
   excludeAgentRunId,
-}: GetPreviousTaskExecutionsForRecordParams): Promise<PreviousTaskExecution[]> => {
+}: GetPreviousTaskExecutionsForRecordParams): Promise<
+  PreviousTaskExecution[]
+> => {
   const rows = await db
     .select({
       taskTitle: taskTable.title,

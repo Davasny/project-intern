@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 import { createOrgMcpApiKey } from "@/features/auth/lib/create-org-mcp-api-key"
 import { opencodeServerTable } from "@/features/opencode/db"
 import { buildOpencodeConfig } from "@/features/opencode/lib/build-opencode-config"
+import { getEnabledProjectSkillNames } from "@/features/opencode/lib/get-enabled-project-skill-names"
 import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
@@ -69,12 +70,18 @@ const findAvailablePort = async ({
 
 const startEmbeddedServer = async ({
   organizationId,
+  projectId,
   runtimeTemperature,
 }: {
   organizationId: string
+  projectId: string
   runtimeTemperature: number | null
 }) => {
   const { key } = await createOrgMcpApiKey({ organizationId })
+  const enabledSkillNames = await getEnabledProjectSkillNames({
+    organizationId,
+    projectId,
+  })
 
   const port = await findAvailablePort({
     host: backendConfig.CRM_OPENCODE_HOST,
@@ -84,15 +91,21 @@ const startEmbeddedServer = async ({
   logger.info(
     {
       host: backendConfig.CRM_OPENCODE_HOST,
+      enabledSkillCount: enabledSkillNames.length,
       mode: "embedded",
       organizationId,
       port,
+      projectId,
     },
     "Starting OpenCode server",
   )
 
   const instance = await createOpencode({
-    config: buildOpencodeConfig({ mcpToken: key, runtimeTemperature }),
+    config: buildOpencodeConfig({
+      enabledSkillNames,
+      mcpToken: key,
+      runtimeTemperature,
+    }),
     hostname: backendConfig.CRM_OPENCODE_HOST,
     port,
     timeout: backendConfig.CRM_OPENCODE_TIMEOUT_MS,
@@ -144,10 +157,12 @@ const shutdownEmbeddedServer = async ({
 export const withOpencodeForOrg = async <T>({
   fn,
   organizationId,
+  projectId,
   runtimeTemperature,
 }: {
   fn: (params: { client: OpencodeClient; mcpToken: string }) => Promise<T>
   organizationId: string
+  projectId: string
   runtimeTemperature: number | null
 }): Promise<T> => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
@@ -156,6 +171,7 @@ export const withOpencodeForOrg = async <T>({
         {
           baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
           mode: "external-configured",
+          projectId,
           runtimeTemperature,
         },
         "Runtime temperature override is not enforced for external OpenCode servers",
@@ -166,8 +182,9 @@ export const withOpencodeForOrg = async <T>({
       {
         baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
         mode: "external-configured",
+        projectId,
       },
-      "Using configured OpenCode server",
+      "Using configured OpenCode server; project skill permissions are not enforced by embedded config",
     )
 
     const client = createOpencodeClient({
@@ -179,6 +196,7 @@ export const withOpencodeForOrg = async <T>({
 
   const server = await startEmbeddedServer({
     organizationId,
+    projectId,
     runtimeTemperature,
   })
 
@@ -224,9 +242,11 @@ const getInteractiveServersMap = (): Map<string, RunningInteractiveServer> => {
 
 export const startInteractiveServer = async ({
   organizationId,
+  projectId,
   runtimeTemperature,
 }: {
   organizationId: string
+  projectId: string
   runtimeTemperature: number | null
 }) => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
@@ -244,6 +264,7 @@ export const startInteractiveServer = async ({
 
   const server = await startEmbeddedServer({
     organizationId,
+    projectId,
     runtimeTemperature,
   })
 

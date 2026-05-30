@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 import { stopInteractiveServer } from "@/features/opencode/lib/get-opencode-client"
+import { getProjectDisabledSkillNames } from "@/features/opencode/lib/get-project-disabled-skill-names"
 import { listDiskSkills } from "@/features/opencode/lib/list-disk-skills"
 import {
   spawnDebugSession,
@@ -10,6 +11,7 @@ import {
   listSessionsOnExternalServer,
   spawnSession,
 } from "@/features/opencode/lib/spawn-session"
+import { updateProjectSkillEnabled } from "@/features/opencode/lib/update-project-skill-enabled"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { getProjectSkillsDirectory } from "@/lib/config/backend"
 import { protectedProcedure, router } from "@/lib/trpc/init"
@@ -36,15 +38,45 @@ export const opencodeRouter = router({
         })
       }
 
-      const { skillsDirectory, skills } = await listDiskSkills(
-        project.organizationId,
-        project.id,
-      )
+      const disabledSkillNames = await getProjectDisabledSkillNames(project.id)
+      const { skillsDirectory, skills } = await listDiskSkills({
+        disabledSkillNames,
+        organizationId: project.organizationId,
+        projectId: project.id,
+      })
 
       return {
         skillsDirectory,
         skills,
       }
+    }),
+  updateSkillEnabled: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        enabled: z.boolean(),
+        skillName: z.string().trim().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return updateProjectSkillEnabled({
+        enabled: input.enabled,
+        organizationId: project.organizationId,
+        projectId: project.id,
+        skillName: input.skillName,
+      })
     }),
   getSkillsRoot: protectedProcedure
     .input(projectScopeSchema)

@@ -102,6 +102,7 @@ export const completeScopedTaskRecord = async ({
   syncAgentRunMetricsFromSession({
     agentRunId: scope.agentRun.id,
     organizationId: scope.project.organizationId,
+    projectId: scope.project.id,
   }).catch(() => {
     // fire-and-forget: logged internally
   })

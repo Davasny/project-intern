@@ -10,6 +10,7 @@ import { logger } from "@/lib/logger"
 type SyncAgentRunMetricsFromSessionParams = {
   agentRunId: string
   organizationId: string
+  projectId: string
 }
 
 /**
@@ -23,8 +24,9 @@ type SyncAgentRunMetricsFromSessionParams = {
 export const syncAgentRunMetricsFromSession = async ({
   agentRunId,
   organizationId,
+  projectId,
 }: SyncAgentRunMetricsFromSessionParams) => {
-  const log = logger.child({ agentRunId, organizationId })
+  const log = logger.child({ agentRunId, organizationId, projectId })
 
   const run = await db
     .select({
@@ -36,7 +38,9 @@ export const syncAgentRunMetricsFromSession = async ({
     .limit(1)
     .then((rows) => rows[0] ?? null)
 
-  if (!run?.sessionReference) {
+  const sessionReference = run?.sessionReference
+
+  if (!sessionReference) {
     log.debug("No session reference, skipping metrics sync")
     return
   }
@@ -50,10 +54,11 @@ export const syncAgentRunMetricsFromSession = async ({
         client,
         directory: run.directory,
         log,
-        sessionId: run.sessionReference!,
+        sessionId: sessionReference,
       })
     },
     organizationId,
+    projectId,
     runtimeTemperature: null,
   })
 }

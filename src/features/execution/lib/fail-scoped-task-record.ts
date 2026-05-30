@@ -81,6 +81,7 @@ export const failScopedTaskRecord = async ({
     syncAgentRunMetricsFromSession({
       agentRunId: scope.agentRun.id,
       organizationId: scope.project.organizationId,
+      projectId: scope.project.id,
     }).catch(() => {
       // fire-and-forget: logged internally
     })
@@ -114,6 +115,7 @@ export const failScopedTaskRecord = async ({
   syncAgentRunMetricsFromSession({
     agentRunId: scope.agentRun.id,
     organizationId: scope.project.organizationId,
+    projectId: scope.project.id,
   }).catch(() => {
     // fire-and-forget: logged internally
   })

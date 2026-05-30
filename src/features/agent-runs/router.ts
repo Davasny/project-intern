@@ -85,6 +85,7 @@ export const agentRunsRouter = router({
             userId: ctx.session.user.id,
           }),
         organizationId: project.organizationId,
+        projectId: project.id,
         runtimeTemperature: null,
       })
     }),

@@ -6,7 +6,14 @@ type DiskSkill = {
   name: string
   description: string
   directoryName: string
+  enabled: boolean
   skillMdPath: string
+}
+
+type ListDiskSkillsParams = {
+  disabledSkillNames: string[]
+  organizationId: string
+  projectId: string
 }
 
 const parseSkillFrontmatter = (
@@ -27,11 +34,16 @@ const parseSkillFrontmatter = (
   }
 }
 
-export const listDiskSkills = async (
-  organizationId: string,
-  projectId: string,
-): Promise<{ skillsDirectory: string; skills: DiskSkill[] }> => {
+export const listDiskSkills = async ({
+  disabledSkillNames,
+  organizationId,
+  projectId,
+}: ListDiskSkillsParams): Promise<{
+  skillsDirectory: string
+  skills: DiskSkill[]
+}> => {
   const skillsDirectory = getProjectSkillsDirectory(organizationId, projectId)
+  const disabledSkillNameSet = new Set(disabledSkillNames)
 
   let entries: string[] = []
   try {
@@ -64,6 +76,7 @@ export const listDiskSkills = async (
       name,
       description,
       directoryName: entry,
+      enabled: !disabledSkillNameSet.has(name),
       skillMdPath,
     })
   }

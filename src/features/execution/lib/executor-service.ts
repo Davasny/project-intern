@@ -180,6 +180,7 @@ export const executorService = async ({
           workspace,
         }),
       organizationId: initialScope.project.organizationId,
+      projectId: initialScope.project.id,
       runtimeTemperature,
     })
   } catch (error) {
