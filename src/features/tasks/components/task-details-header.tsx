@@ -4,6 +4,11 @@ import { PageHeaderActions } from "@/components/ui/page-header/page-header-actio
 import { PageHeaderMeta } from "@/components/ui/page-header/page-header-meta"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import { TaskStatusBadge } from "@/components/ui/status-badge/task-status-badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { TaskSummaryState } from "@/features/tasks/schemas/task-summary-state"
 
 type TaskDraftState =
@@ -16,10 +21,12 @@ type TaskDraftState =
   | "rejecting_failed"
 
 type TaskDetailsHeaderProps = {
+  deleteDisabledReason: string | null
   draftActionPending: boolean
   onAcceptDraft: () => Promise<void>
   onEditTask: () => void
   onRejectDraft: () => Promise<void>
+  onRemoveTask: () => void
   onResetDownstream: () => void
   schemaVersion: number
   sortOrder: number
@@ -53,10 +60,12 @@ const draftStatusToneMap: Record<
 }
 
 export const TaskDetailsHeader = ({
+  deleteDisabledReason,
   draftActionPending,
   onAcceptDraft,
   onEditTask,
   onRejectDraft,
+  onRemoveTask,
   onResetDownstream,
   schemaVersion,
   sortOrder,
@@ -117,6 +126,22 @@ export const TaskDetailsHeader = ({
             Reset downstream
           </Button>
         ) : null}
+        {deleteDisabledReason ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                <Button disabled type="button" variant="destructive">
+                  Delete task
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{deleteDisabledReason}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button onClick={onRemoveTask} type="button" variant="destructive">
+            Delete task
+          </Button>
+        )}
       </PageHeaderActions>
     </div>
   </PageHeader>

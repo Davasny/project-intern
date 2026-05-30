@@ -3,6 +3,7 @@ import { z } from "zod"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { acceptTaskDraftById } from "@/features/tasks/lib/accept-task-draft-by-id"
 import { createTask } from "@/features/tasks/lib/create-task"
+import { deleteTask } from "@/features/tasks/lib/delete-task"
 import { getTaskById } from "@/features/tasks/lib/get-task-by-id"
 import { listTasks } from "@/features/tasks/lib/list-tasks"
 import { rejectTaskDraftById } from "@/features/tasks/lib/reject-task-draft-by-id"
@@ -82,6 +83,16 @@ export const tasksRouter = router({
     .input(projectScopeSchema.extend({ taskId: z.string().uuid() }))
     .mutation(({ ctx, input }) =>
       rejectTaskDraftById({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        taskId: input.taskId,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  remove: protectedProcedure
+    .input(projectScopeSchema.extend({ taskId: z.string().uuid() }))
+    .mutation(({ ctx, input }) =>
+      deleteTask({
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
         taskId: input.taskId,
