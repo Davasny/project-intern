@@ -190,8 +190,20 @@ export const AgentRunDetailsPage = ({
               <RunStatusBadge state={run.state} />
             </div>
             <p className="text-sm text-muted-foreground">
-              Attempt #{run.attemptNumber} for task &quot;{run.taskTitle}&quot;
-              on record &quot;{run.recordName}&quot;
+              Attempt #{run.attemptNumber} for task{" "}
+              <Link
+                className="font-medium text-foreground hover:text-muted-foreground"
+                href={`/app/${organizationSlug}/${projectSlug}/tasks/${run.taskId}`}
+              >
+                &quot;{run.taskTitle}&quot;
+              </Link>{" "}
+              on record{" "}
+              <Link
+                className="font-medium text-foreground hover:text-muted-foreground"
+                href={`/app/${organizationSlug}/${projectSlug}/records/${run.recordId}`}
+              >
+                &quot;{run.recordName}&quot;
+              </Link>
             </p>
           </div>
           <div className="flex items-center gap-2">
