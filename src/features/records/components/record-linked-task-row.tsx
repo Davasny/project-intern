@@ -17,6 +17,7 @@ import { TaskRecordRunStatusBadge } from "@/components/ui/status-badge/task-reco
 import { TableCell, TableRow } from "@/components/ui/table"
 import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
+import { isRetryableTaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -51,12 +52,6 @@ const getFailureMessage = (task: RecordLinkedTaskRowProps["task"]) => {
 
   return task.errorCode
 }
-
-const isRetryableState = (state: TaskRecordState) =>
-  state === "failed" ||
-  state === "picked_up_failed" ||
-  state === "completed_failed" ||
-  state === "failed_failed"
 
 export const RecordLinkedTaskRow = ({
   nextWaitingSortOrder,
@@ -108,7 +103,7 @@ export const RecordLinkedTaskRow = ({
       onSuccess: invalidateRecordTaskQueries,
     }),
   )
-  const canRetry = isRetryableState(task.state)
+  const canRetry = isRetryableTaskRecordState(task.state)
   const canTrigger =
     task.state === "waiting" &&
     nextWaitingSortOrder !== null &&

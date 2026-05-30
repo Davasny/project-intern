@@ -41,3 +41,6 @@ export const terminalTaskRecordStates = [
   "completed",
   "skipped",
 ] satisfies Array<TaskRecordState>
+
+export const isRetryableTaskRecordState = (state: TaskRecordState): boolean =>
+  new Set<TaskRecordState>(retryableTaskRecordStates).has(state)

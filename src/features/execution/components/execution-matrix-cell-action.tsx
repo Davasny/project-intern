@@ -10,9 +10,9 @@ import {
 } from "@/components/ui/tooltip"
 import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
 import { isFailedAgentRunState } from "@/features/execution/lib/is-failed-agent-run-state"
-import { isRetryableTaskRecordState } from "@/features/execution/lib/is-retryable-task-record-state"
-import { useProjectScope } from "@/features/projects/context/project-scope-context"
+import { isRetryableTaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
+import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 type ExecutionMatrixCellActionProps = {

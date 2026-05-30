@@ -6,12 +6,19 @@ type SkipTaskRecordParams = {
   taskRecordId: string
 }
 
+const skipNoopStates = ["completed", "skipped"]
+
 export const skipTaskRecord = async ({
   agentRunId,
   errorCode,
   taskRecordId,
 }: SkipTaskRecordParams) => {
   const actor = await getTaskRecordActor(taskRecordId)
+
+  if (skipNoopStates.includes(actor.state as (typeof skipNoopStates)[number])) {
+    return
+  }
+
   const lastTransitionAt = new Date()
 
   if (actor.nextEvents.includes("skip")) {
