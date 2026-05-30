@@ -70,14 +70,14 @@ export const AppSidebar = () => {
       icon: iconMap["Schema settings"],
     },
     {
-      href: `/app/${organizationSlug}/${projectSlug}/settings`,
-      label: "Project settings",
-      icon: iconMap["Project settings"],
-    },
-    {
       href: `/app/${organizationSlug}/${projectSlug}/execution`,
       label: "Execution",
       icon: iconMap["Execution monitor"],
+    },
+    {
+      href: `/app/${organizationSlug}/${projectSlug}/settings`,
+      label: "Project settings",
+      icon: iconMap["Project settings"],
     },
   ]
 
