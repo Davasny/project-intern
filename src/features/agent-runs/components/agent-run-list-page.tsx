@@ -5,7 +5,6 @@ import Link from "next/link"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
-import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
 import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
 import {
   TableBody,
@@ -14,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ExecutionPageNavigation } from "@/features/execution/components/execution-page-navigation"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -38,20 +36,17 @@ export const AgentRunListPage = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader>
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Agent runs
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Complete history of all agent run executions across tasks and
-            records.
-          </p>
-        </div>
-        <PageHeaderActions>
-          <ExecutionPageNavigation activePage="runs" />
-        </PageHeaderActions>
-      </PageHeader>
+        <PageHeader>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              Runs
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Complete history of all agent run executions across tasks and
+              records.
+            </p>
+          </div>
+        </PageHeader>
       <DataTable>
         <TableHead>
           <TableRow>
@@ -76,7 +71,7 @@ export const AgentRunListPage = () => {
             <TableRow key={run.id}>
               <TableCell>
                 <Link
-                  href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${run.id}`}
+                  href={`/app/${organizationSlug}/${projectSlug}/runs/${run.id}`}
                 >
                   <RunStatusBadge state={run.state} />
                 </Link>

@@ -1,7 +1,7 @@
-import { ProjectOverviewPage } from "@/features/projects/components/project-overview-page"
+import { ExecutionMatrixPage } from "@/features/execution/components/execution-matrix-page"
 
-const ProjectOverviewRoutePage = () => {
-  return <ProjectOverviewPage />
+const ProjectDashboardPage = () => {
+  return <ExecutionMatrixPage />
 }
 
-export default ProjectOverviewRoutePage
+export default ProjectDashboardPage

@@ -89,9 +89,6 @@ export const TaskForm = ({
           trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
         )
         await queryClient.invalidateQueries(
-          trpc.projects.overview.queryFilter({ organizationSlug, projectSlug }),
-        )
-        await queryClient.invalidateQueries(
           trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
         )
         form.reset({
@@ -121,9 +118,6 @@ export const TaskForm = ({
             projectSlug,
             taskId: task.id,
           }),
-        )
-        await queryClient.invalidateQueries(
-          trpc.projects.overview.queryFilter({ organizationSlug, projectSlug }),
         )
       },
       onError: () => {

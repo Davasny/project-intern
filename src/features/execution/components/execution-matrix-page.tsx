@@ -2,9 +2,7 @@
 
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
-import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
 import { ExecutionMatrixSection } from "@/features/execution/components/execution-matrix-section"
-import { ExecutionPageNavigation } from "@/features/execution/components/execution-page-navigation"
 import { ExecutionSummaryStrip } from "@/features/execution/components/execution-summary-strip"
 import { useExecutionMonitorQuery } from "@/features/execution/hooks/use-execution-monitor-query"
 import { buildExecutionMatrix } from "@/features/execution/lib/build-execution-matrix"
@@ -26,20 +24,17 @@ export const ExecutionMatrixPage = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader>
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Execution matrix
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Record-by-task grid with the latest task-record run result in each
-            cell.
-          </p>
-        </div>
-        <PageHeaderActions>
-          <ExecutionPageNavigation activePage="matrix" />
-        </PageHeaderActions>
-      </PageHeader>
+        <PageHeader>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Record-by-task execution grid with latest run results, queue
+              summary, and controls.
+            </p>
+          </div>
+        </PageHeader>
 
       <ExecutionSummaryStrip summary={executionQuery.data.summary} />
       <ExecutionMatrixSection

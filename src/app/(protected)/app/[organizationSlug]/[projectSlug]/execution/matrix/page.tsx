@@ -1,7 +1,12 @@
-import { ExecutionMatrixPage } from "@/features/execution/components/execution-matrix-page"
+import { redirect } from "next/navigation"
 
-const ProjectExecutionMatrixPage = () => {
-  return <ExecutionMatrixPage />
+type PageProps = {
+  params: Promise<{ organizationSlug: string; projectSlug: string }>
 }
 
-export default ProjectExecutionMatrixPage
+const ProjectExecutionMatrixRedirect = async ({ params }: PageProps) => {
+  const { organizationSlug, projectSlug } = await params
+  redirect(`/app/${organizationSlug}/${projectSlug}`)
+}
+
+export default ProjectExecutionMatrixRedirect

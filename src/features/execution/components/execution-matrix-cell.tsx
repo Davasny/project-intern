@@ -40,7 +40,7 @@ export const ExecutionMatrixCell = ({
       <div className="flex flex-row items-center gap-1.5">
         <Link
           className="inline-flex"
-          href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${taskRecord.latestAgentRun.id}`}
+          href={`/app/${organizationSlug}/${projectSlug}/runs/${taskRecord.latestAgentRun.id}`}
         >
           <ExecutionMatrixRunStatusBadge
             attemptCount={taskRecord.attemptCount}

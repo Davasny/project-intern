@@ -1,27 +1,20 @@
-import { notFound } from "next/navigation"
-import { AgentRunDetailsPage } from "@/features/agent-runs/components/agent-run-details-page"
+import { redirect } from "next/navigation"
 
 type PageProps = {
   params: Promise<{
     attemptNumber: string
+    organizationSlug: string
+    projectSlug: string
     runId: string
   }>
 }
 
-const ProjectExecutionRunAttemptDetailsPage = async ({ params }: PageProps) => {
-  const { attemptNumber, runId } = await params
-  const parsedAttemptNumber = Number(attemptNumber)
+const ProjectExecutionRunAttemptRedirect = async ({ params }: PageProps) => {
+  const { attemptNumber, organizationSlug, projectSlug, runId } = await params
 
-  if (!Number.isInteger(parsedAttemptNumber) || parsedAttemptNumber < 1) {
-    notFound()
-  }
-
-  return (
-    <AgentRunDetailsPage
-      anchorAgentRunId={runId}
-      attemptNumber={parsedAttemptNumber}
-    />
+  redirect(
+    `/app/${organizationSlug}/${projectSlug}/runs/${runId}/attempts/${attemptNumber}`,
   )
 }
 
-export default ProjectExecutionRunAttemptDetailsPage
+export default ProjectExecutionRunAttemptRedirect

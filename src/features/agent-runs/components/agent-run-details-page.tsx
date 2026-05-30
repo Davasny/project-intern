@@ -207,7 +207,7 @@ export const AgentRunDetailsPage = ({
             ) : null}
             <Button asChild variant="secondary">
               <Link
-                href={`/app/${organizationSlug}/${projectSlug}/execution/runs`}
+                href={`/app/${organizationSlug}/${projectSlug}/runs`}
               >
                 Back to runs
               </Link>
@@ -266,7 +266,7 @@ export const AgentRunDetailsPage = ({
                         <RunStatusBadge state={sibling.state} />
                       ) : (
                         <Link
-                          href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${anchorAgentRunId}/attempts/${String(sibling.attemptNumber)}`}
+                          href={`/app/${organizationSlug}/${projectSlug}/runs/${anchorAgentRunId}/attempts/${String(sibling.attemptNumber)}`}
                         >
                           <RunStatusBadge state={sibling.state} />
                         </Link>

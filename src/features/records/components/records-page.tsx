@@ -115,10 +115,6 @@ export const RecordsPage = () => {
         </PageHeader>
         <FilterBar>
           <div className="flex items-center gap-6">
-            <div className="text-sm text-muted-foreground">
-              {recordsQuery.data ? recordsQuery.data.length : 0} records in this
-              project.
-            </div>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <span>
                 {showContextValues

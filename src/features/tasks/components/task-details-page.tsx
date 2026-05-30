@@ -61,9 +61,6 @@ export const TaskDetailsPage = ({
       trpc.tasks.getById.queryFilter({ organizationSlug, projectSlug, taskId }),
     )
     await queryClient.invalidateQueries(
-      trpc.projects.overview.queryFilter({ organizationSlug, projectSlug }),
-    )
-    await queryClient.invalidateQueries(
       trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
     )
   }

@@ -59,9 +59,6 @@ export const TasksPage = () => {
       trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
     )
     await queryClient.invalidateQueries(
-      trpc.projects.overview.queryFilter({ organizationSlug, projectSlug }),
-    )
-    await queryClient.invalidateQueries(
       trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
     )
   }
@@ -177,11 +174,7 @@ export const TasksPage = () => {
             </Button>
           </PageHeaderActions>
         </PageHeader>
-        <FilterBar>
-          <div className="text-sm text-muted-foreground">
-            {tasksQuery.data.length} tasks ordered for this project queue.
-          </div>
-        </FilterBar>
+
         {tasksQuery.data.length > 0 ? (
           <DataTable>
             <TableHead>

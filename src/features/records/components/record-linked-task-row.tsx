@@ -96,12 +96,6 @@ export const RecordLinkedTaskRow = ({
       }),
     )
     await queryClient.invalidateQueries(
-      trpc.projects.overview.queryFilter({
-        organizationSlug,
-        projectSlug,
-      }),
-    )
-    await queryClient.invalidateQueries(
       trpc.execution.getMonitor.queryFilter({
         organizationSlug,
         projectSlug,
@@ -184,7 +178,7 @@ export const RecordLinkedTaskRow = ({
     resetDownstreamTaskRecordMutation.error
   const latestAgentRun = task.latestAgentRun
   const latestRunHref = latestAgentRun
-    ? `/app/${organizationSlug}/${projectSlug}/execution/runs/${latestAgentRun.id}`
+    ? `/app/${organizationSlug}/${projectSlug}/runs/${latestAgentRun.id}`
     : null
 
   return (
@@ -215,7 +209,7 @@ export const RecordLinkedTaskRow = ({
         {latestAgentRun ? (
           <Link
             className="cursor-pointer"
-            href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${latestAgentRun.id}`}
+            href={`/app/${organizationSlug}/${projectSlug}/runs/${latestAgentRun.id}`}
           >
             <RunStatusBadge state={latestAgentRun.state} />
           </Link>

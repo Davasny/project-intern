@@ -92,12 +92,6 @@ export const TaskRecordRow = ({
       }),
     )
     await queryClient.invalidateQueries(
-      trpc.projects.overview.queryFilter({
-        organizationSlug,
-        projectSlug,
-      }),
-    )
-    await queryClient.invalidateQueries(
       trpc.execution.getMonitor.queryFilter({
         organizationSlug,
         projectSlug,
@@ -159,7 +153,7 @@ export const TaskRecordRow = ({
             <div className="flex flex-col gap-1">
               <Link
                 className="cursor-pointer"
-                href={`/app/${organizationSlug}/${projectSlug}/execution/runs/${taskRecord.latestAgentRun.id}`}
+                href={`/app/${organizationSlug}/${projectSlug}/runs/${taskRecord.latestAgentRun.id}`}
               >
                 <RunStatusBadge state={taskRecord.latestAgentRun.state} />
               </Link>

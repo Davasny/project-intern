@@ -1,7 +1,12 @@
-import { AgentRunListPage } from "@/features/agent-runs/components/agent-run-list-page"
+import { redirect } from "next/navigation"
 
-const ProjectExecutionRunsPage = () => {
-  return <AgentRunListPage />
+type PageProps = {
+  params: Promise<{ organizationSlug: string; projectSlug: string }>
 }
 
-export default ProjectExecutionRunsPage
+const ProjectExecutionRunsRedirect = async ({ params }: PageProps) => {
+  const { organizationSlug, projectSlug } = await params
+  redirect(`/app/${organizationSlug}/${projectSlug}/runs`)
+}
+
+export default ProjectExecutionRunsRedirect

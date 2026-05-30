@@ -1,15 +1,14 @@
 "use client"
 
 import {
-  ActivityIcon,
-  BotIcon,
-  BrainCircuitIcon,
+  BracesIcon,
   BrainIcon,
   CogIcon,
   DatabaseIcon,
   FolderIcon,
   LayoutDashboardIcon,
   ListTodoIcon,
+  PlayIcon,
   SettingsIcon,
   SquareTerminalIcon,
 } from "lucide-react"
@@ -36,14 +35,6 @@ type NavItem = {
   icon: ReactNode
 }
 
-const iconMap: Record<string, ReactNode> = {
-  Overview: <LayoutDashboardIcon />,
-  Tasks: <ListTodoIcon />,
-  Records: <DatabaseIcon />,
-  "Schema settings": <SettingsIcon />,
-  "Project settings": <CogIcon />,
-  "Execution monitor": <ActivityIcon />,
-}
 
 export const AppSidebar = () => {
   const { organizationSlug, projectSlug, currentProject } = useProjectScope()
@@ -51,33 +42,33 @@ export const AppSidebar = () => {
   const projectNavItems: Array<NavItem> = [
     {
       href: `/app/${organizationSlug}/${projectSlug}`,
-      label: "Overview",
-      icon: iconMap["Overview"],
+      label: "Dashboard",
+      icon: <LayoutDashboardIcon />,
     },
     {
       href: `/app/${organizationSlug}/${projectSlug}/tasks`,
       label: "Tasks",
-      icon: iconMap["Tasks"],
+      icon: <ListTodoIcon />,
     },
     {
       href: `/app/${organizationSlug}/${projectSlug}/records`,
       label: "Records",
-      icon: iconMap["Records"],
+      icon: <DatabaseIcon />,
     },
     {
       href: `/app/${organizationSlug}/${projectSlug}/settings/schema`,
       label: "Schema settings",
-      icon: iconMap["Schema settings"],
+      icon: <BracesIcon/>,
     },
     {
-      href: `/app/${organizationSlug}/${projectSlug}/execution`,
-      label: "Execution",
-      icon: iconMap["Execution monitor"],
+      href: `/app/${organizationSlug}/${projectSlug}/runs`,
+      label: "Runs",
+      icon: <PlayIcon />,
     },
     {
       href: `/app/${organizationSlug}/${projectSlug}/settings`,
       label: "Project settings",
-      icon: iconMap["Project settings"],
+      icon: <CogIcon />,
     },
   ]
 

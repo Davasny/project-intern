@@ -6,7 +6,6 @@ import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { SchemaActiveFieldsSection } from "@/features/project-schema/components/schema-active-fields-section"
 import { SchemaDiffModal } from "@/features/project-schema/components/schema-diff-modal"
 import { SchemaHistorySection } from "@/features/project-schema/components/schema-history-section"
-import { SchemaMigrationProgressStrip } from "@/features/project-schema/components/schema-migration-progress-strip"
 import { SchemaProposalsSection } from "@/features/project-schema/components/schema-proposals-section"
 import { SchemaSettingsHeader } from "@/features/project-schema/components/schema-settings-header"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
@@ -55,13 +54,6 @@ export const SchemaVersionBrowser = () => {
         initialSchemaDefinition={activeVersion.schemaDefinition}
         totalRecordCount={settingsQuery.data.totalRecordCount}
         versionCount={settingsQuery.data.versions.length}
-      />
-
-      <SchemaMigrationProgressStrip
-        affectedRecordCount={activeMigration?.migration.affectedRecordCount ?? 0}
-        completedCount={activeMigration?.migration.completedCount ?? 0}
-        pendingRecordCount={activeMigration?.migration.pendingRecordCount ?? 0}
-        totalRecordCount={settingsQuery.data.totalRecordCount}
       />
 
       <SchemaActiveFieldsSection fields={activeVersion.schemaDefinition.fields} />

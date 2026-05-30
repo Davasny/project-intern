@@ -82,9 +82,6 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
       trpc.tasks.list.queryFilter({ organizationSlug, projectSlug }),
     )
     await queryClient.invalidateQueries(
-      trpc.projects.overview.queryFilter({ organizationSlug, projectSlug }),
-    )
-    await queryClient.invalidateQueries(
       trpc.records.list.queryFilter({ organizationSlug, projectSlug }),
     )
   }
