@@ -1,4 +1,6 @@
+import { TRPCError } from "@trpc/server"
 import { z } from "zod"
+import { readRecordFilePreview } from "@/features/files/lib/read-record-file-preview"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { getRecordDataDirectory } from "@/lib/storage/get-record-data-directory"
 import { listRecordFileTree } from "@/lib/storage/list-record-file-tree"
@@ -39,5 +41,38 @@ export const filesRouter = router({
       ])
 
       return { nodes, storageRoot }
+    }),
+  preview: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        path: z
+          .string()
+          .min(1)
+          .refine((value) => !value.includes("\0"), {
+            message: "File path is not valid.",
+          }),
+        recordId: z.string().uuid(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return readRecordFilePreview({
+        filePath: input.path,
+        organizationId: project.organizationId,
+        projectId: project.id,
+        recordId: input.recordId,
+      })
     }),
 })

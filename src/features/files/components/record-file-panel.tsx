@@ -193,7 +193,12 @@ export const RecordFilePanel = ({
           </div>
         ) : null}
         {nodes.length > 0 ? (
-          <RecordFileTree nodes={nodes} />
+          <RecordFileTree
+            nodes={nodes}
+            organizationSlug={organizationSlug}
+            projectSlug={projectSlug}
+            recordId={recordId}
+          />
         ) : (
           <p className="text-sm text-muted-foreground">
             No files in record storage.

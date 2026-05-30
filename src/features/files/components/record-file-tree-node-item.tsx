@@ -1,14 +1,21 @@
 import { FileTextIcon, FolderIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { RecordFilePreviewButton } from "@/features/files/components/record-file-preview-button"
 import type { RecordFileTreeNode } from "@/lib/storage/record-file-tree-node"
 import { formatFileSize } from "@/utils/format-file-size"
 
 type RecordFileTreeNodeItemProps = {
   node: RecordFileTreeNode
+  organizationSlug: string
+  projectSlug: string
+  recordId: string
 }
 
 export const RecordFileTreeNodeItem = ({
   node,
+  organizationSlug,
+  projectSlug,
+  recordId,
 }: RecordFileTreeNodeItemProps) => {
   return node.kind === "directory" ? (
     <div className="flex flex-col gap-2">
@@ -18,7 +25,13 @@ export const RecordFileTreeNodeItem = ({
       </div>
       <div className="flex flex-col gap-2 border-l border-border pl-4">
         {node.children.map((childNode) => (
-          <RecordFileTreeNodeItem key={childNode.path} node={childNode} />
+          <RecordFileTreeNodeItem
+            key={childNode.path}
+            node={childNode}
+            organizationSlug={organizationSlug}
+            projectSlug={projectSlug}
+            recordId={recordId}
+          />
         ))}
       </div>
     </div>
@@ -26,7 +39,13 @@ export const RecordFileTreeNodeItem = ({
     <Card className="flex flex-col gap-1 p-3">
       <div className="flex flex-row items-center gap-2 text-sm font-medium text-foreground">
         <FileTextIcon className="size-4" />
-        <span>{node.name}</span>
+        <span className="font-mono text-sm text-foreground">{node.name}</span>
+        <RecordFilePreviewButton
+          filePath={node.path}
+          organizationSlug={organizationSlug}
+          projectSlug={projectSlug}
+          recordId={recordId}
+        />
       </div>
       <div className="text-xs text-muted-foreground">
         {node.path} · {formatFileSize(node.sizeBytes)} ·{" "}
