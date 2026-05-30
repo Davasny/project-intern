@@ -1,21 +1,11 @@
 "use client"
 
-import { DataTable } from "@/components/ui/data-table/data-table"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
-import { SectionCard } from "@/components/ui/section-card/section-card"
-import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
-import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
-import {
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { ExecutionMatrixRecordRow } from "@/features/execution/components/execution-matrix-record-row"
+import { ExecutionMatrixSection } from "@/features/execution/components/execution-matrix-section"
 import { ExecutionPageNavigation } from "@/features/execution/components/execution-page-navigation"
+import { ExecutionSummaryStrip } from "@/features/execution/components/execution-summary-strip"
 import { useExecutionMonitorQuery } from "@/features/execution/hooks/use-execution-monitor-query"
 import { buildExecutionMatrix } from "@/features/execution/lib/build-execution-matrix"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
@@ -51,65 +41,14 @@ export const ExecutionMatrixPage = () => {
         </PageHeaderActions>
       </PageHeader>
 
-      <SectionCard>
-        <SectionCardHeader>
-          <h2 className="text-lg font-semibold text-foreground">
-            Task-record matrix
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Rows are records, columns are tasks ordered by task order.
-          </p>
-        </SectionCardHeader>
-        <SectionCardContent>
-          <DataTable>
-            <TableHead>
-              <TableRow>
-                <TableHeader className="sticky left-0 z-20 min-w-56 bg-muted">
-                  Record
-                </TableHeader>
-                {matrix.tasks.map((task) => (
-                  <TableHeader
-                    className="min-w-40 whitespace-normal break-words text-xs normal-case tracking-normal"
-                    key={task.id}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <span className="font-semibold text-foreground">
-                        {task.title}
-                      </span>
-                      <span className="text-muted-foreground">
-                        #{task.sortOrder}
-                      </span>
-                    </div>
-                  </TableHeader>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {matrix.records.length > 0 ? (
-                matrix.records.map((record) => (
-                  <ExecutionMatrixRecordRow
-                    key={record.id}
-                    organizationSlug={organizationSlug}
-                    projectSlug={projectSlug}
-                    record={record}
-                    recordCells={matrix.taskRecordsByRecordId.get(record.id) ?? null}
-                    tasks={matrix.tasks}
-                  />
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    className="text-sm text-muted-foreground"
-                    colSpan={Math.max(matrix.tasks.length + 1, 2)}
-                  >
-                    No task-record executions yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </DataTable>
-        </SectionCardContent>
-      </SectionCard>
+      <ExecutionSummaryStrip summary={executionQuery.data.summary} />
+      <ExecutionMatrixSection
+        debugControlsEnabled={executionQuery.data.debugControlsEnabled}
+        isAutopickEnabled={executionQuery.data.isAutopickEnabled}
+        matrix={matrix}
+        organizationSlug={organizationSlug}
+        projectSlug={projectSlug}
+      />
     </div>
   )
 }

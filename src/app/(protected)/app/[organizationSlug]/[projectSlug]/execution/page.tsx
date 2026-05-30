@@ -1,7 +1,7 @@
-import { ExecutionMonitorPage } from "@/features/execution/components/execution-monitor-page"
+import { ExecutionMatrixPage } from "@/features/execution/components/execution-matrix-page"
 
 const ProjectExecutionPage = () => {
-  return <ExecutionMonitorPage />
+  return <ExecutionMatrixPage />
 }
 
 export default ProjectExecutionPage

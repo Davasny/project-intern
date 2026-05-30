@@ -1,7 +1,8 @@
 import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
 import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 
-type ExecutionTaskRecordCell = {
+export type ExecutionTaskRecordCell = {
+  attemptCount: number
   latestAgentRun: {
     id: string
     state: AgentRunState
@@ -10,6 +11,7 @@ type ExecutionTaskRecordCell = {
   recordName: string
   state: TaskRecordState
   taskId: string
+  taskRecordId: string
   taskSortOrder: number
   taskTitle: string
 }
@@ -77,8 +79,11 @@ export const buildExecutionMatrix = (
   })
 
   const records = Array.from(recordsById.values()).sort((left, right) => {
-    if (left.name !== right.name) {
-      return left.name.localeCompare(right.name)
+    const leftName = left.name.toLocaleLowerCase()
+    const rightName = right.name.toLocaleLowerCase()
+
+    if (leftName !== rightName) {
+      return leftName.localeCompare(rightName)
     }
 
     return left.id.localeCompare(right.id)

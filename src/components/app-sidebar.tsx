@@ -76,7 +76,7 @@ export const AppSidebar = () => {
     },
     {
       href: `/app/${organizationSlug}/${projectSlug}/execution`,
-      label: "Execution monitor",
+      label: "Execution",
       icon: iconMap["Execution monitor"],
     },
   ]

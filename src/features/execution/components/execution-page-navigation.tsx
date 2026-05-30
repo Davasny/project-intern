@@ -5,23 +5,18 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 import { cn } from "@/lib/utils"
 
 type ExecutionPageNavigationProps = {
-  activePage: "matrix" | "monitor" | "runs"
+  activePage: "matrix" | "runs"
 }
 
 const navItems: Array<{
   id: ExecutionPageNavigationProps["activePage"]
   label: string
-  route: "" | "/matrix" | "/runs"
+  route: "" | "/runs"
 }> = [
-  {
-    id: "monitor",
-    label: "Monitor",
-    route: "",
-  },
   {
     id: "matrix",
     label: "Matrix",
-    route: "/matrix",
+    route: "",
   },
   {
     id: "runs",
