@@ -46,43 +46,43 @@ export const OpencodeSessionsPage = () => {
   const spawnMutation = useMutation(
     trpc.opencode.spawnSession.mutationOptions(),
   )
-  const dumpMutation = useMutation(trpc.opencode.dumpSessions.mutationOptions())
+  const spawnDumpMutation = useMutation(
+    trpc.opencode.spawnDumpSession.mutationOptions(),
+  )
 
   const stopMutation = useMutation(
     trpc.opencode.stopSession.mutationOptions({
       onSuccess: () => {
         spawnMutation.reset()
+        spawnDumpMutation.reset()
       },
     }),
   )
 
   const handleSpawn = async () => {
     try {
-      const spawnedSession = await spawnMutation.mutateAsync({
+      if (dumpSessions) {
+        await spawnDumpMutation.mutateAsync({
+          organizationSlug,
+          projectSlug,
+          recordId: selectedRecordId,
+          taskId: selectedTaskId,
+        })
+        return
+      }
+
+      await spawnMutation.mutateAsync({
         organizationSlug,
         projectSlug,
         taskId: selectedTaskId,
         recordId: selectedRecordId,
       })
-
-      if (dumpSessions) {
-        await dumpMutation.mutateAsync({
-          organizationSlug,
-          projectSlug,
-          scope: {
-            recordId: selectedRecordId,
-            taskId: selectedTaskId,
-          },
-        })
-      }
-
-      return spawnedSession
     } catch {
     }
   }
 
   const handleStop = async () => {
-    const data = spawnMutation.data
+    const data = spawnMutation.data ?? spawnDumpMutation.data
     if (!data) return
 
     const payload: {
@@ -123,15 +123,16 @@ export const OpencodeSessionsPage = () => {
   }
 
   const handleCopyCommand = async () => {
-    if (!spawnMutation.data) return
-    await navigator.clipboard.writeText(spawnMutation.data.cliCommand)
+    const data = spawnMutation.data ?? spawnDumpMutation.data
+    if (!data) return
+    await navigator.clipboard.writeText(data.cliCommand)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const handleCopyDumpPath = async () => {
-    if (!dumpMutation.data) return
-    await navigator.clipboard.writeText(dumpMutation.data.directory)
+    if (!spawnDumpMutation.data) return
+    await navigator.clipboard.writeText(spawnDumpMutation.data.directory)
     setCopiedDumpPath(true)
     setTimeout(() => setCopiedDumpPath(false), 2000)
   }
@@ -139,6 +140,7 @@ export const OpencodeSessionsPage = () => {
   const isLoading = tasksQuery.isLoading || recordsQuery.isLoading
   const shouldWarnDumpingEverything =
     dumpSessions && !selectedTaskId && !selectedRecordId
+  const activeSession = spawnMutation.data ?? spawnDumpMutation.data
 
   return (
     <div className="flex flex-col gap-6">
@@ -166,7 +168,7 @@ export const OpencodeSessionsPage = () => {
             </span>
           </div>
           <div className="flex flex-row gap-2">
-            {spawnMutation.data ? (
+            {activeSession ? (
               <Button
                 variant="destructive"
                 size="sm"
@@ -199,8 +201,8 @@ export const OpencodeSessionsPage = () => {
                 </span>
                 <span className="text-xs text-muted-foreground">
                   Write bounded markdown transcripts and task/record context to
-                  the project debug-sessions directory after spawning the
-                  interactive debug session.
+                  a project debug-sessions directory, then spawn the OpenCode
+                  session inside that dump directory.
                 </span>
               </div>
             </div>
@@ -279,15 +281,15 @@ export const OpencodeSessionsPage = () => {
                 className="gap-2"
                 disabled={
                   spawnMutation.isPending ||
-                  dumpMutation.isPending ||
-                  !!spawnMutation.data ||
+                  spawnDumpMutation.isPending ||
+                  !!activeSession ||
                   isLoading
                 }
                 onClick={handleSpawn}
                 type="button"
                 variant="default"
               >
-                {spawnMutation.isPending || dumpMutation.isPending ? (
+                {spawnMutation.isPending || spawnDumpMutation.isPending ? (
                   <RefreshCwIcon className="size-4 animate-spin" />
                 ) : (
                   <PlusIcon className="size-4" />
@@ -295,7 +297,7 @@ export const OpencodeSessionsPage = () => {
                 {dumpSessions
                   ? spawnMutation.isPending
                     ? "Spawning..."
-                    : dumpMutation.isPending
+                    : spawnDumpMutation.isPending
                       ? "Dumping..."
                       : "Spawn + Dump"
                   : spawnMutation.isPending
@@ -304,11 +306,11 @@ export const OpencodeSessionsPage = () => {
               </Button>
             </div>
 
-            {dumpMutation.data ? (
+            {spawnDumpMutation.data ? (
               <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3">
                 <div className="flex items-center gap-2">
                   <code className="rounded bg-muted px-2 py-1 font-mono text-xs text-foreground">
-                    {dumpMutation.data.runCount.toString()} runs dumped
+                    {spawnDumpMutation.data.runCount.toString()} runs dumped
                   </code>
                   <Button
                     className="gap-2"
@@ -325,27 +327,27 @@ export const OpencodeSessionsPage = () => {
                   </Button>
                 </div>
                 <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs text-muted-foreground">
-                  {dumpMutation.data.directory}
+                  {spawnDumpMutation.data.directory}
                 </pre>
-                {dumpMutation.data.truncatedRunCount > 0 ||
-                dumpMutation.data.failedRunCount > 0 ? (
+                {spawnDumpMutation.data.truncatedRunCount > 0 ||
+                spawnDumpMutation.data.failedRunCount > 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    {dumpMutation.data.truncatedRunCount > 0
-                      ? `${dumpMutation.data.truncatedRunCount.toString()} runs skipped by limit. `
+                    {spawnDumpMutation.data.truncatedRunCount > 0
+                      ? `${spawnDumpMutation.data.truncatedRunCount.toString()} runs skipped by limit. `
                       : ""}
-                    {dumpMutation.data.failedRunCount > 0
-                      ? `${dumpMutation.data.failedRunCount.toString()} runs had transcript load errors.`
+                    {spawnDumpMutation.data.failedRunCount > 0
+                      ? `${spawnDumpMutation.data.failedRunCount.toString()} runs had transcript load errors.`
                       : ""}
                   </p>
                 ) : null}
               </div>
             ) : null}
 
-            {spawnMutation.data ? (
+            {activeSession ? (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <code className="text-xs bg-muted px-2 py-1 rounded font-mono text-foreground">
-                    {spawnMutation.data.sessionId.slice(0, 12)}…
+                    {activeSession.sessionId.slice(0, 12)}…
                   </code>
                   <Button
                     variant="outline"
@@ -362,7 +364,7 @@ export const OpencodeSessionsPage = () => {
                   </Button>
                 </div>
                 <pre className="text-xs text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto font-mono">
-                  {spawnMutation.data.cliCommand}
+                  {activeSession.cliCommand}
                 </pre>
               </div>
             ) : null}

@@ -11,6 +11,7 @@ import {
   spawnDebugSession,
   stopDebugSession,
 } from "@/features/opencode/lib/spawn-debug-session"
+import { spawnDumpSession } from "@/features/opencode/lib/spawn-dump-session"
 import {
   listSessionsOnExternalServer,
   spawnSession,
@@ -144,6 +145,38 @@ export const opencodeRouter = router({
       return spawnSession({
         organizationId: project.organizationId,
         projectId: project.id,
+        title: input.title,
+      })
+    }),
+  spawnDumpSession: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        title: z.string().trim().min(1).default("Debug session dump"),
+        taskId: z.string().uuid().optional(),
+        recordId: z.string().uuid().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return spawnDumpSession({
+        organizationId: project.organizationId,
+        projectId: project.id,
+        scope: resolveSessionDumpScope({
+          recordId: input.recordId,
+          taskId: input.taskId,
+        }),
         title: input.title,
       })
     }),
