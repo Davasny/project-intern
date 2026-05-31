@@ -1,6 +1,10 @@
 import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
+import { InternRunHistoryCommandBlock } from "@/features/intern-runs/components/intern-run-history-command-block"
+import { InternRunHistoryDiffBlock } from "@/features/intern-runs/components/intern-run-history-diff-block"
 import { InternRunHistoryMetricList } from "@/features/intern-runs/components/intern-run-history-metric-list"
+import { InternRunHistoryUrlBlock } from "@/features/intern-runs/components/intern-run-history-url-block"
+import { InternRunHistoryWrittenContentBlock } from "@/features/intern-runs/components/intern-run-history-written-content-block"
 import type { InternRunHistoryEvent } from "@/features/intern-runs/lib/intern-run-history-event"
 import { getInternRunHistoryEventTone } from "@/features/intern-runs/lib/get-intern-run-history-event-tone"
 
@@ -55,6 +59,26 @@ export const InternRunHistoryEventDetail = ({
         </div>
       </div>
       <div className="flex min-w-0 max-w-full flex-col gap-5 overflow-hidden px-5 pb-5 pt-5">
+        {event.detail.toolDisplay?.command ? (
+          <InternRunHistoryCommandBlock
+            command={event.detail.toolDisplay.command}
+          />
+        ) : null}
+        {event.detail.toolDisplay?.url ? (
+          <InternRunHistoryUrlBlock url={event.detail.toolDisplay.url} />
+        ) : null}
+        {event.detail.toolDisplay?.diff ? (
+          <InternRunHistoryDiffBlock
+            diff={event.detail.toolDisplay.diff}
+            filePath={event.detail.toolDisplay.diffFilePath}
+          />
+        ) : null}
+        {event.detail.toolDisplay?.writtenContent ? (
+          <InternRunHistoryWrittenContentBlock
+            content={event.detail.toolDisplay.writtenContent}
+            filePath={event.detail.toolDisplay.writtenFilePath ?? "Written file"}
+          />
+        ) : null}
         {event.detail.output ? (
           <DetailTextBlock label="Output" text={event.detail.output} />
         ) : null}

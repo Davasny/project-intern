@@ -70,7 +70,10 @@ export const InternRunMessages = ({
     )
   }
 
-  const events = mapSessionMessagesToHistoryEvents(messagesQuery.data.messages)
+  const events = mapSessionMessagesToHistoryEvents(
+    messagesQuery.data.messages,
+    messagesQuery.data.directory,
+  )
 
   return <InternRunHistoryExplorer events={events} />
 }

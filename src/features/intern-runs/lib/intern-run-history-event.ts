@@ -13,6 +13,16 @@ type InternRunHistoryEventDetail = {
   input: Record<string, unknown> | null
   metadata: Record<string, unknown> | null
   output: string | null
+  toolDisplay: InternRunHistoryToolDisplay | null
+}
+
+type InternRunHistoryToolDisplay = {
+  command: string | null
+  diff: string | null
+  diffFilePath: string | null
+  url: string | null
+  writtenFilePath: string | null
+  writtenContent: string | null
 }
 
 type InternRunHistoryEventTokens = {

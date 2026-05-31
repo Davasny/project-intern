@@ -1,3 +1,9 @@
+import { getInternRunToolCommand } from "@/features/intern-runs/lib/get-intern-run-tool-command"
+import { getInternRunToolDiff } from "@/features/intern-runs/lib/get-intern-run-tool-diff"
+import { getInternRunToolDiffFilePath } from "@/features/intern-runs/lib/get-intern-run-tool-diff-file-path"
+import { getInternRunToolUrl } from "@/features/intern-runs/lib/get-intern-run-tool-url"
+import { getInternRunToolWrittenContent } from "@/features/intern-runs/lib/get-intern-run-tool-written-content"
+import { getInternRunToolWrittenFilePath } from "@/features/intern-runs/lib/get-intern-run-tool-written-file-path"
 import type {
   InternRunHistoryEvent,
   InternRunHistoryEventKind,
@@ -78,6 +84,7 @@ const createTextEvent = ({
       synthetic: part.synthetic,
     },
     output: null,
+    toolDisplay: null,
   },
 })
 
@@ -101,38 +108,81 @@ const createReasoningEvent = ({
     input: null,
     metadata: null,
     output: null,
+    toolDisplay: null,
   },
 })
 
 const createToolEvent = ({
   message,
   part,
+  workspaceDirectory,
 }: {
   message: InternRunSessionMessage
   part: Extract<InternRunSessionMessagePart, { type: "tool" }>
-}): InternRunHistoryEvent => ({
-  id: `${message.id}:${part.id}`,
-  kind: part.error ? "error" : "tool",
-  title: part.tool,
-  summary: part.title ?? `${part.tool} ${part.status}`,
-  timestamp: message.createdAt,
-  metadata: [part.status, ...getMessageMetadata(message)],
-  metrics: getMessageMetrics(message),
-  detail: {
-    content: part.title,
-    error: part.error,
+  workspaceDirectory: string
+}): InternRunHistoryEvent => {
+  const diff = getInternRunToolDiff({
     input: part.input,
-    metadata:
-      part.metadata || part.attachments.length > 0
-        ? {
-            attachments: part.attachments,
-            callId: part.callId,
-            metadata: part.metadata,
-          }
-        : { callId: part.callId },
+    metadata: part.metadata,
     output: part.output,
-  },
-})
+    tool: part.tool,
+  })
+  const toolDisplay = {
+    command: getInternRunToolCommand({
+      input: part.input,
+      tool: part.tool,
+      workspaceDirectory,
+    }),
+    diff,
+    diffFilePath: getInternRunToolDiffFilePath({
+      diff,
+      input: part.input,
+      tool: part.tool,
+      workspaceDirectory,
+    }),
+    url: getInternRunToolUrl({ input: part.input, tool: part.tool }),
+    writtenContent: getInternRunToolWrittenContent({
+      input: part.input,
+      tool: part.tool,
+    }),
+    writtenFilePath: getInternRunToolWrittenFilePath({
+      input: part.input,
+      tool: part.tool,
+      workspaceDirectory,
+    }),
+  }
+
+  return {
+    id: `${message.id}:${part.id}`,
+    kind: part.error ? "error" : "tool",
+    title: part.tool,
+    summary: part.title ?? `${part.tool} ${part.status}`,
+    timestamp: message.createdAt,
+    metadata: [part.status, ...getMessageMetadata(message)],
+    metrics: getMessageMetrics(message),
+    detail: {
+      content: part.title,
+      error: part.error,
+      input: part.input,
+      metadata:
+        part.metadata || part.attachments.length > 0
+          ? {
+              attachments: part.attachments,
+              callId: part.callId,
+              metadata: part.metadata,
+            }
+          : { callId: part.callId },
+      output: part.output,
+      toolDisplay:
+        toolDisplay.command ||
+        toolDisplay.diff ||
+        toolDisplay.url ||
+        toolDisplay.writtenContent
+          ? toolDisplay
+          : null,
+    },
+  }
+}
 
 const createMetadataEvent = ({
   kind,
@@ -160,15 +210,18 @@ const createMetadataEvent = ({
     input: null,
     metadata: { part },
     output: null,
+    toolDisplay: null,
   },
 })
 
 const mapPartToHistoryEvent = ({
   message,
   part,
+  workspaceDirectory,
 }: {
   message: InternRunSessionMessage
   part: InternRunSessionMessagePart
+  workspaceDirectory: string
 }) => {
   if (part.type === "text") {
     return createTextEvent({ message, part })
@@ -179,7 +232,7 @@ const mapPartToHistoryEvent = ({
   }
 
   if (part.type === "tool") {
-    return createToolEvent({ message, part })
+    return createToolEvent({ message, part, workspaceDirectory })
   }
 
   if (part.type === "file") {
@@ -252,6 +305,7 @@ const createMessageErrorEvent = (
       input: null,
       metadata: { name: message.error.name },
       output: null,
+      toolDisplay: null,
     },
   }
 }
@@ -277,16 +331,18 @@ const createSystemEvent = (
       input: null,
       metadata: null,
       output: null,
+      toolDisplay: null,
     },
   }
 }
 
 export const mapSessionMessagesToHistoryEvents = (
   messages: Array<InternRunSessionMessage>,
+  workspaceDirectory: string,
 ) =>
   messages.flatMap((message) => {
     const partEvents = message.parts.map((part) =>
-      mapPartToHistoryEvent({ message, part }),
+      mapPartToHistoryEvent({ message, part, workspaceDirectory }),
     )
     const errorEvent = createMessageErrorEvent(message)
     const systemEvent = createSystemEvent(message)

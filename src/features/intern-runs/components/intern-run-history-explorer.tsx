@@ -6,13 +6,13 @@ import { SectionCardContent } from "@/components/ui/section-card/section-card-co
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { InternRunHistoryEventDetail } from "@/features/intern-runs/components/intern-run-history-event-detail"
 import { InternRunHistoryEventList } from "@/features/intern-runs/components/intern-run-history-event-list"
-import { InternRunHistoryMetadataFilter } from "@/features/intern-runs/components/intern-run-history-metadata-filter"
 import { InternRunHistoryNavigation } from "@/features/intern-runs/components/intern-run-history-navigation"
 import { InternRunHistoryTimeline } from "@/features/intern-runs/components/intern-run-history-timeline"
+import { InternRunHistoryTypeFilter } from "@/features/intern-runs/components/intern-run-history-type-filter"
 import type { InternRunHistoryEvent } from "@/features/intern-runs/lib/intern-run-history-event"
 import { getInternRunHistoryAdjacentEvents } from "@/features/intern-runs/lib/get-intern-run-history-adjacent-events"
 import { getInternRunHistoryVisibleEvents } from "@/features/intern-runs/lib/get-intern-run-history-visible-events"
-import { hideInternRunHistoryMetadataAtom } from "@/features/intern-runs/state/hide-intern-run-history-metadata-atom"
+import { internRunHistoryKindFilterAtom } from "@/features/intern-runs/state/intern-run-history-kind-filter-atom"
 import { selectedInternRunHistoryEventIdAtom } from "@/features/intern-runs/state/selected-intern-run-history-event-id-atom"
 
 type InternRunHistoryExplorerProps = {
@@ -25,10 +25,12 @@ export const InternRunHistoryExplorer = ({
   const [selectedEventId, setSelectedEventId] = useAtom(
     selectedInternRunHistoryEventIdAtom,
   )
-  const [hideMetadata, setHideMetadata] = useAtom(hideInternRunHistoryMetadataAtom)
+  const [selectedFilterKinds, setSelectedFilterKinds] = useAtom(
+    internRunHistoryKindFilterAtom,
+  )
   const visibleEvents = getInternRunHistoryVisibleEvents({
     events,
-    hideMetadata,
+    selectedFilterKinds,
   })
   const selectedEvent =
     visibleEvents.find((event) => event.id === selectedEventId) ??
@@ -53,9 +55,9 @@ export const InternRunHistoryExplorer = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <InternRunHistoryMetadataFilter
-              hideMetadata={hideMetadata}
-              onHideMetadataChange={setHideMetadata}
+            <InternRunHistoryTypeFilter
+              onSelectedFilterKindsChange={setSelectedFilterKinds}
+              selectedFilterKinds={selectedFilterKinds}
             />
             <span className="rounded-full border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">
               {visibleEvents.length.toLocaleString()} events

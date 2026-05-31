@@ -8,6 +8,7 @@ import {
 } from "react"
 import { cn } from "@/lib/utils"
 import { highlight, type Languages, Themes } from "@/utils/shiki/highlight"
+import { addLineClassNames } from "@/utils/shiki/transformers/add-line-class-names"
 import { showLineNumbers } from "@/utils/shiki/transformers/show-line-numbers"
 import { wordWrapContent } from "@/utils/shiki/transformers/word-wrap"
 
@@ -15,13 +16,17 @@ interface CodeblockClientShikiProps extends ComponentProps<"div"> {
   code: string
   language?: Languages
   lineNumbers?: boolean
+  lineClassNames?: ReadonlyArray<string | null>
   fontSize?: "xs" | "sm" | "base" | "lg" | "xl"
 }
+
+const emptyLineClassNames: ReadonlyArray<string | null> = []
 
 const CodeblockShiki = ({
   code,
   language = "json",
-  lineNumbers = false,
+  lineNumbers = true,
+  lineClassNames = emptyLineClassNames,
   fontSize = "sm",
   className,
   ...props
@@ -34,6 +39,7 @@ const CodeblockShiki = ({
     xl: "1.25rem",
   } as const
   const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null)
+  const lineClassSignature = lineClassNames.join("\n")
 
   useEffect(() => {
     async function clientHighlight() {
@@ -49,15 +55,16 @@ const CodeblockShiki = ({
           dark: Themes.dark,
         },
         transformers: [
-          showLineNumbers({ activateByDefault: true }),
+          showLineNumbers({ activateByDefault: lineNumbers }),
           wordWrapContent(),
+          addLineClassNames(lineClassNames),
         ],
       })
 
       setHighlightedHtml(html)
     }
     void clientHighlight()
-  }, [code, language])
+  }, [code, language, lineClassSignature, lineNumbers])
 
   const classNames = cn("w-full overflow-x-auto", className)
 
