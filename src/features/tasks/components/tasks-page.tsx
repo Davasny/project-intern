@@ -192,6 +192,7 @@ export const TasksPage = () => {
                   <TableHeader>Completed</TableHeader>
                   <TableHeader>Active</TableHeader>
                   <TableHeader>Failed</TableHeader>
+                  <TableHeader>Skipped</TableHeader>
                   <TableHeader>Waiting</TableHeader>
                   <TableHeader>Actions</TableHeader>
                 </TableRow>

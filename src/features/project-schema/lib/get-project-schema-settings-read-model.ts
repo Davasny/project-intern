@@ -187,6 +187,7 @@ export const getProjectSchemaSettingsReadModel = async ({
                 failedCount: 0,
                 inProgressCount: 0,
                 pendingRecordCount: 0,
+                skippedCount: 0,
                 status: "rejected" as const,
                 taskId: null,
                 taskTitle: null,
@@ -201,6 +202,9 @@ export const getProjectSchemaSettingsReadModel = async ({
                 failedCount,
                 inProgressCount,
                 pendingRecordCount,
+                skippedCount: linkedWorkRecords.filter(
+                  (workRecord) => workRecord.state === "skipped",
+                ).length,
                 status: getMigrationStatus({
                   failedCount,
                   inProgressCount,

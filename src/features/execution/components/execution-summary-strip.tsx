@@ -6,6 +6,7 @@ type ExecutionSummaryStripProps = {
     activeCount: number
     failedCount: number
     retriedCount: number
+    skippedCount: number
     waitingCount: number
   }
   isAutopickEnabled: boolean
@@ -20,6 +21,7 @@ export const ExecutionSummaryStrip = ({
       { label: "Waiting", value: summary.waitingCount },
       { label: "Active", value: summary.activeCount },
       { label: "Failed", value: summary.failedCount },
+      { label: "Skipped", value: summary.skippedCount },
       { label: "Retried", value: summary.retriedCount },
     ]}
   >

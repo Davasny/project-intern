@@ -1,7 +1,7 @@
 import { inArray } from "drizzle-orm"
 import { workRecordTable } from "@/features/work-records/db"
 import { workRecordMachine } from "@/features/work-records/lib/work-record-machine"
-import { retryableWorkRecordStates } from "@/features/work-records/schemas/work-record-state"
+import { autoRetryableWorkRecordStates } from "@/features/work-records/schemas/work-record-state"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
@@ -22,11 +22,11 @@ export const runTaskRetryScan = async ({ limit }: RunTaskRetryScanParams) => {
       state: workRecordTable.state,
     })
     .from(workRecordTable)
-    .where(inArray(workRecordTable.state, retryableWorkRecordStates))
+    .where(inArray(workRecordTable.state, autoRetryableWorkRecordStates))
     .limit(limit)
 
   if (workRecords.length === 0) {
-    retryLogger.info("no failed or skipped work records to retry")
+    retryLogger.info("no failed work records to retry")
     return {
       retriedCount: 0,
       workRecordIds: [],
@@ -35,7 +35,7 @@ export const runTaskRetryScan = async ({ limit }: RunTaskRetryScanParams) => {
 
   retryLogger.info(
     { count: workRecords.length },
-    "found failed or skipped work records to retry",
+    "found failed work records to retry",
   )
 
   for (const workRecord of workRecords) {

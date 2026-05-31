@@ -66,7 +66,11 @@ If you consider the task is done - call tool \`crm_record_complete_task\`.
 
 If you can't complete the task - call tool \`crm_record_fail_task\`.
 
-You can never finish the job without calling those tools.
+If the task is not applicable to this record or cannot produce useful work but should not be treated as a runtime
+failure - call tool \`crm_record_skip_task\` with a clear reason. Skipped tasks unblock downstream tasks and are not
+automatically retried.
+
+You can never finish the job without calling one of those final state tools.
 
 You can't ask user for more information. If you are not sure about task workflow and there is not enough information to
 make assumptions, fail the task.

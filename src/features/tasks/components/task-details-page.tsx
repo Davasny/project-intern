@@ -211,6 +211,7 @@ export const TaskDetailsPage = ({
           activeCount={taskQuery.data.progress.inProgressCount}
           completedCount={taskQuery.data.progress.completedCount}
           failedCount={taskQuery.data.progress.failedCount}
+          skippedCount={taskQuery.data.progress.skippedCount}
           waitingCount={taskQuery.data.progress.waitingCount}
         />
         <TaskPromptSection

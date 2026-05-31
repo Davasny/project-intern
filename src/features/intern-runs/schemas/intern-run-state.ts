@@ -14,18 +14,18 @@ const internRunStateSchema = z.enum([
   "failed_failed",
   "aborted",
   "aborted_failed",
+  "skipped",
+  "skipped_failed",
 ])
 
 export type InternRunState = z.infer<typeof internRunStateSchema>
 
-export const activeInternRunStates = [
+export const activeInternRunStates: readonly InternRunState[] = [
   "created",
   "booting",
   "running",
   "persisting_outputs",
-] as const
+] satisfies readonly InternRunState[]
 
 export const isInternRunStateActive = (state: InternRunState): boolean =>
-  activeInternRunStates.includes(
-    state as (typeof activeInternRunStates)[number],
-  )
+  activeInternRunStates.includes(state)

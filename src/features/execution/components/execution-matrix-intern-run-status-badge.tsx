@@ -22,6 +22,8 @@ const runStatusMap: Record<
   },
   running: { label: "Running", tone: "info" },
   running_failed: { label: "Run failed", tone: "danger" },
+  skipped: { label: "Skipped", tone: "muted" },
+  skipped_failed: { label: "Skip failed", tone: "danger" },
 }
 
 type ExecutionMatrixRunStatusBadgeProps = {

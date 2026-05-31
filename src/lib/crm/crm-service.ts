@@ -2,6 +2,7 @@ import { completeScopedWorkRecord } from "@/features/execution/lib/complete-scop
 import { failScopedWorkRecord } from "@/features/execution/lib/fail-scoped-work-record"
 import { getWorkRecordExecutionScope } from "@/features/execution/lib/get-work-record-execution-scope"
 import { getWorkRecordPatchSchemaVersion } from "@/features/execution/lib/get-work-record-patch-schema-version"
+import { skipScopedWorkRecord } from "@/features/execution/lib/skip-scoped-work-record"
 import { createProjectSchemaVersionProposalByProjectId } from "@/features/project-schema/lib/create-project-schema-version-proposal-by-project-id"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listProjectSchemaVersionsByProjectId } from "@/features/project-schema/lib/list-project-schema-versions-by-project-id"
@@ -35,6 +36,7 @@ import type {
   CrmRecordListRelationsInput,
   CrmRecordProposePatchInput,
   CrmRecordReadInput,
+  CrmRecordSkipTaskInput,
 } from "./crm-schemas"
 
 export const readRecord = async (
@@ -206,6 +208,23 @@ export const failWorkRecord = async (
     executionScope: input.execution,
     failure: input.failure,
     toolActivitySummary: { failureSource: "rest" },
+  })
+}
+
+export const skipWorkRecord = async (
+  input: CrmRecordSkipTaskInput,
+  scope: CrmScope,
+) => {
+  const resolvedScope = await getWorkRecordExecutionScope(input.execution)
+  await assertMcpOrgOwnsProject({
+    organizationId: scope.organizationId,
+    projectId: resolvedScope.project.id,
+  })
+  return skipScopedWorkRecord({
+    executionScope: input.execution,
+    reason: input.reason,
+    resultPayload: input.resultPayload,
+    toolActivitySummary: { skipSource: "rest" },
   })
 }
 

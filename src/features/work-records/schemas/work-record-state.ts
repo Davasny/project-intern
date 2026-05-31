@@ -29,6 +29,14 @@ export const retryableWorkRecordStates = [
   "failed_failed",
 ] satisfies Array<WorkRecordState>
 
+/** Retryable states that are safe for automatic cron retry. Skipped stays manual-only. */
+export const autoRetryableWorkRecordStates = [
+  "failed",
+  "picked_up_failed",
+  "completed_failed",
+  "failed_failed",
+] satisfies Array<WorkRecordState>
+
 /** States eligible for a manual claim (trigger or retry-and-claim). */
 export const claimableWorkRecordStates = [
   "waiting",

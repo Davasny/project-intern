@@ -24,6 +24,7 @@ type RecordListRowProps = {
       completedCount: number
       failedCount: number
       inProgressCount: number
+      skippedCount: number
       totalCount: number
       waitingCount: number
     }
@@ -120,6 +121,7 @@ export const RecordListRow = ({
       </TableCell>
       <TableCell>{record.progress.inProgressCount}</TableCell>
       <TableCell>{record.progress.failedCount}</TableCell>
+      <TableCell>{record.progress.skippedCount}</TableCell>
       <TableCell>{record.progress.waitingCount}</TableCell>
       <TableCell>
         {record.activeRun ? (

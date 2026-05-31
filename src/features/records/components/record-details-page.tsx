@@ -176,6 +176,7 @@ export const RecordDetailsPage = ({
             value: recordQuery.data.progress.completedCount,
           },
           { label: "Failed", value: recordQuery.data.progress.failedCount },
+          { label: "Skipped", value: recordQuery.data.progress.skippedCount },
         ]}
       />
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">

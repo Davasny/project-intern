@@ -34,6 +34,7 @@ type TaskListRowProps = {
       completedCount: number
       failedCount: number
       inProgressCount: number
+      skippedCount: number
       totalCount: number
       waitingCount: number
     }
@@ -223,6 +224,7 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
         </TableCell>
         <TableCell>{task.progress.inProgressCount}</TableCell>
         <TableCell>{task.progress.failedCount}</TableCell>
+        <TableCell>{task.progress.skippedCount}</TableCell>
         <TableCell>{task.progress.waitingCount}</TableCell>
         <TableCell>
           <div className="flex flex-row gap-2">

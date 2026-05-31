@@ -14,6 +14,7 @@ import {
   crmRecordPatchInputSchema,
   crmRecordProposePatchInputSchema,
   crmRecordReadInputSchema,
+  crmRecordSkipTaskInputSchema,
 } from "@/lib/crm/crm-schemas"
 import {
   applyRecordPatch,
@@ -31,6 +32,7 @@ import {
   proposeRecordPatch,
   readProjectSchema,
   readRecord,
+  skipWorkRecord,
 } from "@/lib/crm/crm-service"
 import { createMcpJsonResponse } from "@/lib/mcp/create-mcp-json-response"
 import { getMcpScope } from "@/lib/mcp/mcp-scope-storage"
@@ -178,6 +180,24 @@ export const createCrmMcpServer = () => {
 
       return createMcpJsonResponse({
         data: failedScope,
+        ok: true,
+      })
+    },
+  )
+
+  server.registerTool(
+    "crm_record_skip_task",
+    {
+      description:
+        "Skip the scoped work record with a required reason. Use this when the task is not applicable or cannot be completed usefully, but should unblock downstream tasks without being treated as a failure.",
+      inputSchema: crmRecordSkipTaskInputSchema,
+    },
+    async (input) => {
+      const scope = getMcpScope()
+      const skippedScope = await skipWorkRecord(input, scope)
+
+      return createMcpJsonResponse({
+        data: skippedScope,
         ok: true,
       })
     },

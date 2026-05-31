@@ -4,6 +4,7 @@ import type pino from "pino"
 import { internRunTable } from "@/features/intern-runs/db"
 import { failInternRunCommand } from "@/features/intern-runs/lib/intern-run-commands"
 import { updateInternRunMetrics } from "@/features/intern-runs/lib/update-intern-run-metrics"
+import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { db } from "@/lib/db"
 import { logger as rootLogger } from "@/lib/logger"
@@ -20,7 +21,9 @@ type PollSessionForMetricsParams = {
 const DEFAULT_INTERVAL_MS = 2000
 const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000
 
-const isInternRunStillActive = async (internRunId: string) => {
+const getInternRunState = async (
+  internRunId: string,
+): Promise<InternRunState | null> => {
   const rows = await db
     .select({ state: internRunTable.state })
     .from(internRunTable)
@@ -29,8 +32,11 @@ const isInternRunStillActive = async (internRunId: string) => {
 
   const internRun = rows[0]
 
-  return internRun ? isInternRunStateActive(internRun.state) : false
+  return internRun?.state ?? null
 }
+
+const shouldAbortSessionForState = (state: InternRunState | null) =>
+  state === null || state === "aborted" || state === "aborted_failed"
 
 const abortOpencodeSession = async ({
   client,
@@ -76,11 +82,21 @@ export const pollSessionForMetrics = async ({
 
   while (Date.now() - startTime <= timeoutMs) {
     try {
-      const stillActive = await isInternRunStillActive(internRunId)
+      const internRunState = await getInternRunState(internRunId)
+      const stillActive = internRunState
+        ? isInternRunStateActive(internRunState)
+        : false
 
       if (!stillActive) {
-        log.info("Intern run is no longer active, stopping session polling")
-        await abortOpencodeSession({ client, log, sessionId })
+        log.info(
+          { internRunState },
+          "Intern run is no longer active, stopping session polling",
+        )
+
+        if (shouldAbortSessionForState(internRunState)) {
+          await abortOpencodeSession({ client, log, sessionId })
+        }
+
         return
       }
 

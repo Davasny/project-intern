@@ -4,7 +4,7 @@ import { taskTable } from "@/features/tasks/db"
 import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
-const completedStates = ["completed", "failed"] as const
+const terminalHistoryStates = ["completed", "failed", "skipped"] as const
 
 type PreviousTaskExecution = {
   taskTitle: string
@@ -66,7 +66,7 @@ export const getPreviousTaskExecutionsForRecord = async ({
       and(
         eq(workRecordTable.recordId, recordId),
         ne(internRunTable.id, excludeInternRunId),
-        inArray(internRunTable.state, completedStates),
+        inArray(internRunTable.state, terminalHistoryStates),
         isNotNull(internRunTable.finishedAt),
       ),
     )

@@ -322,3 +322,32 @@ export const abortInternRunCommand = async ({
     toolSummary: toolActivitySummary,
   })
 }
+
+type SkipInternRunCommandParams = {
+  internRunId: string
+  resultPayload: Record<string, unknown>
+  workRecordId: string
+  toolActivitySummary: Record<string, unknown>
+}
+
+export const skipInternRunCommand = async ({
+  internRunId,
+  resultPayload,
+  workRecordId,
+  toolActivitySummary,
+}: SkipInternRunCommandParams) => {
+  const actor = await getInternRunActorById(internRunId)
+
+  if (!actor) {
+    throw new Error(`Intern run ${internRunId} not found.`)
+  }
+
+  await actor.send("skip", {
+    internRunId,
+    finishedAt: new Date(),
+    resultPayload,
+    workRecordId,
+    toolActivitySummary,
+    toolSummary: toolActivitySummary,
+  })
+}

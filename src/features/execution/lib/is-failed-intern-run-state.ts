@@ -7,4 +7,5 @@ export const isFailedInternRunState = (state: InternRunState) =>
   state === "completed_failed" ||
   state === "failed" ||
   state === "failed_failed" ||
-  state === "aborted_failed"
+  state === "aborted_failed" ||
+  state === "skipped_failed"

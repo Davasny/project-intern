@@ -98,6 +98,16 @@ export type CrmRecordFailTaskInput = z.infer<
   typeof crmRecordFailTaskInputSchema
 >
 
+export const crmRecordSkipTaskInputSchema = z.object({
+  execution: executionScopeInputSchema,
+  reason: z.string().trim().min(1, "Skip reason is required."),
+  resultPayload: z.record(z.string(), z.unknown()).nullable(),
+})
+
+export type CrmRecordSkipTaskInput = z.infer<
+  typeof crmRecordSkipTaskInputSchema
+>
+
 export const crmRecordListRelationsInputSchema = executionScopeInputSchema
 
 export type CrmRecordListRelationsInput = z.infer<

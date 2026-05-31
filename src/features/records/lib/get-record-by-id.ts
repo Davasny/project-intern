@@ -118,6 +118,9 @@ export const getRecordById = async ({
           workRecord.state === "picked_up" ||
           workRecord.state === "in_progress",
       ).length,
+      skippedCount: linkedWorkRecords.filter(
+        (workRecord) => workRecord.state === "skipped",
+      ).length,
       totalCount: linkedWorkRecords.length,
       waitingCount: linkedWorkRecords.filter(
         (workRecord) => workRecord.state === "waiting",

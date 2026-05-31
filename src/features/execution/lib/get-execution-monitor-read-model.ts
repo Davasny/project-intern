@@ -52,6 +52,9 @@ export const getExecutionMonitorReadModel = async ({
     retriedCount: workRecords.filter(
       (workRecord) => workRecord.attemptCount > 1,
     ).length,
+    skippedCount: workRecords.filter(
+      (workRecord) => workRecord.state === "skipped",
+    ).length,
     waitingCount: workRecords.filter(
       (workRecord) => workRecord.state === "waiting",
     ).length,

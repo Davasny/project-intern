@@ -4,6 +4,7 @@ type TaskProgressStripProps = {
   activeCount: number
   completedCount: number
   failedCount: number
+  skippedCount: number
   waitingCount: number
 }
 
@@ -15,6 +16,7 @@ const progressItems: {
   { key: "activeCount", label: "Active" },
   { key: "completedCount", label: "Completed" },
   { key: "failedCount", label: "Failed" },
+  { key: "skippedCount", label: "Skipped" },
 ]
 
 export const TaskProgressStrip = (props: TaskProgressStripProps) => (

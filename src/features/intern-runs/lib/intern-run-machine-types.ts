@@ -99,3 +99,12 @@ export type AbortedEvent = {
   toolActivitySummary: Record<string, unknown>
   toolSummary: Record<string, unknown>
 }
+
+export type SkippedEvent = {
+  internRunId: string
+  finishedAt: Date | null
+  resultPayload: Record<string, unknown>
+  workRecordId: string
+  toolActivitySummary: Record<string, unknown>
+  toolSummary: Record<string, unknown>
+}

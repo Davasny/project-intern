@@ -14,6 +14,7 @@ import type {
   InternRunMachineContext,
   PersistingOutputsEvent,
   RunningEvent,
+  SkippedEvent,
 } from "./intern-run-machine-types"
 
 const internRunMachineDefinition = machine<InternRunMachineContext>().define({
@@ -54,6 +55,7 @@ const internRunMachineDefinition = machine<InternRunMachineContext>().define({
         abort: { target: "aborted" },
         fail: { target: "failed" },
         run: { target: "running" },
+        skip: { target: "skipped" },
       },
       onSuccess: { target: "booting" },
       onError: { target: "booting_failed" },
@@ -78,6 +80,7 @@ const internRunMachineDefinition = machine<InternRunMachineContext>().define({
         abort: { target: "aborted" },
         fail: { target: "failed" },
         persist: { target: "persisting_outputs" },
+        skip: { target: "skipped" },
       },
       onSuccess: { target: "running" },
       onError: { target: "running_failed" },
@@ -99,6 +102,7 @@ const internRunMachineDefinition = machine<InternRunMachineContext>().define({
         abort: { target: "aborted" },
         complete: { target: "completed" },
         fail: { target: "failed" },
+        skip: { target: "skipped" },
       },
       onSuccess: { target: "persisting_outputs" },
       onError: { target: "persisting_outputs_failed" },
@@ -205,6 +209,37 @@ const internRunMachineDefinition = machine<InternRunMachineContext>().define({
     },
     aborted_failed: {
       on: { retry: { target: "aborted" } },
+    },
+    skipped: {
+      entry: async (context, event: SkippedEvent) => {
+        await skipWorkRecord({
+          internRunId: event.internRunId,
+          errorCode: null,
+          workRecordId: event.workRecordId,
+        })
+
+        logger.info(
+          {
+            internRunId: event.internRunId,
+            workRecordId: event.workRecordId,
+            resultPayload: event.resultPayload,
+          },
+          "Intern run skipped",
+        )
+
+        return {
+          ...context,
+          finishedAt: event.finishedAt,
+          resultPayload: event.resultPayload,
+          toolActivitySummary: event.toolActivitySummary,
+          toolSummary: event.toolSummary,
+        }
+      },
+      onSuccess: { target: "skipped" },
+      onError: { target: "skipped_failed" },
+    },
+    skipped_failed: {
+      on: { retry: { target: "skipped" } },
     },
   },
 })
