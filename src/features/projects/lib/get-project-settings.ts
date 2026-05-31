@@ -31,6 +31,7 @@ export const getProjectSettings = async ({
 
   const settings = await db
     .select({
+      displayName: projectTable.displayName,
       internPythonRequirements: projectTable.internPythonRequirements,
       defaultModel: projectTable.defaultModel,
       defaultTemperature: projectTable.defaultTemperature,

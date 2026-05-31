@@ -3,40 +3,15 @@ import { eq } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { validateProjectSchemaDefinition } from "@/features/project-schema/lib/validate-project-schema-definition"
 import { projectTable } from "@/features/projects/db"
+import { createUniqueProjectSlug } from "@/features/projects/lib/create-unique-project-slug"
 import { ensureOrganizationAccess } from "@/features/projects/lib/ensure-organization-access"
 import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
-import { createSlug } from "@/utils/create-slug"
 
 type CreateProjectParams = {
   displayName: string
   organizationSlug: string
   userId: string
-}
-
-const createUniqueProjectSlug = async (
-  organizationId: string,
-  displayName: string,
-) => {
-  const baseSlug = createSlug(displayName)
-  const existingProjects = await db
-    .select({ slug: projectTable.slug })
-    .from(projectTable)
-    .where(eq(projectTable.organizationId, organizationId))
-
-  if (existingProjects.every((project) => project.slug !== baseSlug)) {
-    return baseSlug
-  }
-
-  let suffix = 2
-  let nextSlug = `${baseSlug}-${suffix}`
-
-  while (existingProjects.some((project) => project.slug === nextSlug)) {
-    suffix += 1
-    nextSlug = `${baseSlug}-${suffix}`
-  }
-
-  return nextSlug
 }
 
 export const createProject = async ({
@@ -56,10 +31,11 @@ export const createProject = async ({
     })
   }
 
-  const projectSlug = await createUniqueProjectSlug(
-    organization.id,
+  const projectSlug = await createUniqueProjectSlug({
     displayName,
-  )
+    excludedProjectId: null,
+    organizationId: organization.id,
+  })
 
   return db.transaction(async (transaction) => {
     const [project] = await transaction

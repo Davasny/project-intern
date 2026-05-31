@@ -7,6 +7,8 @@ import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { ImportExportSection } from "@/features/projects/components/import-export-section"
+import { ProjectDeleteSection } from "@/features/projects/components/project-delete-section"
+import { ProjectRenameForm } from "@/features/projects/components/project-rename-form"
 import { ProjectSettingsForm } from "@/features/projects/components/project-settings-form"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
@@ -40,6 +42,14 @@ export const ProjectSettingsPage = () => {
       </PageHeader>
       <SectionCard>
         <SectionCardHeader>
+          <h2 className="text-lg font-semibold text-foreground">Project</h2>
+        </SectionCardHeader>
+        <SectionCardContent>
+          <ProjectRenameForm initialDisplayName={settingsQuery.data.displayName} />
+        </SectionCardContent>
+      </SectionCard>
+      <SectionCard>
+        <SectionCardHeader>
           <h2 className="text-lg font-semibold text-foreground">
             Runtime
           </h2>
@@ -65,6 +75,16 @@ export const ProjectSettingsPage = () => {
         </SectionCardHeader>
         <SectionCardContent>
           <ImportExportSection />
+        </SectionCardContent>
+      </SectionCard>
+      <SectionCard>
+        <SectionCardHeader>
+          <h2 className="text-lg font-semibold text-destructive">
+            Danger zone
+          </h2>
+        </SectionCardHeader>
+        <SectionCardContent>
+          <ProjectDeleteSection displayName={settingsQuery.data.displayName} />
         </SectionCardContent>
       </SectionCard>
     </div>

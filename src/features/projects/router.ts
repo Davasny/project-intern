@@ -1,10 +1,12 @@
 import { z } from "zod"
 import { commitProjectImport } from "@/features/projects/lib/commit-project-import"
 import { createProject } from "@/features/projects/lib/create-project"
+import { deleteProject } from "@/features/projects/lib/delete-project"
 import { exportProjectData } from "@/features/projects/lib/export-project-data"
 import { getProjectSettings } from "@/features/projects/lib/get-project-settings"
 import { listOrganizationProjects } from "@/features/projects/lib/list-organization-projects"
 import { previewProjectImport } from "@/features/projects/lib/preview-project-import"
+import { renameProject } from "@/features/projects/lib/rename-project"
 import { updateProjectSettings } from "@/features/projects/lib/update-project-settings"
 import {
   projectExportRequestSchema,
@@ -69,6 +71,36 @@ export const projectsRouter = router({
     .mutation(({ ctx, input }) =>
       updateProjectSettings({
         input: input.input,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  rename: protectedProcedure
+    .input(
+      z.object({
+        displayName: z.string().trim().min(2),
+        organizationSlug: z.string().trim().min(1),
+        projectSlug: z.string().trim().min(1),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      renameProject({
+        displayName: input.displayName,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  remove: protectedProcedure
+    .input(
+      z.object({
+        organizationSlug: z.string().trim().min(1),
+        projectSlug: z.string().trim().min(1),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      deleteProject({
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
         userId: ctx.session.user.id,
