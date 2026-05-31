@@ -35,7 +35,7 @@ const backendConfigSchema = z.object({
   CRM_WORKSPACE_ROOT: z
     .string()
     .min(1)
-    .default(path.join(process.cwd(), "agent-workspaces")),
+    .default(path.join(process.cwd(), "intern-workspaces")),
   CRM_SKILLS_ROOT: z
     .string()
     .min(1)

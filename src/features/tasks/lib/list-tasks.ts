@@ -1,9 +1,9 @@
 import { TRPCError } from "@trpc/server"
 import { asc, eq } from "drizzle-orm"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
-import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
 import { getDerivedTaskSummaryState } from "@/features/tasks/lib/get-derived-task-summary-state"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
 type ListTasksParams = {
@@ -49,17 +49,17 @@ export const listTasks = async ({
     .where(eq(taskTable.projectId, project.id))
     .orderBy(asc(taskTable.sortOrder))
 
-  const taskRecordStates = await db
+  const workRecordStates = await db
     .select({
-      state: taskRecordTable.state,
-      taskId: taskRecordTable.taskId,
+      state: workRecordTable.state,
+      taskId: workRecordTable.taskId,
     })
-    .from(taskRecordTable)
+    .from(workRecordTable)
 
   return tasks.map((task) => {
-    const states = taskRecordStates
-      .filter((taskRecord) => taskRecord.taskId === task.id)
-      .map((taskRecord) => taskRecord.state)
+    const states = workRecordStates
+      .filter((workRecord) => workRecord.taskId === task.id)
+      .map((workRecord) => workRecord.state)
 
     return {
       ...task,

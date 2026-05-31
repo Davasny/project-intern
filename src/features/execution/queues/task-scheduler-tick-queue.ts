@@ -2,7 +2,7 @@ import { Queue } from "pg-bosser"
 import { z } from "zod"
 import { pgBosserOptions } from "@/features/execution/lib/pg-bosser-options"
 
-const taskSchedulerTickQueueName = "task-record-scheduler-tick"
+const taskSchedulerTickQueueName = "work-record-scheduler-tick"
 
 export const taskSchedulerTickQueuePayloadSchema = z.object({
   limit: z.number().int().min(1).max(100).default(10),

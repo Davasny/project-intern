@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm"
-import { isFailedAgentRunState } from "@/features/execution/lib/is-failed-agent-run-state"
-import { listTaskRecordExecutionReadModels } from "@/features/execution/lib/list-task-record-execution-read-models"
+import { isFailedInternRunState } from "@/features/execution/lib/is-failed-intern-run-state"
+import { listWorkRecordExecutionReadModels } from "@/features/execution/lib/list-work-record-execution-read-models"
 import { projectTable } from "@/features/projects/db"
 import { db } from "@/lib/db"
 
@@ -24,42 +24,42 @@ export const getExecutionMonitorReadModel = async ({
     return null
   }
 
-  const taskRecords = await listTaskRecordExecutionReadModels({
+  const workRecords = await listWorkRecordExecutionReadModels({
     projectId,
     recordId: null,
     taskId: null,
   })
 
   const summary = {
-    activeCount: taskRecords.filter(
-      (taskRecord) =>
-        taskRecord.state === "picked_up" || taskRecord.state === "in_progress",
+    activeCount: workRecords.filter(
+      (workRecord) =>
+        workRecord.state === "picked_up" || workRecord.state === "in_progress",
     ).length,
-    failedCount: taskRecords.filter((taskRecord) => {
+    failedCount: workRecords.filter((workRecord) => {
       if (
-        taskRecord.state === "failed" ||
-        taskRecord.state === "picked_up_failed" ||
-        taskRecord.state === "completed_failed" ||
-        taskRecord.state === "failed_failed"
+        workRecord.state === "failed" ||
+        workRecord.state === "picked_up_failed" ||
+        workRecord.state === "completed_failed" ||
+        workRecord.state === "failed_failed"
       ) {
         return true
       }
 
-      return taskRecord.latestAgentRun
-        ? isFailedAgentRunState(taskRecord.latestAgentRun.state)
+      return workRecord.latestInternRun
+        ? isFailedInternRunState(workRecord.latestInternRun.state)
         : false
     }).length,
-    retriedCount: taskRecords.filter(
-      (taskRecord) => taskRecord.attemptCount > 1,
+    retriedCount: workRecords.filter(
+      (workRecord) => workRecord.attemptCount > 1,
     ).length,
-    waitingCount: taskRecords.filter(
-      (taskRecord) => taskRecord.state === "waiting",
+    waitingCount: workRecords.filter(
+      (workRecord) => workRecord.state === "waiting",
     ).length,
   }
 
   return {
     isAutopickEnabled: project.isAutopickEnabled,
     summary,
-    taskRecords,
+    workRecords,
   }
 }

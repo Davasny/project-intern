@@ -1,12 +1,10 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq, inArray, sql } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
-import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { projectTable } from "@/features/projects/db"
-import { writeProjectAgentRequirements } from "@/features/projects/lib/write-project-agent-requirements"
-import type {
-  ProjectImportCommitInput,
-} from "@/features/projects/schemas/project-export-data"
+import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import { writeInternRequirements } from "@/features/projects/lib/write-intern-requirements"
+import type { ProjectImportCommitInput } from "@/features/projects/schemas/project-export-data"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
@@ -91,9 +89,7 @@ export const commitProjectImport = async ({
           .from(projectSchemaVersionTable)
           .where(eq(projectSchemaVersionTable.projectId, project.id))
 
-        existingSchemaVersionNumbers = new Set(
-          svRows.map((row) => row.version),
-        )
+        existingSchemaVersionNumbers = new Set(svRows.map((row) => row.version))
       }
 
       const schemaVersionIdMap = new Map<string, string>()
@@ -231,8 +227,8 @@ export const commitProjectImport = async ({
         await transaction
           .update(projectTable)
           .set({
-            agentPythonRequirements:
-              data.projectSettings.agentPythonRequirements,
+            internPythonRequirements:
+              data.projectSettings.internPythonRequirements,
             defaultModel: data.projectSettings.defaultModel,
             defaultTemperature: data.projectSettings.defaultTemperature,
             isAutopickEnabled: data.projectSettings.isAutopickEnabled,
@@ -249,9 +245,9 @@ export const commitProjectImport = async ({
     })
 
     if (data.projectSettings) {
-      await writeProjectAgentRequirements({
+      await writeInternRequirements({
         projectId: project.id,
-        requirements: data.projectSettings.agentPythonRequirements,
+        requirements: data.projectSettings.internPythonRequirements,
       })
     }
 
@@ -268,8 +264,7 @@ export const commitProjectImport = async ({
 
     return result
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Import failed."
+    const message = error instanceof Error ? error.message : "Import failed."
 
     throw new TRPCError({
       code: "BAD_REQUEST",

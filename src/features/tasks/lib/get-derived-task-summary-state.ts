@@ -1,8 +1,8 @@
-import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
 import type { TaskSummaryState } from "@/features/tasks/schemas/task-summary-state"
+import type { WorkRecordState } from "@/features/work-records/schemas/work-record-state"
 
 type TaskSummaryParams = {
-  states: Array<TaskRecordState>
+  states: Array<WorkRecordState>
 }
 
 export const getDerivedTaskSummaryState = ({

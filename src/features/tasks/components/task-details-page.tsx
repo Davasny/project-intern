@@ -17,7 +17,7 @@ import { TaskDetailsHeader } from "@/features/tasks/components/task-details-head
 import { TaskForm } from "@/features/tasks/components/task-form"
 import { TaskProgressStrip } from "@/features/tasks/components/task-progress-strip"
 import { TaskPromptSection } from "@/features/tasks/components/task-prompt-section"
-import { TaskRecordsSection } from "@/features/tasks/components/task-records-section"
+import { WorkRecordsSection } from "@/features/tasks/components/work-records-section"
 import { TaskRevisionsSection } from "@/features/tasks/components/task-revisions-section"
 import { useTRPC } from "@/lib/trpc/client"
 
@@ -96,17 +96,17 @@ export const TaskDetailsPage = ({
     trpc.tasks.resetDownstream.mutationOptions({
       onSuccess: (result) => {
         if (result.resetCount === 0) {
-          toast.info("No terminal downstream task-records to reset.")
+          toast.info("No terminal downstream work records to reset.")
         } else {
           toast.success(
-            `Reset ${result.resetCount} task-record${result.resetCount === 1 ? "" : "s"} across ${result.affectedTaskIds.length} downstream task${result.affectedTaskIds.length === 1 ? "" : "s"}.`,
+            `Reset ${result.resetCount} work record${result.resetCount === 1 ? "" : "s"} across ${result.affectedTaskIds.length} downstream task${result.affectedTaskIds.length === 1 ? "" : "s"}.`,
           )
         }
         invalidateTaskQueries()
         setIsResetDialogOpen(false)
       },
       onError: () => {
-        toast.error("Failed to reset downstream task-records.")
+        toast.error("Failed to reset downstream work records.")
       },
     }),
   )
@@ -165,8 +165,8 @@ export const TaskDetailsPage = ({
   const isTaskRemovable =
     alwaysDetailRemovableStates.has(taskQuery.data.state) ||
     (taskQuery.data.state === "accepted" &&
-      taskQuery.data.taskRecords.every(
-        (taskRecord) => taskRecord.latestAgentRun === null,
+      taskQuery.data.workRecords.every(
+        (workRecord) => workRecord.latestInternRun === null,
       ))
 
   const getDeleteDisabledReason = () => {
@@ -224,9 +224,9 @@ export const TaskDetailsPage = ({
           temperature={taskQuery.data.temperature}
           updatedAt={taskQuery.data.updatedAt}
         />
-        <TaskRecordsSection
+        <WorkRecordsSection
           taskId={taskQuery.data.id}
-          taskRecords={taskQuery.data.taskRecords}
+          workRecords={taskQuery.data.workRecords}
           taskTitle={taskQuery.data.title}
         />
         <TaskRevisionsSection revisions={taskQuery.data.revisions} />
@@ -261,9 +261,9 @@ export const TaskDetailsPage = ({
           <DialogHeader>
             <DialogTitle>Reset downstream tasks</DialogTitle>
             <DialogDescription>
-              This will reset all completed and skipped task-records for this
+              This will reset all completed and skipped work records for this
               task and later tasks back to waiting state. Active and in-progress
-              task-records will not be affected. The scheduler will pick them up
+              work records will not be affected. The scheduler will pick them up
               for re-execution.
             </DialogDescription>
           </DialogHeader>
@@ -293,7 +293,7 @@ export const TaskDetailsPage = ({
             <DialogTitle>Delete task</DialogTitle>
             <DialogDescription>
               {taskQuery.data.state === "accepted"
-                ? "This task and its task records will be permanently deleted. No agent runs exist for this task."
+                ? "This task and its work records will be permanently deleted. No intern runs exist for this task."
                 : `"${taskQuery.data.title}" will be permanently deleted.`}
             </DialogDescription>
           </DialogHeader>

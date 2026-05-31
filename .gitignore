@@ -31,5 +31,6 @@ drizzle/*.sqlite
 tsconfig.tsbuildinfo
 
 agent-workspaces/
+intern-workspaces/
 storage/
 .yalc/

@@ -49,7 +49,7 @@ export const deactivateRecordEdge = async ({
   const actor = await getRecordEdgeActor(recordEdge.id)
 
   await actor.send("deactivate", {
-    byAgentRunId: null,
+    byInternRunId: null,
     byUserId: userId,
     fromRecordId: input.recordId,
   })

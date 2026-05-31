@@ -7,7 +7,7 @@ type EnsureSystemUserForOrgParams = {
 }
 
 const buildSystemUserEmail = (organizationId: string) =>
-  `system+${organizationId}@project-intern.local`
+  `system+${organizationId}@intern.local`
 
 export const ensureSystemUserForOrg = async ({
   organizationId,
@@ -40,7 +40,7 @@ export const ensureSystemUserForOrg = async ({
       createdAt: now,
       email,
       isAnonymous: true,
-      name: "System Agent",
+      name: "System Intern",
       updatedAt: now,
     })
     .returning({ id: user.id })

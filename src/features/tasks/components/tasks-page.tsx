@@ -104,7 +104,7 @@ export const TasksPage = () => {
             },
           },
           description:
-            `${taskCount} tasks updated. Existing task-record execution states are preserved — completed tasks will not re-run automatically. To re-execute downstream tasks after inserting a task mid-pipeline, use the Reset downstream action on that task.`,
+            `${taskCount} tasks updated. Existing work record execution states are preserved — completed tasks will not re-run automatically. To re-execute downstream tasks after inserting a task mid-pipeline, use the Reset downstream action on that task.`,
           duration: 8000,
         })
       },
@@ -215,7 +215,7 @@ export const TasksPage = () => {
                 Create first task
               </Button>
             }
-            description="Create the first project task to fan out task records across every current record."
+            description="Create the first project task to fan out work records across every current record."
             icon={<ListTodoIcon />}
             title="No tasks yet"
           />
@@ -226,7 +226,7 @@ export const TasksPage = () => {
           <DialogHeader>
             <DialogTitle>Create task</DialogTitle>
             <DialogDescription>
-              New tasks fan out task-record rows to every current record.
+              New tasks fan out work record rows to every current record.
             </DialogDescription>
           </DialogHeader>
           <TaskForm

@@ -49,7 +49,7 @@ const schemaVersionExportSchema = z.object({
 const projectSettingsExportSchema = z.object({
   defaultModel: z.string().trim().min(1),
   defaultTemperature: z.number(),
-  agentPythonRequirements: z.string(),
+  internPythonRequirements: z.string(),
   isAutopickEnabled: z.boolean(),
 })
 
@@ -88,7 +88,7 @@ const importSummarySchema = z.object({
   hasProjectSettings: z.boolean(),
 })
 
-export const projectImportPreviewResultSchema = z.object({
+const projectImportPreviewResultSchema = z.object({
   summary: importSummarySchema,
   warnings: z.array(importWarningSchema),
   data: projectExportDataSchema.shape.data,
@@ -106,8 +106,4 @@ export type ProjectImportPreviewResult = z.infer<
 export type ProjectImportCommitInput = z.infer<
   typeof projectImportCommitInputSchema
 >
-export type TaskExport = z.infer<typeof taskExportSchema>
-export type RecordExport = z.infer<typeof recordExportSchema>
-export type SchemaVersionExport = z.infer<typeof schemaVersionExportSchema>
-export type ProjectSettingsExport = z.infer<typeof projectSettingsExportSchema>
 export type ImportWarning = z.infer<typeof importWarningSchema>

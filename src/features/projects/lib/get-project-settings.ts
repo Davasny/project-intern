@@ -31,7 +31,7 @@ export const getProjectSettings = async ({
 
   const settings = await db
     .select({
-      agentPythonRequirements: projectTable.agentPythonRequirements,
+      internPythonRequirements: projectTable.internPythonRequirements,
       defaultModel: projectTable.defaultModel,
       defaultTemperature: projectTable.defaultTemperature,
       isAutopickEnabled: projectTable.isAutopickEnabled,

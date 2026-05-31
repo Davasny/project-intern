@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server"
 import { asc, eq, inArray, sql } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
+import { internRunTable } from "@/features/intern-runs/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { listRecordRelationSummaries } from "@/features/record-edges/lib/list-record-relation-summaries"
 import { recordTable } from "@/features/records/db"
-import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
 type ListRecordsParams = {
@@ -53,33 +53,33 @@ export const listRecords = async ({
 
   const recordIds = records.map((record) => record.id)
 
-  const taskRecords =
+  const workRecords =
     recordIds.length > 0
       ? await db
           .select({
-            agentRunId: taskRecordTable.agentRunId,
-            recordId: taskRecordTable.recordId,
-            state: taskRecordTable.state,
-            taskId: taskRecordTable.taskId,
+            internRunId: workRecordTable.internRunId,
+            recordId: workRecordTable.recordId,
+            state: workRecordTable.state,
+            taskId: workRecordTable.taskId,
           })
-          .from(taskRecordTable)
-          .where(inArray(taskRecordTable.recordId, recordIds))
+          .from(workRecordTable)
+          .where(inArray(workRecordTable.recordId, recordIds))
       : []
 
-  const activeAgentRunIds = taskRecords
-    .map((taskRecord) => taskRecord.agentRunId)
-    .filter((agentRunId) => agentRunId !== null)
+  const activeInternRunIds = workRecords
+    .map((workRecord) => workRecord.internRunId)
+    .filter((internRunId) => internRunId !== null)
 
-  const agentRuns =
-    activeAgentRunIds.length > 0
+  const internRuns =
+    activeInternRunIds.length > 0
       ? await db
           .select({
-            id: agentRunTable.id,
-            selectedModel: agentRunTable.selectedModel,
-            state: agentRunTable.state,
+            id: internRunTable.id,
+            selectedModel: internRunTable.selectedModel,
+            state: internRunTable.state,
           })
-          .from(agentRunTable)
-          .where(inArray(agentRunTable.id, activeAgentRunIds))
+          .from(internRunTable)
+          .where(inArray(internRunTable.id, activeInternRunIds))
       : []
 
   const tasks = await db
@@ -91,8 +91,8 @@ export const listRecords = async ({
     .where(eq(taskTable.projectId, project.id))
 
   const taskMap = new Map(tasks.map((task) => [task.id, task]))
-  const agentRunMap = new Map(
-    agentRuns.map((agentRun) => [agentRun.id, agentRun]),
+  const internRunMap = new Map(
+    internRuns.map((internRun) => [internRun.id, internRun]),
   )
   const relationSummaryMap = await listRecordRelationSummaries({
     projectId: project.id,
@@ -100,17 +100,17 @@ export const listRecords = async ({
   })
 
   return records.map((record) => {
-    const linkedTaskRecords = taskRecords.filter(
-      (taskRecord) => taskRecord.recordId === record.id,
+    const linkedWorkRecords = workRecords.filter(
+      (workRecord) => workRecord.recordId === record.id,
     )
     const activeRun =
-      linkedTaskRecords
-        .map((taskRecord) =>
-          taskRecord.agentRunId !== null
-            ? (agentRunMap.get(taskRecord.agentRunId) ?? null)
+      linkedWorkRecords
+        .map((workRecord) =>
+          workRecord.internRunId !== null
+            ? (internRunMap.get(workRecord.internRunId) ?? null)
             : null,
         )
-        .find((agentRun) => agentRun !== null) ?? null
+        .find((internRun) => internRun !== null) ?? null
 
     const relationSummary = relationSummaryMap.get(record.id) ?? {
       activeCount: 0,
@@ -122,26 +122,26 @@ export const listRecords = async ({
     return {
       ...record,
       activeRun,
-      linkedTasks: linkedTaskRecords.map((taskRecord) => ({
-        state: taskRecord.state,
-        taskId: taskRecord.taskId,
-        title: taskMap.get(taskRecord.taskId)?.title ?? "Unknown task",
+      linkedTasks: linkedWorkRecords.map((workRecord) => ({
+        state: workRecord.state,
+        taskId: workRecord.taskId,
+        title: taskMap.get(workRecord.taskId)?.title ?? "Unknown task",
       })),
       progress: {
-        completedCount: linkedTaskRecords.filter(
-          (taskRecord) => taskRecord.state === "completed",
+        completedCount: linkedWorkRecords.filter(
+          (workRecord) => workRecord.state === "completed",
         ).length,
-        failedCount: linkedTaskRecords.filter(
-          (taskRecord) => taskRecord.state === "failed",
+        failedCount: linkedWorkRecords.filter(
+          (workRecord) => workRecord.state === "failed",
         ).length,
-        inProgressCount: linkedTaskRecords.filter(
-          (taskRecord) =>
-            taskRecord.state === "picked_up" ||
-            taskRecord.state === "in_progress",
+        inProgressCount: linkedWorkRecords.filter(
+          (workRecord) =>
+            workRecord.state === "picked_up" ||
+            workRecord.state === "in_progress",
         ).length,
-        totalCount: linkedTaskRecords.length,
-        waitingCount: linkedTaskRecords.filter(
-          (taskRecord) => taskRecord.state === "waiting",
+        totalCount: linkedWorkRecords.length,
+        waitingCount: linkedWorkRecords.filter(
+          (workRecord) => workRecord.state === "waiting",
         ).length,
       },
       relationSummary,

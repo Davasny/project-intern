@@ -32,7 +32,7 @@ export const RecordLinkedTasksSection = ({
         <TableHead>
           <TableRow>
             <TableHeader>Task</TableHeader>
-            <TableHeader>Task record</TableHeader>
+            <TableHeader>Work record</TableHeader>
             <TableHeader>Latest run</TableHeader>
             <TableHeader className="text-right">Actions</TableHeader>
           </TableRow>
@@ -42,7 +42,7 @@ export const RecordLinkedTasksSection = ({
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((task) => (
               <RecordLinkedTaskRow
-                key={task.taskRecordId}
+                key={task.workRecordId}
                 nextWaitingSortOrder={nextWaitingSortOrder}
                 recordId={recordId}
                 task={task}

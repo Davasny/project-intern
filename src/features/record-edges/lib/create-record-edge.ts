@@ -67,7 +67,7 @@ export const createRecordEdge = async ({
   const actor = await getRecordEdgeActor(recordEdgeId)
 
   await actor.send("activate", {
-    byAgentRunId: null,
+    byInternRunId: null,
     byUserId: userId,
     direction: input.direction,
     fromProjectId: sourceProject.id,

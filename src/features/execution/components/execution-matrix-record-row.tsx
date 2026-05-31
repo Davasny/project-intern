@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { ExecutionMatrixCell } from "@/features/execution/components/execution-matrix-cell"
-import type { ExecutionTaskRecordCell } from "@/features/execution/lib/build-execution-matrix"
+import type { ExecutionWorkRecordCell } from "@/features/execution/lib/build-execution-matrix"
 
 type ExecutionMatrixRecordRowProps = {
   debugControlsEnabled: boolean
@@ -17,7 +17,7 @@ type ExecutionMatrixRecordRowProps = {
   recordCells:
     | Map<
         string,
-        ExecutionTaskRecordCell
+        ExecutionWorkRecordCell
       >
     | null
   tasks: Array<{
@@ -51,7 +51,7 @@ export const ExecutionMatrixRecordRow = ({
           isAutopickEnabled={isAutopickEnabled}
           organizationSlug={organizationSlug}
           projectSlug={projectSlug}
-          taskRecord={recordCells ? (recordCells.get(task.id) ?? null) : null}
+          workRecord={recordCells ? (recordCells.get(task.id) ?? null) : null}
         />
       </TableCell>
     ))}

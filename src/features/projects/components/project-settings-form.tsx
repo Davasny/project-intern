@@ -27,7 +27,7 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 import { useTRPC } from "@/lib/trpc/client"
 
 const projectSettingsFormSchema = z.object({
-  agentPythonRequirements: z.string(),
+  internPythonRequirements: z.string(),
   defaultModel: z.string().trim().min(1, "Default model is required."),
   defaultTemperature: z.string().trim().min(1, "Default temperature is required."),
   isAutopickEnabled: z.boolean(),
@@ -38,7 +38,7 @@ type ProjectSettingsFormValues = z.infer<typeof projectSettingsFormSchema>
 type ProjectSettingsFormProps = {
   approvedModels: string[]
   debugControlsEnabled: boolean
-  initialAgentPythonRequirements: string
+  initialInternPythonRequirements: string
   initialDefaultModel: string
   initialDefaultTemperature: number
   initialIsAutopickEnabled: boolean
@@ -51,7 +51,7 @@ const temperatureOptions = Array.from({ length: 11 }, (_, index) =>
 export const ProjectSettingsForm = ({
   approvedModels,
   debugControlsEnabled,
-  initialAgentPythonRequirements,
+  initialInternPythonRequirements,
   initialDefaultModel,
   initialDefaultTemperature,
   initialIsAutopickEnabled,
@@ -61,7 +61,7 @@ export const ProjectSettingsForm = ({
   const queryClient = useQueryClient()
   const form = useForm<ProjectSettingsFormValues>({
     defaultValues: {
-      agentPythonRequirements: initialAgentPythonRequirements,
+      internPythonRequirements: initialInternPythonRequirements,
       defaultModel: initialDefaultModel,
       defaultTemperature: initialDefaultTemperature.toFixed(1),
       isAutopickEnabled: initialIsAutopickEnabled,
@@ -91,7 +91,7 @@ export const ProjectSettingsForm = ({
   const handleSubmit = form.handleSubmit(async (values) => {
     await updateSettingsMutation.mutateAsync({
       input: {
-        agentPythonRequirements: values.agentPythonRequirements,
+        internPythonRequirements: values.internPythonRequirements,
         defaultModel: values.defaultModel,
         defaultTemperature: Number(values.defaultTemperature),
         isAutopickEnabled: values.isAutopickEnabled,
@@ -167,7 +167,7 @@ export const ProjectSettingsForm = ({
                 <div className="flex flex-col gap-1">
                   <FormLabel>Autopick</FormLabel>
                   <FormDescription>
-                    Automatically claim waiting task records.
+                    Automatically claim waiting work records.
                   </FormDescription>
                 </div>
                 <FormControl>
@@ -183,10 +183,10 @@ export const ProjectSettingsForm = ({
         ) : null}
         <FormField
           control={form.control}
-          name="agentPythonRequirements"
+          name="internPythonRequirements"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Agent Python requirements</FormLabel>
+              <FormLabel>Intern Python requirements</FormLabel>
               <FormControl>
                 <Textarea
                   className="min-h-48 font-mono"
@@ -195,7 +195,7 @@ export const ProjectSettingsForm = ({
                 />
               </FormControl>
               <FormDescription>
-                Written to requirements-agent.txt and installed into the project
+                Written to requirements-intern.txt and installed into the project
                 venv before agents run.
               </FormDescription>
               <FormMessage />

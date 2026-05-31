@@ -215,7 +215,7 @@ export const RecordDetailsPage = ({
             <DialogTitle>Delete record</DialogTitle>
             <DialogDescription>
               This will permanently delete &quot;{recordQuery.data.name}&quot;
-              and all linked task records, relations, artifacts, and activity
+              and all linked work records, relations, artifacts, and activity
               logs. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>

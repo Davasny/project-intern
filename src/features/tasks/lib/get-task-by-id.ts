@@ -1,12 +1,12 @@
 import { TRPCError } from "@trpc/server"
 import { and, asc, desc, eq } from "drizzle-orm"
-import { listTaskRecordExecutionReadModels } from "@/features/execution/lib/list-task-record-execution-read-models"
+import { listWorkRecordExecutionReadModels } from "@/features/execution/lib/list-work-record-execution-read-models"
 import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
-import { taskRecordTable } from "@/features/task-records/db"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
 import { getDerivedTaskSummaryState } from "@/features/tasks/lib/get-derived-task-summary-state"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
 type GetTaskByIdParams = {
@@ -82,21 +82,21 @@ export const getTaskById = async ({
     .where(eq(taskDescriptionRevisionTable.taskId, taskId))
     .orderBy(desc(taskDescriptionRevisionTable.revisionNumber))
 
-  const taskRecords = await db
+  const workRecords = await db
     .select({
-      errorCode: taskRecordTable.errorCode,
-      id: taskRecordTable.id,
-      lastTransitionAt: taskRecordTable.lastTransitionAt,
-      recordId: taskRecordTable.recordId,
+      errorCode: workRecordTable.errorCode,
+      id: workRecordTable.id,
+      lastTransitionAt: workRecordTable.lastTransitionAt,
+      recordId: workRecordTable.recordId,
       recordName: recordTable.name,
-      state: taskRecordTable.state,
+      state: workRecordTable.state,
     })
-    .from(taskRecordTable)
-    .innerJoin(recordTable, eq(taskRecordTable.recordId, recordTable.id))
-    .where(eq(taskRecordTable.taskId, taskId))
+    .from(workRecordTable)
+    .innerJoin(recordTable, eq(workRecordTable.recordId, recordTable.id))
+    .where(eq(workRecordTable.taskId, taskId))
     .orderBy(asc(recordTable.name))
 
-  const executionReadModels = await listTaskRecordExecutionReadModels({
+  const executionReadModels = await listWorkRecordExecutionReadModels({
     projectId: project.id,
     recordId: null,
     taskId,
@@ -104,39 +104,39 @@ export const getTaskById = async ({
 
   const executionReadModelMap = new Map(
     executionReadModels.map((executionReadModel) => [
-      executionReadModel.taskRecordId,
+      executionReadModel.workRecordId,
       executionReadModel,
     ]),
   )
-  const taskRecordStates = taskRecords.map((taskRecord) => taskRecord.state)
+  const workRecordStates = workRecords.map((workRecord) => workRecord.state)
 
   return {
     ...task,
     effectiveModel: task.model ?? projectDefaultModel,
     effectiveTemperature: task.temperature ?? projectDefaultTemperature,
     progress: {
-      completedCount: taskRecordStates.filter((state) => state === "completed")
+      completedCount: workRecordStates.filter((state) => state === "completed")
         .length,
-      failedCount: taskRecordStates.filter((state) => state === "failed")
+      failedCount: workRecordStates.filter((state) => state === "failed")
         .length,
-      inProgressCount: taskRecordStates.filter(
+      inProgressCount: workRecordStates.filter(
         (state) => state === "picked_up" || state === "in_progress",
       ).length,
-      skippedCount: taskRecordStates.filter((state) => state === "skipped")
+      skippedCount: workRecordStates.filter((state) => state === "skipped")
         .length,
-      totalCount: taskRecordStates.length,
-      waitingCount: taskRecordStates.filter((state) => state === "waiting")
+      totalCount: workRecordStates.length,
+      waitingCount: workRecordStates.filter((state) => state === "waiting")
         .length,
     },
     revisions,
-    summaryState: getDerivedTaskSummaryState({ states: taskRecordStates }),
-    taskRecords: taskRecords.map((taskRecord) => ({
-      ...taskRecord,
-      attemptCount: executionReadModelMap.get(taskRecord.id)?.attemptCount ?? 0,
-      latestAgentRun:
-        executionReadModelMap.get(taskRecord.id)?.latestAgentRun ?? null,
+    summaryState: getDerivedTaskSummaryState({ states: workRecordStates }),
+    workRecords: workRecords.map((workRecord) => ({
+      ...workRecord,
+      attemptCount: executionReadModelMap.get(workRecord.id)?.attemptCount ?? 0,
+      latestInternRun:
+        executionReadModelMap.get(workRecord.id)?.latestInternRun ?? null,
       latestFailurePayload:
-        executionReadModelMap.get(taskRecord.id)?.latestFailurePayload ?? null,
+        executionReadModelMap.get(workRecord.id)?.latestFailurePayload ?? null,
     })),
   }
 }

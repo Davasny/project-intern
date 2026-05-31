@@ -2,11 +2,11 @@ import { Queue } from "pg-bosser"
 import { z } from "zod"
 import { pgBosserOptions } from "@/features/execution/lib/pg-bosser-options"
 
-const taskExecutorQueueName = "task-record-execution"
+const taskExecutorQueueName = "work-record-execution"
 
 export const taskExecutorQueuePayloadSchema = z.object({
-  agentRunId: z.string().uuid(),
-  taskRecordId: z.string().uuid(),
+  internRunId: z.string().uuid(),
+  workRecordId: z.string().uuid(),
 })
 
 export type TaskExecutorQueuePayload = z.infer<

@@ -86,23 +86,23 @@ export const OpencodeSessionsPage = () => {
     if (!data) return
 
     const payload: {
-      agentRunId?: string
+      internRunId?: string
       serverId?: string
-      taskRecordId?: string
+      workRecordId?: string
     } = {}
 
     if (
-      "agentRunId" in data &&
-      typeof data.agentRunId === "string"
+      "internRunId" in data &&
+      typeof data.internRunId === "string"
     ) {
-      payload.agentRunId = data.agentRunId
+      payload.internRunId = data.internRunId
     }
 
     if (
-      "taskRecordId" in data &&
-      typeof data.taskRecordId === "string"
+      "workRecordId" in data &&
+      typeof data.workRecordId === "string"
     ) {
-      payload.taskRecordId = data.taskRecordId
+      payload.workRecordId = data.workRecordId
     }
 
     if (

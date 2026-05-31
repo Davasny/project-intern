@@ -9,9 +9,9 @@ import {
 } from "@/lib/crm/crm-schemas"
 import {
   applyRecordPatch,
-  completeTaskRecord,
+  completeWorkRecord,
   createRecord,
-  failTaskRecord,
+  failWorkRecord,
   proposeRecordPatch,
   readRecord,
 } from "@/lib/crm/crm-service"
@@ -93,7 +93,7 @@ export const registerRecordRoutes = (app: OpenAPIHono) => {
         },
       },
       responses: {
-        200: okResponse("The patched record and task record state."),
+        200: okResponse("The patched record and work record state."),
         ...errorResponse,
       },
       security: [{ Bearer: [] }],
@@ -127,13 +127,13 @@ export const registerRecordRoutes = (app: OpenAPIHono) => {
         ...errorResponse,
       },
       security: [{ Bearer: [] }],
-      summary: "Complete the scoped task record and optionally apply a patch.",
+      summary: "Complete the scoped work record and optionally apply a patch.",
       tags: ["Records"],
     },
     async (context) => {
       const body = context.req.valid("json")
       const scope = getScope(context)
-      const completedScope = await completeTaskRecord(body, scope)
+      const completedScope = await completeWorkRecord(body, scope)
       return context.json({ data: completedScope, ok: true as const }, 200)
     },
   )
@@ -157,13 +157,13 @@ export const registerRecordRoutes = (app: OpenAPIHono) => {
         ...errorResponse,
       },
       security: [{ Bearer: [] }],
-      summary: "Fail the scoped task record with a structured failure payload.",
+      summary: "Fail the scoped work record with a structured failure payload.",
       tags: ["Records"],
     },
     async (context) => {
       const body = context.req.valid("json")
       const scope = getScope(context)
-      const failedScope = await failTaskRecord(body, scope)
+      const failedScope = await failWorkRecord(body, scope)
       return context.json({ data: failedScope, ok: true as const }, 200)
     },
   )

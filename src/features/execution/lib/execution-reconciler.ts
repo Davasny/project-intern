@@ -1,15 +1,15 @@
 import { and, eq, inArray, isNull, lt } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
-import { activeAgentRunStates } from "@/features/agent-runs/schemas/agent-run-state"
 import {
   claimAndCreateRun,
-  releaseClaimedTaskRecord,
+  releaseClaimedWorkRecord,
 } from "@/features/execution/lib/execution-claim-service"
 import { executionLogger } from "@/features/execution/lib/execution-logger"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
+import { internRunTable } from "@/features/intern-runs/db"
+import { activeInternRunStates } from "@/features/intern-runs/schemas/intern-run-state"
 import { projectTable } from "@/features/projects/db"
-import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
 type ReconcileExecutionsParams = {
@@ -20,41 +20,41 @@ type ReconcileExecutionsParams = {
 export type ReconcileExecutionsResult = {
   recoveredCount: number
   skippedCount: number
-  repairedTaskRecordIds: string[]
+  repairedWorkRecordIds: string[]
 }
 
 const enqueueRecoveredExecution = async ({
-  agentRunId,
+  internRunId,
   repairAction,
-  taskRecordId,
+  workRecordId,
 }: {
-  agentRunId: string
+  internRunId: string
   repairAction: string
-  taskRecordId: string
+  workRecordId: string
 }) => {
-  const jobId = await executionQueueService.enqueueTaskRecordExecution({
-    agentRunId,
-    taskRecordId,
+  const jobId = await executionQueueService.enqueueWorkRecordExecution({
+    internRunId,
+    workRecordId,
   })
 
   if (jobId === null) {
     executionLogger.error(
-      { agentRunId, repairAction, taskRecordId },
-      "Execution reconciler failed to enqueue recovered task record",
+      { internRunId, repairAction, workRecordId },
+      "Execution reconciler failed to enqueue recovered work record",
     )
 
-    await releaseClaimedTaskRecord({
-      agentRunId,
+    await releaseClaimedWorkRecord({
+      internRunId,
       reason: "RECONCILER_ENQUEUE_FAILED",
-      taskRecordId,
+      workRecordId,
     })
 
     return false
   }
 
   executionLogger.info(
-    { agentRunId, jobId, repairAction, taskRecordId },
-    "Execution reconciler enqueued recovered task record",
+    { internRunId, jobId, repairAction, workRecordId },
+    "Execution reconciler enqueued recovered work record",
   )
 
   return true
@@ -64,41 +64,41 @@ export const reconcileExecutions = async ({
   limit,
   staleAfterMs = 10 * 60 * 1000,
 }: ReconcileExecutionsParams): Promise<ReconcileExecutionsResult> => {
-  const repairedTaskRecordIds: string[] = []
+  const repairedWorkRecordIds: string[] = []
   let skippedCount = 0
 
   const orphanClaimFailures = await db
     .select({
       projectId: taskTable.projectId,
-      state: taskRecordTable.state,
-      taskRecordId: taskRecordTable.id,
+      state: workRecordTable.state,
+      workRecordId: workRecordTable.id,
     })
-    .from(taskRecordTable)
-    .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
+    .from(workRecordTable)
+    .innerJoin(taskTable, eq(workRecordTable.taskId, taskTable.id))
     .where(
       and(
-        eq(taskRecordTable.state, "picked_up_failed"),
-        isNull(taskRecordTable.agentRunId),
+        eq(workRecordTable.state, "picked_up_failed"),
+        isNull(workRecordTable.internRunId),
       ),
     )
     .limit(limit)
 
-  for (const taskRecord of orphanClaimFailures) {
+  for (const workRecord of orphanClaimFailures) {
     const claim = await claimAndCreateRun({
-      projectId: taskRecord.projectId,
+      projectId: workRecord.projectId,
       requestedBy: "reconciler",
-      taskRecordId: taskRecord.taskRecordId,
+      workRecordId: workRecord.workRecordId,
     })
 
     if (claim.status !== "claimed" && claim.status !== "already_claimed") {
       skippedCount += 1
       executionLogger.warn(
         {
-          afterState: taskRecord.state,
-          beforeState: taskRecord.state,
+          afterState: workRecord.state,
+          beforeState: workRecord.state,
           repairAction: "claim_orphan_picked_up_failed",
           result: claim.status,
-          taskRecordId: taskRecord.taskRecordId,
+          workRecordId: workRecord.workRecordId,
         },
         "Execution reconciler skipped orphan claim failure",
       )
@@ -106,84 +106,87 @@ export const reconcileExecutions = async ({
     }
 
     const enqueued = await enqueueRecoveredExecution({
-      agentRunId: claim.agentRunId,
+      internRunId: claim.internRunId,
       repairAction: "claim_orphan_picked_up_failed",
-      taskRecordId: claim.taskRecordId,
+      workRecordId: claim.workRecordId,
     })
 
     if (enqueued) {
-      repairedTaskRecordIds.push(claim.taskRecordId)
+      repairedWorkRecordIds.push(claim.workRecordId)
       executionLogger.info(
         {
           afterState: "picked_up",
-          beforeState: taskRecord.state,
+          beforeState: workRecord.state,
           repairAction: "claim_orphan_picked_up_failed",
-          taskRecordId: claim.taskRecordId,
+          workRecordId: claim.workRecordId,
         },
         "Execution reconciler repaired orphan claim failure",
       )
     }
   }
 
-  const remainingLimit = Math.max(0, limit - repairedTaskRecordIds.length)
+  const remainingLimit = Math.max(0, limit - repairedWorkRecordIds.length)
   const staleThreshold = new Date(Date.now() - staleAfterMs)
 
   if (remainingLimit > 0) {
     const stalePickedUpRows = await db
       .select({
-        agentRunId: taskRecordTable.agentRunId,
-        state: taskRecordTable.state,
-        taskRecordId: taskRecordTable.id,
+        internRunId: workRecordTable.internRunId,
+        state: workRecordTable.state,
+        workRecordId: workRecordTable.id,
       })
-      .from(taskRecordTable)
+      .from(workRecordTable)
       .where(
         and(
-          eq(taskRecordTable.state, "picked_up"),
-          lt(taskRecordTable.lastTransitionAt, staleThreshold),
+          eq(workRecordTable.state, "picked_up"),
+          lt(workRecordTable.lastTransitionAt, staleThreshold),
         ),
       )
       .limit(remainingLimit)
 
-    for (const taskRecord of stalePickedUpRows) {
-      if (!taskRecord.agentRunId) {
+    for (const workRecord of stalePickedUpRows) {
+      if (!workRecord.internRunId) {
         skippedCount += 1
         continue
       }
 
       const enqueued = await enqueueRecoveredExecution({
-        agentRunId: taskRecord.agentRunId,
+        internRunId: workRecord.internRunId,
         repairAction: "reenqueue_stale_picked_up",
-        taskRecordId: taskRecord.taskRecordId,
+        workRecordId: workRecord.workRecordId,
       })
 
       if (enqueued) {
-        repairedTaskRecordIds.push(taskRecord.taskRecordId)
+        repairedWorkRecordIds.push(workRecord.workRecordId)
         executionLogger.info(
           {
-            afterState: taskRecord.state,
-            beforeState: taskRecord.state,
+            afterState: workRecord.state,
+            beforeState: workRecord.state,
             repairAction: "reenqueue_stale_picked_up",
-            taskRecordId: taskRecord.taskRecordId,
+            workRecordId: workRecord.workRecordId,
           },
-          "Execution reconciler re-enqueued stale picked-up task record",
+          "Execution reconciler re-enqueued stale picked-up work record",
         )
       }
     }
   }
 
   const staleActiveRuns = await db
-    .select({ agentRunId: agentRunTable.id, taskRecordId: taskRecordTable.id })
-    .from(agentRunTable)
+    .select({
+      internRunId: internRunTable.id,
+      workRecordId: workRecordTable.id,
+    })
+    .from(internRunTable)
     .innerJoin(
-      taskRecordTable,
-      eq(agentRunTable.taskRecordId, taskRecordTable.id),
+      workRecordTable,
+      eq(internRunTable.workRecordId, workRecordTable.id),
     )
-    .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
+    .innerJoin(taskTable, eq(workRecordTable.taskId, taskTable.id))
     .innerJoin(projectTable, eq(taskTable.projectId, projectTable.id))
     .where(
       and(
-        inArray(agentRunTable.state, activeAgentRunStates),
-        lt(agentRunTable.updatedAt, staleThreshold),
+        inArray(internRunTable.state, activeInternRunStates),
+        lt(internRunTable.updatedAt, staleThreshold),
       ),
     )
     .limit(limit)
@@ -191,17 +194,17 @@ export const reconcileExecutions = async ({
   if (staleActiveRuns.length > 0) {
     executionLogger.warn(
       {
-        repairAction: "stale_active_agent_run_detected",
+        repairAction: "stale_active_intern_run_detected",
         staleCount: staleActiveRuns.length,
-        agentRunIds: staleActiveRuns.map((run) => run.agentRunId),
+        internRunIds: staleActiveRuns.map((run) => run.internRunId),
       },
-      "Execution reconciler found stale active agent runs; startup sweeper handles failure transition",
+      "Execution reconciler found stale active intern runs; startup sweeper handles failure transition",
     )
   }
 
   return {
-    recoveredCount: repairedTaskRecordIds.length,
-    repairedTaskRecordIds,
+    recoveredCount: repairedWorkRecordIds.length,
+    repairedWorkRecordIds,
     skippedCount,
   }
 }

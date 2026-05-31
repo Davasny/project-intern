@@ -1,21 +1,21 @@
 type ExecutionScopeField =
-  | "agentRunId"
+  | "internRunId"
   | "projectId"
   | "recordId"
   | "taskId"
-  | "taskRecordId"
+  | "workRecordId"
 
 export type ExecutionScopeValidationFailureReason =
-  | "agent_run_not_found"
+  | "intern_run_not_found"
   | "project_not_found"
   | "record_not_found"
   | "task_not_found"
-  | "task_record_not_found"
-  | "agent_run_task_record_mismatch"
+  | "work_record_not_found"
+  | "intern_run_work_record_mismatch"
   | "record_project_mismatch"
   | "task_project_mismatch"
-  | "task_record_record_mismatch"
-  | "task_record_task_mismatch"
+  | "work_record_record_mismatch"
+  | "work_record_task_mismatch"
 
 export type ExecutionScopeValidationFailure = {
   invalidFields: ExecutionScopeField[]

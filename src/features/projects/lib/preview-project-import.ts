@@ -1,14 +1,12 @@
 import { and, eq, inArray, sql } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
-import {
-  projectExportDataSchema,
-} from "@/features/projects/schemas/project-export-data"
 import type {
   ImportWarning,
   ProjectExportData,
   ProjectImportPreviewResult,
 } from "@/features/projects/schemas/project-export-data"
+import { projectExportDataSchema } from "@/features/projects/schemas/project-export-data"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
@@ -55,10 +53,7 @@ const fetchExistingTaskTitles = async (titles: string[], projectId: string) => {
     .select({ title: taskTable.title })
     .from(taskTable)
     .where(
-      and(
-        eq(taskTable.projectId, projectId),
-        inArray(taskTable.title, titles),
-      ),
+      and(eq(taskTable.projectId, projectId), inArray(taskTable.title, titles)),
     )
 
   return new Set(existingRows.map((row) => row.title))
@@ -117,7 +112,10 @@ export const previewProjectImport = async ({
   if (data.records && data.records.length > 0) {
     recordsFound = data.records.length
     const recordNames = data.records.map((record) => record.name)
-    const existingNames = await fetchExistingRecordNames(recordNames, project.id)
+    const existingNames = await fetchExistingRecordNames(
+      recordNames,
+      project.id,
+    )
 
     for (const name of recordNames) {
       if (existingNames.has(name)) {

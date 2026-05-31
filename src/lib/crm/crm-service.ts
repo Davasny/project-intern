@@ -1,7 +1,7 @@
-import { completeScopedTaskRecord } from "@/features/execution/lib/complete-scoped-task-record"
-import { failScopedTaskRecord } from "@/features/execution/lib/fail-scoped-task-record"
-import { getTaskRecordExecutionScope } from "@/features/execution/lib/get-task-record-execution-scope"
-import { getTaskRecordPatchSchemaVersion } from "@/features/execution/lib/get-task-record-patch-schema-version"
+import { completeScopedWorkRecord } from "@/features/execution/lib/complete-scoped-work-record"
+import { failScopedWorkRecord } from "@/features/execution/lib/fail-scoped-work-record"
+import { getWorkRecordExecutionScope } from "@/features/execution/lib/get-work-record-execution-scope"
+import { getWorkRecordPatchSchemaVersion } from "@/features/execution/lib/get-work-record-patch-schema-version"
 import { createProjectSchemaVersionProposalByProjectId } from "@/features/project-schema/lib/create-project-schema-version-proposal-by-project-id"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { listProjectSchemaVersionsByProjectId } from "@/features/project-schema/lib/list-project-schema-versions-by-project-id"
@@ -41,7 +41,7 @@ export const readRecord = async (
   input: CrmRecordReadInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input)
+  const resolvedScope = await getWorkRecordExecutionScope(input)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
@@ -56,7 +56,7 @@ export const readProjectSchema = async (
   input: CrmProjectReadSchemaInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input)
+  const resolvedScope = await getWorkRecordExecutionScope(input)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
@@ -124,12 +124,12 @@ export const proposeRecordPatch = async (
   input: CrmRecordProposePatchInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input.execution)
+  const resolvedScope = await getWorkRecordExecutionScope(input.execution)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
   })
-  const schemaVersion = getTaskRecordPatchSchemaVersion({
+  const schemaVersion = getWorkRecordPatchSchemaVersion({
     recordSchemaVersion: resolvedScope.record.schemaVersion,
     taskSchemaVersion: resolvedScope.task.schemaVersion,
     taskTargetSchemaVersionId: resolvedScope.task.targetSchemaVersionId,
@@ -146,12 +146,12 @@ export const applyRecordPatch = async (
   input: CrmRecordApplyPatchInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input.execution)
+  const resolvedScope = await getWorkRecordExecutionScope(input.execution)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
   })
-  const schemaVersion = getTaskRecordPatchSchemaVersion({
+  const schemaVersion = getWorkRecordPatchSchemaVersion({
     recordSchemaVersion: resolvedScope.record.schemaVersion,
     taskSchemaVersion: resolvedScope.task.schemaVersion,
     taskTargetSchemaVersionId: resolvedScope.task.targetSchemaVersionId,
@@ -172,20 +172,20 @@ export const applyRecordPatch = async (
 
   return {
     record,
-    taskRecordState: resolvedScope.taskRecord.state,
+    workRecordState: resolvedScope.workRecord.state,
   }
 }
 
-export const completeTaskRecord = async (
+export const completeWorkRecord = async (
   input: CrmRecordCompleteTaskInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input.execution)
+  const resolvedScope = await getWorkRecordExecutionScope(input.execution)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
   })
-  return completeScopedTaskRecord({
+  return completeScopedWorkRecord({
     executionScope: input.execution,
     patch: input.patch,
     resultPayload: input.resultPayload,
@@ -193,16 +193,16 @@ export const completeTaskRecord = async (
   })
 }
 
-export const failTaskRecord = async (
+export const failWorkRecord = async (
   input: CrmRecordFailTaskInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input.execution)
+  const resolvedScope = await getWorkRecordExecutionScope(input.execution)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
   })
-  return failScopedTaskRecord({
+  return failScopedWorkRecord({
     executionScope: input.execution,
     failure: input.failure,
     toolActivitySummary: { failureSource: "rest" },
@@ -213,7 +213,7 @@ export const listRecordRelations = async (
   input: CrmRecordListRelationsInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input)
+  const resolvedScope = await getWorkRecordExecutionScope(input)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
@@ -228,7 +228,7 @@ export const getRelatedRecord = async (
   input: CrmRecordGetRelatedInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input.execution)
+  const resolvedScope = await getWorkRecordExecutionScope(input.execution)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
@@ -244,7 +244,7 @@ export const getRelatedRecords = async (
   input: CrmRecordGetRelatedRecordsInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input)
+  const resolvedScope = await getWorkRecordExecutionScope(input)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
@@ -259,13 +259,13 @@ export const createRelationEdge = async (
   input: CrmRecordCreateRelationEdgeInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input.execution)
+  const resolvedScope = await getWorkRecordExecutionScope(input.execution)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
   })
   return createRecordEdgeById({
-    agentRunId: resolvedScope.agentRun.id,
+    internRunId: resolvedScope.internRun.id,
     direction: input.direction,
     metadata: {
       ...input.metadata,
@@ -284,13 +284,13 @@ export const deactivateRelationEdge = async (
   input: CrmRecordDeactivateRelationEdgeInput,
   scope: CrmScope,
 ) => {
-  const resolvedScope = await getTaskRecordExecutionScope(input.execution)
+  const resolvedScope = await getWorkRecordExecutionScope(input.execution)
   await assertMcpOrgOwnsProject({
     organizationId: scope.organizationId,
     projectId: resolvedScope.project.id,
   })
   return deactivateRecordEdgeById({
-    agentRunId: resolvedScope.agentRun.id,
+    internRunId: resolvedScope.internRun.id,
     projectId: resolvedScope.project.id,
     recordEdgeId: input.recordEdgeId,
     recordId: resolvedScope.record.id,

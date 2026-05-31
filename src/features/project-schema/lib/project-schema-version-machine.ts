@@ -51,29 +51,30 @@ const projectSchemaVersionMachineDefinition =
             .from(recordTable)
             .where(eq(recordTable.projectId, context.projectId))
 
-          const migrationTask =
+          if (
             event.previousVersionId &&
             event.previousSchemaDefinition &&
             event.previousVersionNumber &&
             recordCount > 0
-              ? await createProjectTask({
-                  createdByUserId: event.acceptedByUserId,
-                  database: db,
-                  descriptionMarkdown: buildSchemaMigrationTaskDescription({
-                    nextSchemaDefinition: context.schemaDefinition,
-                    nextVersion: context.version,
-                    previousSchemaDefinition: event.previousSchemaDefinition,
-                    previousVersion: event.previousVersionNumber,
-                  }),
-                  model: null,
-                  temperature: null,
-                  projectId: context.projectId,
-                  schemaVersion: context.version,
-                  sourceSchemaVersionId: event.previousVersionId,
-                  targetSchemaVersionId: event.schemaVersionId,
-                  title: `Adopt schema v${context.version}`,
-                })
-              : null
+          ) {
+            await createProjectTask({
+              createdByUserId: event.acceptedByUserId,
+              database: db,
+              descriptionMarkdown: buildSchemaMigrationTaskDescription({
+                nextSchemaDefinition: context.schemaDefinition,
+                nextVersion: context.version,
+                previousSchemaDefinition: event.previousSchemaDefinition,
+                previousVersion: event.previousVersionNumber,
+              }),
+              model: null,
+              temperature: null,
+              projectId: context.projectId,
+              schemaVersion: context.version,
+              sourceSchemaVersionId: event.previousVersionId,
+              targetSchemaVersionId: event.schemaVersionId,
+              title: `Adopt schema v${context.version}`,
+            })
+          }
 
           return context
         },

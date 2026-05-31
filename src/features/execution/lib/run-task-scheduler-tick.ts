@@ -1,4 +1,4 @@
-import { releaseClaimedTaskRecord } from "@/features/execution/lib/execution-claim-service"
+import { releaseClaimedWorkRecord } from "@/features/execution/lib/execution-claim-service"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { schedulerService } from "@/features/execution/lib/scheduler-service"
 import { logger } from "@/lib/logger"
@@ -10,46 +10,46 @@ type RunTaskSchedulerTickParams = {
 export const runTaskSchedulerTick = async ({
   limit,
 }: RunTaskSchedulerTickParams) => {
-  const enqueuedTaskRecordIds: string[] = []
+  const enqueuedWorkRecordIds: string[] = []
   const schedulerLogger = logger.child({
     limit,
     service: "task-scheduler-tick",
   })
 
   for (let index = 0; index < limit; index += 1) {
-    const scheduledTaskRecord = await schedulerService()
+    const scheduledWorkRecord = await schedulerService()
 
-    if (!scheduledTaskRecord) {
+    if (!scheduledWorkRecord) {
       break
     }
 
-    const jobId = await executionQueueService.enqueueTaskRecordExecution({
-      agentRunId: scheduledTaskRecord.agentRunId,
-      taskRecordId: scheduledTaskRecord.taskRecordId,
+    const jobId = await executionQueueService.enqueueWorkRecordExecution({
+      internRunId: scheduledWorkRecord.internRunId,
+      workRecordId: scheduledWorkRecord.workRecordId,
     })
 
     if (jobId === null) {
       schedulerLogger.warn(
         {
-          agentRunId: scheduledTaskRecord.agentRunId,
-          taskRecordId: scheduledTaskRecord.taskRecordId,
+          internRunId: scheduledWorkRecord.internRunId,
+          workRecordId: scheduledWorkRecord.workRecordId,
         },
-        "Failed to enqueue claimed task record, releasing back to waiting",
+        "Failed to enqueue claimed work record, releasing back to waiting",
       )
 
       try {
-        await releaseClaimedTaskRecord({
-          agentRunId: scheduledTaskRecord.agentRunId,
+        await releaseClaimedWorkRecord({
+          internRunId: scheduledWorkRecord.internRunId,
           reason: "ENQUEUE_FAILED",
-          taskRecordId: scheduledTaskRecord.taskRecordId,
+          workRecordId: scheduledWorkRecord.workRecordId,
         })
       } catch (releaseError) {
         schedulerLogger.error(
           {
             error: releaseError,
-            taskRecordId: scheduledTaskRecord.taskRecordId,
+            workRecordId: scheduledWorkRecord.workRecordId,
           },
-          "Failed to release task record after enqueue failure",
+          "Failed to release work record after enqueue failure",
         )
       }
 
@@ -58,27 +58,27 @@ export const runTaskSchedulerTick = async ({
 
     schedulerLogger.info(
       {
-        agentRunId: scheduledTaskRecord.agentRunId,
+        internRunId: scheduledWorkRecord.internRunId,
         jobId,
         requestedBy: "scheduler",
-        taskRecordId: scheduledTaskRecord.taskRecordId,
+        workRecordId: scheduledWorkRecord.workRecordId,
       },
-      "Enqueued claimed task record",
+      "Enqueued claimed work record",
     )
 
-    enqueuedTaskRecordIds.push(scheduledTaskRecord.taskRecordId)
+    enqueuedWorkRecordIds.push(scheduledWorkRecord.workRecordId)
   }
 
   schedulerLogger.info(
     {
-      enqueuedCount: enqueuedTaskRecordIds.length,
-      taskRecordIds: enqueuedTaskRecordIds,
+      enqueuedCount: enqueuedWorkRecordIds.length,
+      workRecordIds: enqueuedWorkRecordIds,
     },
     "Completed scheduler tick",
   )
 
   return {
-    enqueuedCount: enqueuedTaskRecordIds.length,
-    taskRecordIds: enqueuedTaskRecordIds,
+    enqueuedCount: enqueuedWorkRecordIds.length,
+    workRecordIds: enqueuedWorkRecordIds,
   }
 }

@@ -17,11 +17,11 @@ import {
 } from "@/lib/crm/crm-schemas"
 import {
   applyRecordPatch,
-  completeTaskRecord,
+  completeWorkRecord,
   createRecord,
   createRelationEdge,
   deactivateRelationEdge,
-  failTaskRecord,
+  failWorkRecord,
   getRelatedRecord,
   getRelatedRecords,
   listProjects,
@@ -37,7 +37,7 @@ import { getMcpScope } from "@/lib/mcp/mcp-scope-storage"
 
 export const createCrmMcpServer = () => {
   const server = new McpServer({
-    name: "project-intern-crm",
+    name: "intern-crm",
     version: "1.0.0",
   })
 
@@ -151,12 +151,12 @@ export const createCrmMcpServer = () => {
     "crm_record_complete_task",
     {
       description:
-        "Complete the scoped task record and optionally apply a patch. Pass patch as null when no record values need to change, including schema-only migrations.",
+        "Complete the scoped work record and optionally apply a patch. Pass patch as null when no record values need to change, including schema-only migrations.",
       inputSchema: crmRecordCompleteTaskInputSchema,
     },
     async (input) => {
       const scope = getMcpScope()
-      const completedScope = await completeTaskRecord(input, scope)
+      const completedScope = await completeWorkRecord(input, scope)
 
       return createMcpJsonResponse({
         data: completedScope,
@@ -169,12 +169,12 @@ export const createCrmMcpServer = () => {
     "crm_record_fail_task",
     {
       description:
-        "Fail the scoped task record with a structured failure payload. Use this whenever you cannot complete the task, including repeated tool validation errors or inability to produce a valid patch.",
+        "Fail the scoped work record with a structured failure payload. Use this whenever you cannot complete the task, including repeated tool validation errors or inability to produce a valid patch.",
       inputSchema: crmRecordFailTaskInputSchema,
     },
     async (input) => {
       const scope = getMcpScope()
-      const failedScope = await failTaskRecord(input, scope)
+      const failedScope = await failWorkRecord(input, scope)
 
       return createMcpJsonResponse({
         data: failedScope,

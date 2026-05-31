@@ -1,10 +1,10 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
-import { listTaskRecordExecutionReadModels } from "@/features/execution/lib/list-task-record-execution-read-models"
+import { listWorkRecordExecutionReadModels } from "@/features/execution/lib/list-work-record-execution-read-models"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
-import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
 type GetRecordByIdParams = {
@@ -58,28 +58,28 @@ export const getRecordById = async ({
     })
   }
 
-  const linkedTaskRecords = await db
+  const linkedWorkRecords = await db
     .select({
-      errorCode: taskRecordTable.errorCode,
-      lastTransitionAt: taskRecordTable.lastTransitionAt,
+      errorCode: workRecordTable.errorCode,
+      lastTransitionAt: workRecordTable.lastTransitionAt,
       sortOrder: taskTable.sortOrder,
-      state: taskRecordTable.state,
+      state: workRecordTable.state,
       taskId: taskTable.id,
-      taskRecordId: taskRecordTable.id,
+      workRecordId: workRecordTable.id,
       title: taskTable.title,
     })
-    .from(taskRecordTable)
-    .innerJoin(taskTable, eq(taskRecordTable.taskId, taskTable.id))
-    .where(eq(taskRecordTable.recordId, recordId))
+    .from(workRecordTable)
+    .innerJoin(taskTable, eq(workRecordTable.taskId, taskTable.id))
+    .where(eq(workRecordTable.recordId, recordId))
 
-  const executionReadModels = await listTaskRecordExecutionReadModels({
+  const executionReadModels = await listWorkRecordExecutionReadModels({
     projectId: project.id,
     recordId,
     taskId: null,
   })
   const executionReadModelMap = new Map(
     executionReadModels.map((executionReadModel) => [
-      executionReadModel.taskRecordId,
+      executionReadModel.workRecordId,
       executionReadModel,
     ]),
   )
@@ -87,40 +87,40 @@ export const getRecordById = async ({
   return {
     ...record,
     activeRunSummary:
-      linkedTaskRecords
+      linkedWorkRecords
         .map(
-          (taskRecord) =>
-            executionReadModelMap.get(taskRecord.taskRecordId)
-              ?.latestAgentRun ?? null,
+          (workRecord) =>
+            executionReadModelMap.get(workRecord.workRecordId)
+              ?.latestInternRun ?? null,
         )
-        .find((agentRun) => agentRun !== null) ?? null,
-    linkedTasks: linkedTaskRecords.map((taskRecord) => ({
-      ...taskRecord,
+        .find((internRun) => internRun !== null) ?? null,
+    linkedTasks: linkedWorkRecords.map((workRecord) => ({
+      ...workRecord,
       attemptCount:
-        executionReadModelMap.get(taskRecord.taskRecordId)?.attemptCount ?? 0,
-      latestAgentRun:
-        executionReadModelMap.get(taskRecord.taskRecordId)?.latestAgentRun ??
+        executionReadModelMap.get(workRecord.workRecordId)?.attemptCount ?? 0,
+      latestInternRun:
+        executionReadModelMap.get(workRecord.workRecordId)?.latestInternRun ??
         null,
       latestFailurePayload:
-        executionReadModelMap.get(taskRecord.taskRecordId)
+        executionReadModelMap.get(workRecord.workRecordId)
           ?.latestFailurePayload ?? null,
-      sortOrder: taskRecord.sortOrder,
+      sortOrder: workRecord.sortOrder,
     })),
     progress: {
-      completedCount: linkedTaskRecords.filter(
-        (taskRecord) => taskRecord.state === "completed",
+      completedCount: linkedWorkRecords.filter(
+        (workRecord) => workRecord.state === "completed",
       ).length,
-      failedCount: linkedTaskRecords.filter(
-        (taskRecord) => taskRecord.state === "failed",
+      failedCount: linkedWorkRecords.filter(
+        (workRecord) => workRecord.state === "failed",
       ).length,
-      inProgressCount: linkedTaskRecords.filter(
-        (taskRecord) =>
-          taskRecord.state === "picked_up" ||
-          taskRecord.state === "in_progress",
+      inProgressCount: linkedWorkRecords.filter(
+        (workRecord) =>
+          workRecord.state === "picked_up" ||
+          workRecord.state === "in_progress",
       ).length,
-      totalCount: linkedTaskRecords.length,
-      waitingCount: linkedTaskRecords.filter(
-        (taskRecord) => taskRecord.state === "waiting",
+      totalCount: linkedWorkRecords.length,
+      waitingCount: linkedWorkRecords.filter(
+        (workRecord) => workRecord.state === "waiting",
       ).length,
     },
   }

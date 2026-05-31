@@ -12,7 +12,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
   title: frontendConfig.NEXT_PUBLIC_APP_NAME,
-  description: "Agentic-first CRM foundation",
+  description: "Internic-first CRM foundation",
 }
 
 const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => (

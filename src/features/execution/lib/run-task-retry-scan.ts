@@ -1,7 +1,7 @@
 import { inArray } from "drizzle-orm"
-import { taskRecordTable } from "@/features/task-records/db"
-import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
-import { retryableTaskRecordStates } from "@/features/task-records/schemas/task-record-state"
+import { workRecordTable } from "@/features/work-records/db"
+import { workRecordMachine } from "@/features/work-records/lib/work-record-machine"
+import { retryableWorkRecordStates } from "@/features/work-records/schemas/work-record-state"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
@@ -10,44 +10,44 @@ type RunTaskRetryScanParams = {
 }
 
 export const runTaskRetryScan = async ({ limit }: RunTaskRetryScanParams) => {
-  const retriedTaskRecordIds: string[] = []
+  const retriedWorkRecordIds: string[] = []
   const retryLogger = logger.child({
     limit,
     service: "task-retry-scan",
   })
 
-  const taskRecords = await db
+  const workRecords = await db
     .select({
-      id: taskRecordTable.id,
-      state: taskRecordTable.state,
+      id: workRecordTable.id,
+      state: workRecordTable.state,
     })
-    .from(taskRecordTable)
-    .where(inArray(taskRecordTable.state, retryableTaskRecordStates))
+    .from(workRecordTable)
+    .where(inArray(workRecordTable.state, retryableWorkRecordStates))
     .limit(limit)
 
-  if (taskRecords.length === 0) {
-    retryLogger.info("no failed or skipped task records to retry")
+  if (workRecords.length === 0) {
+    retryLogger.info("no failed or skipped work records to retry")
     return {
       retriedCount: 0,
-      taskRecordIds: [],
+      workRecordIds: [],
     }
   }
 
   retryLogger.info(
-    { count: taskRecords.length },
-    "found failed or skipped task records to retry",
+    { count: workRecords.length },
+    "found failed or skipped work records to retry",
   )
 
-  for (const taskRecord of taskRecords) {
+  for (const workRecord of workRecords) {
     const childLogger = retryLogger.child({
-      taskRecordId: taskRecord.id,
-      currentState: taskRecord.state,
+      workRecordId: workRecord.id,
+      currentState: workRecord.state,
     })
 
-    const actor = await taskRecordMachine.getActor(taskRecord.id)
+    const actor = await workRecordMachine.getActor(workRecord.id)
 
     if (!actor) {
-      childLogger.warn("could not load task record actor")
+      childLogger.warn("could not load work record actor")
       continue
     }
 
@@ -63,23 +63,23 @@ export const runTaskRetryScan = async ({ limit }: RunTaskRetryScanParams) => {
       await actor.send("retry", {
         lastTransitionAt: new Date(),
       })
-      retriedTaskRecordIds.push(taskRecord.id)
-      childLogger.info("successfully retried task record")
+      retriedWorkRecordIds.push(workRecord.id)
+      childLogger.info("successfully retried work record")
     } catch (error) {
-      childLogger.error({ error }, "failed to retry task record")
+      childLogger.error({ error }, "failed to retry work record")
     }
   }
 
   retryLogger.info(
     {
-      retriedCount: retriedTaskRecordIds.length,
-      taskRecordIds: retriedTaskRecordIds,
+      retriedCount: retriedWorkRecordIds.length,
+      workRecordIds: retriedWorkRecordIds,
     },
     "completed task retry scan",
   )
 
   return {
-    retriedCount: retriedTaskRecordIds.length,
-    taskRecordIds: retriedTaskRecordIds,
+    retriedCount: retriedWorkRecordIds.length,
+    workRecordIds: retriedWorkRecordIds,
   }
 }

@@ -1,7 +1,7 @@
 import type { Job } from "pg-bosser"
-import { failAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
 import { createTaskFailureFromError } from "@/features/execution/lib/create-task-failure-from-error"
 import { taskExecutorQueuePayloadSchema } from "@/features/execution/queues/task-executor-queue"
+import { failInternRunCommand } from "@/features/intern-runs/lib/intern-run-commands"
 import { logger } from "@/lib/logger"
 
 type HandleTaskExecutorWorkerErrorParams = {
@@ -23,7 +23,7 @@ export const handleTaskExecutorWorkerError = async ({
         jobName: job.name,
         payloadError: payloadResult.error.flatten(),
       },
-      "Task executor worker error could not be mapped to task record payload",
+      "Task executor worker error could not be mapped to work record payload",
     )
 
     return
@@ -31,13 +31,13 @@ export const handleTaskExecutorWorkerError = async ({
 
   const failure = createTaskFailureFromError(error)
 
-  await failAgentRunCommand({
-    agentRunId: payloadResult.data.agentRunId,
+  await failInternRunCommand({
+    internRunId: payloadResult.data.internRunId,
     costUsd: null,
     errorCode: failure.code,
     failurePayload: failure,
     latencyMs: null,
-    taskRecordId: payloadResult.data.taskRecordId,
+    workRecordId: payloadResult.data.workRecordId,
     tokenInput: null,
     tokenOutput: null,
     toolActivitySummary: {},
@@ -45,13 +45,13 @@ export const handleTaskExecutorWorkerError = async ({
 
   logger.warn(
     {
-      agentRunId: payloadResult.data.agentRunId,
+      internRunId: payloadResult.data.internRunId,
       error,
       errorCode: failure.code,
       jobId: job.id,
       jobName: job.name,
-      taskRecordId: payloadResult.data.taskRecordId,
+      workRecordId: payloadResult.data.workRecordId,
     },
-    "Mapped task executor worker error to failed agent run",
+    "Mapped task executor worker error to failed intern run",
   )
 }

@@ -18,9 +18,9 @@ import {
   recordInputSchema,
   recordUpdateInputSchema,
 } from "@/features/records/schemas/record-input"
-import { resetDownstreamTaskRecordsForRecord } from "@/features/task-records/lib/reset-downstream-task-records-for-record"
-import { retryTaskRecordForRecord } from "@/features/task-records/lib/retry-task-record-for-record"
-import { triggerTaskRecordForRecord } from "@/features/task-records/lib/trigger-task-record-for-record"
+import { resetDownstreamWorkRecordsForRecord } from "@/features/work-records/lib/reset-downstream-work-records-for-record"
+import { retryWorkRecordForRecord } from "@/features/work-records/lib/retry-work-record-for-record"
+import { triggerWorkRecordForRecord } from "@/features/work-records/lib/trigger-work-record-for-record"
 import { protectedProcedure, router } from "@/lib/trpc/init"
 
 const projectScopeSchema = z.object({
@@ -86,11 +86,11 @@ export const recordsRouter = router({
         userId: ctx.session.user.id,
       }),
     ),
-  retryTaskRecord: protectedProcedure
+  retryWorkRecord: protectedProcedure
     .input(
       projectScopeSchema.extend({
         recordId: z.string().uuid(),
-        taskRecordId: z.string().uuid(),
+        workRecordId: z.string().uuid(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -107,17 +107,17 @@ export const recordsRouter = router({
         })
       }
 
-      return retryTaskRecordForRecord({
+      return retryWorkRecordForRecord({
         projectId: project.id,
         recordId: input.recordId,
-        taskRecordId: input.taskRecordId,
+        workRecordId: input.workRecordId,
       })
     }),
-  resetDownstreamTaskRecord: protectedProcedure
+  resetDownstreamWorkRecord: protectedProcedure
     .input(
       projectScopeSchema.extend({
         recordId: z.string().uuid(),
-        taskRecordId: z.string().uuid(),
+        workRecordId: z.string().uuid(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -134,17 +134,17 @@ export const recordsRouter = router({
         })
       }
 
-      return resetDownstreamTaskRecordsForRecord({
+      return resetDownstreamWorkRecordsForRecord({
         projectId: project.id,
         recordId: input.recordId,
-        taskRecordId: input.taskRecordId,
+        workRecordId: input.workRecordId,
       })
     }),
-  triggerTaskRecord: protectedProcedure
+  triggerWorkRecord: protectedProcedure
     .input(
       projectScopeSchema.extend({
         recordId: z.string().uuid(),
-        taskRecordId: z.string().uuid(),
+        workRecordId: z.string().uuid(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -161,10 +161,10 @@ export const recordsRouter = router({
         })
       }
 
-      return triggerTaskRecordForRecord({
+      return triggerWorkRecordForRecord({
         projectId: project.id,
         recordId: input.recordId,
-        taskRecordId: input.taskRecordId,
+        workRecordId: input.workRecordId,
       })
     }),
   remove: protectedProcedure

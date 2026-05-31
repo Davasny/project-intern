@@ -1,11 +1,11 @@
 import type { AgentConfig } from "@opencode-ai/sdk"
-import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-prompt"
+import { buildWorkRecordSystemPrompt } from "@/lib/llm/build-work-record-system-prompt"
 
 type Agent = AgentConfig & {
   name: string
   description: string
   prompt: string
-  systemPromptFn: typeof buildTaskRecordSystemPrompt
+  systemPromptFn: typeof buildWorkRecordSystemPrompt
 }
 
 export const recordWorkerAgent: Agent = {
@@ -17,7 +17,7 @@ Use the crm MCP server for scoped record and relation operations.
 Record workspace files are preloaded into ./data before the run starts.
 Do not mutate records outside the current task scope.    
     `,
-  systemPromptFn: buildTaskRecordSystemPrompt,
+  systemPromptFn: buildWorkRecordSystemPrompt,
   permission: {
     bash: "allow",
     doom_loop: "deny",

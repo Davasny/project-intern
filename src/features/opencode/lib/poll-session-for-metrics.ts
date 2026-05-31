@@ -1,18 +1,18 @@
 import type { OpencodeClient } from "@opencode-ai/sdk"
 import { eq } from "drizzle-orm"
 import type pino from "pino"
-import { agentRunTable } from "@/features/agent-runs/db"
-import { failAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
-import { updateAgentRunMetrics } from "@/features/agent-runs/lib/update-agent-run-metrics"
-import { isAgentRunStateActive } from "@/features/agent-runs/schemas/agent-run-state"
+import { internRunTable } from "@/features/intern-runs/db"
+import { failInternRunCommand } from "@/features/intern-runs/lib/intern-run-commands"
+import { updateInternRunMetrics } from "@/features/intern-runs/lib/update-intern-run-metrics"
+import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { db } from "@/lib/db"
 import { logger as rootLogger } from "@/lib/logger"
 
 type PollSessionForMetricsParams = {
   sessionId: string
-  agentRunId: string
+  internRunId: string
   client: OpencodeClient
-  taskRecordId: string
+  workRecordId: string
   intervalMs?: number
   timeoutMs?: number
 }
@@ -20,16 +20,16 @@ type PollSessionForMetricsParams = {
 const DEFAULT_INTERVAL_MS = 2000
 const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000
 
-const isAgentRunStillActive = async (agentRunId: string) => {
+const isInternRunStillActive = async (internRunId: string) => {
   const rows = await db
-    .select({ state: agentRunTable.state })
-    .from(agentRunTable)
-    .where(eq(agentRunTable.id, agentRunId))
+    .select({ state: internRunTable.state })
+    .from(internRunTable)
+    .where(eq(internRunTable.id, internRunId))
     .limit(1)
 
-  const agentRun = rows[0]
+  const internRun = rows[0]
 
-  return agentRun ? isAgentRunStateActive(agentRun.state) : false
+  return internRun ? isInternRunStateActive(internRun.state) : false
 }
 
 const abortOpencodeSession = async ({
@@ -46,27 +46,27 @@ const abortOpencodeSession = async ({
       path: { id: sessionId },
     })
 
-    log.info("Aborted OpenCode session after agent run became inactive")
+    log.info("Aborted OpenCode session after intern run became inactive")
   } catch (error) {
     log.warn(
       {
         error,
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      "Failed to abort OpenCode session after agent run became inactive",
+      "Failed to abort OpenCode session after intern run became inactive",
     )
   }
 }
 
 export const pollSessionForMetrics = async ({
   sessionId,
-  agentRunId,
+  internRunId,
   client,
-  taskRecordId,
+  workRecordId,
   intervalMs = DEFAULT_INTERVAL_MS,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 }: PollSessionForMetricsParams) => {
-  const log = rootLogger.child({ sessionId, agentRunId })
+  const log = rootLogger.child({ sessionId, internRunId })
 
   log.info("Starting session metrics polling")
 
@@ -76,10 +76,10 @@ export const pollSessionForMetrics = async ({
 
   while (Date.now() - startTime <= timeoutMs) {
     try {
-      const stillActive = await isAgentRunStillActive(agentRunId)
+      const stillActive = await isInternRunStillActive(internRunId)
 
       if (!stillActive) {
-        log.info("Agent run is no longer active, stopping session polling")
+        log.info("Intern run is no longer active, stopping session polling")
         await abortOpencodeSession({ client, log, sessionId })
         return
       }
@@ -110,7 +110,7 @@ export const pollSessionForMetrics = async ({
             "Session finished, fetching messages for metrics",
           )
           await fetchAndUpdateMetrics({
-            agentRunId,
+            internRunId,
             client,
             log,
             messages: messagesResult.data,
@@ -133,11 +133,13 @@ export const pollSessionForMetrics = async ({
     }
   }
 
-  log.warn("Polling timed out waiting for session to finish, failing agent run")
+  log.warn(
+    "Polling timed out waiting for session to finish, failing intern run",
+  )
 
   try {
-    await failAgentRunCommand({
-      agentRunId,
+    await failInternRunCommand({
+      internRunId,
       costUsd: null,
       errorCode: "EXECUTION_TIMEOUT",
       failurePayload: {
@@ -146,27 +148,27 @@ export const pollSessionForMetrics = async ({
         retryable: true,
       },
       latencyMs: null,
-      taskRecordId,
+      workRecordId,
       tokenInput: null,
       tokenOutput: null,
       toolActivitySummary: {},
     })
-    log.info("Successfully failed agent run after polling timeout")
+    log.info("Successfully failed intern run after polling timeout")
   } catch (failError) {
     log.error(
       { error: failError },
-      "Failed to fail agent run after polling timeout",
+      "Failed to fail intern run after polling timeout",
     )
   }
 }
 
 async function fetchAndUpdateMetrics({
-  agentRunId,
+  internRunId,
   client,
   log,
   messages,
 }: {
-  agentRunId: string
+  internRunId: string
   client: OpencodeClient
   log: pino.Logger
   messages: Awaited<ReturnType<typeof client.session.messages>>["data"]
@@ -237,11 +239,11 @@ async function fetchAndUpdateMetrics({
         toolCallCount,
         assistantMessageCount: assistantMessages.length,
       },
-      "Updating agent run with metrics",
+      "Updating intern run with metrics",
     )
 
-    await updateAgentRunMetrics({
-      agentRunId,
+    await updateInternRunMetrics({
+      internRunId,
       costUsd: totalCost,
       inputTokens: totalInputTokens,
       outputTokens: totalOutputTokens,
@@ -249,7 +251,7 @@ async function fetchAndUpdateMetrics({
       toolCallCount,
     })
 
-    log.info("Successfully updated agent run with metrics")
+    log.info("Successfully updated intern run with metrics")
   } catch (error) {
     log.error(
       {

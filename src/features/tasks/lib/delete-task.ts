@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq, isNotNull } from "drizzle-orm"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
-import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
@@ -65,12 +65,12 @@ export const deleteTask = async ({
 
   if (task.state === "accepted") {
     const runsExist = await db
-      .select({ id: taskRecordTable.id })
-      .from(taskRecordTable)
+      .select({ id: workRecordTable.id })
+      .from(workRecordTable)
       .where(
         and(
-          eq(taskRecordTable.taskId, task.id),
-          isNotNull(taskRecordTable.agentRunId),
+          eq(workRecordTable.taskId, task.id),
+          isNotNull(workRecordTable.internRunId),
         ),
       )
       .then((rows) => rows.length > 0)
@@ -79,7 +79,7 @@ export const deleteTask = async ({
       throw new TRPCError({
         code: "BAD_REQUEST",
         message:
-          "Cannot delete a task that has been executed. Remove its agent runs first.",
+          "Cannot delete a task that has been executed. Remove its intern runs first.",
       })
     }
   }

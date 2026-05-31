@@ -1,6 +1,6 @@
 import { z } from "zod"
-import { createProject } from "@/features/projects/lib/create-project"
 import { commitProjectImport } from "@/features/projects/lib/commit-project-import"
+import { createProject } from "@/features/projects/lib/create-project"
 import { exportProjectData } from "@/features/projects/lib/export-project-data"
 import { getProjectSettings } from "@/features/projects/lib/get-project-settings"
 import { listOrganizationProjects } from "@/features/projects/lib/list-organization-projects"
@@ -59,7 +59,7 @@ export const projectsRouter = router({
         organizationSlug: z.string().trim().min(1),
         projectSlug: z.string().trim().min(1),
         input: z.object({
-          agentPythonRequirements: z.string(),
+          internPythonRequirements: z.string(),
           defaultModel: z.string().trim().min(1),
           defaultTemperature: z.number(),
           isAutopickEnabled: z.boolean(),

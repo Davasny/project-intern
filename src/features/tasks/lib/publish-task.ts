@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm"
-import { fanOutTaskRecordsForTask } from "@/features/task-records/lib/fan-out-task-records-for-task"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
+import { fanOutWorkRecordsForTask } from "@/features/work-records/lib/fan-out-work-records-for-task"
 import type { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
@@ -50,7 +50,7 @@ export const publishTask = async ({
     })
   }
 
-  await fanOutTaskRecordsForTask({
+  await fanOutWorkRecordsForTask({
     database,
     projectId: task.projectId,
     schemaVersion: task.schemaVersion,

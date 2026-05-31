@@ -30,7 +30,7 @@ export const AuthEntryPanel = () => {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            Project Intern
+            Intern
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
             Auth, organizations, and projects

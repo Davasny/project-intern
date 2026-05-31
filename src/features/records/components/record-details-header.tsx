@@ -2,13 +2,13 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
 import { RecordStatusBadge } from "@/components/ui/status-badge/record-status-badge"
-import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
+import { RunStatusBadge } from "@/components/ui/status-badge/intern-run-status-badge"
 import { Switch } from "@/components/ui/switch"
-import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
+import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 import type { RecordState } from "@/features/records/schemas/record-state"
 
 type RecordDetailsHeaderProps = {
-  activeRunState: AgentRunState | null
+  activeRunState: InternRunState | null
   deleteDisabled: boolean
   deletePending: boolean
   isTogglePending: boolean

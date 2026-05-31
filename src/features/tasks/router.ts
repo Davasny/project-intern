@@ -8,7 +8,7 @@ import { getTaskById } from "@/features/tasks/lib/get-task-by-id"
 import { listTasks } from "@/features/tasks/lib/list-tasks"
 import { rejectTaskDraftById } from "@/features/tasks/lib/reject-task-draft-by-id"
 import { reorderTasks } from "@/features/tasks/lib/reorder-tasks"
-import { resetDownstreamTaskRecords } from "@/features/tasks/lib/reset-downstream-task-records"
+import { resetDownstreamWorkRecords } from "@/features/tasks/lib/reset-downstream-work-records"
 import { updateTask } from "@/features/tasks/lib/update-task"
 import {
   taskCreateIntentSchema,
@@ -125,7 +125,7 @@ export const tasksRouter = router({
         })
       }
 
-      return resetDownstreamTaskRecords({
+      return resetDownstreamWorkRecords({
         projectId: project.id,
         taskId: input.taskId,
       })

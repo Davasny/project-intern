@@ -1,17 +1,17 @@
-import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
-import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
+import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
+import type { WorkRecordState } from "@/features/work-records/schemas/work-record-state"
 
-export type ExecutionTaskRecordCell = {
+export type ExecutionWorkRecordCell = {
   attemptCount: number
-  latestAgentRun: {
+  latestInternRun: {
     id: string
-    state: AgentRunState
+    state: InternRunState
   } | null
   recordId: string
   recordName: string
-  state: TaskRecordState
+  state: WorkRecordState
   taskId: string
-  taskRecordId: string
+  workRecordId: string
   taskSortOrder: number
   taskTitle: string
 }
@@ -28,41 +28,41 @@ type ExecutionMatrixRecord = {
 }
 
 export const buildExecutionMatrix = (
-  taskRecords: Array<ExecutionTaskRecordCell>,
+  workRecords: Array<ExecutionWorkRecordCell>,
 ) => {
   const tasksById = new Map<string, ExecutionMatrixTask>()
   const recordsById = new Map<string, ExecutionMatrixRecord>()
-  const taskRecordsByRecordId = new Map<
+  const workRecordsByRecordId = new Map<
     string,
-    Map<string, ExecutionTaskRecordCell>
+    Map<string, ExecutionWorkRecordCell>
   >()
 
-  for (const taskRecord of taskRecords) {
-    if (!tasksById.has(taskRecord.taskId)) {
-      tasksById.set(taskRecord.taskId, {
-        id: taskRecord.taskId,
-        sortOrder: taskRecord.taskSortOrder,
-        title: taskRecord.taskTitle,
+  for (const workRecord of workRecords) {
+    if (!tasksById.has(workRecord.taskId)) {
+      tasksById.set(workRecord.taskId, {
+        id: workRecord.taskId,
+        sortOrder: workRecord.taskSortOrder,
+        title: workRecord.taskTitle,
       })
     }
 
-    if (!recordsById.has(taskRecord.recordId)) {
-      recordsById.set(taskRecord.recordId, {
-        id: taskRecord.recordId,
-        name: taskRecord.recordName,
+    if (!recordsById.has(workRecord.recordId)) {
+      recordsById.set(workRecord.recordId, {
+        id: workRecord.recordId,
+        name: workRecord.recordName,
       })
     }
 
-    const recordCells = taskRecordsByRecordId.get(taskRecord.recordId)
+    const recordCells = workRecordsByRecordId.get(workRecord.recordId)
 
     if (recordCells) {
-      recordCells.set(taskRecord.taskId, taskRecord)
+      recordCells.set(workRecord.taskId, workRecord)
       continue
     }
 
-    taskRecordsByRecordId.set(
-      taskRecord.recordId,
-      new Map([[taskRecord.taskId, taskRecord]]),
+    workRecordsByRecordId.set(
+      workRecord.recordId,
+      new Map([[workRecord.taskId, workRecord]]),
     )
   }
 
@@ -91,7 +91,7 @@ export const buildExecutionMatrix = (
 
   return {
     records,
-    taskRecordsByRecordId,
+    workRecordsByRecordId,
     tasks,
   }
 }

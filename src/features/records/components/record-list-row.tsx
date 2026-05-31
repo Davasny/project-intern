@@ -3,10 +3,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { RecordStatusBadge } from "@/components/ui/status-badge/record-status-badge"
-import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
+import { RunStatusBadge } from "@/components/ui/status-badge/intern-run-status-badge"
 import { Switch } from "@/components/ui/switch"
 import { TableCell, TableRow } from "@/components/ui/table"
-import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
+import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 import type { ProjectSchemaField } from "@/features/project-schema/schemas/project-schema-field"
 import { RecordContextValueCell } from "@/features/records/components/record-context-value-cell"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
@@ -15,7 +15,7 @@ import { useTRPC } from "@/lib/trpc/client"
 type RecordListRowProps = {
   record: {
     activeRun: {
-      state: AgentRunState
+      state: InternRunState
     } | null
     id: string
     context: Record<string, unknown>

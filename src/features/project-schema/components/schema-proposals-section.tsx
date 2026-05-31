@@ -20,7 +20,7 @@ export const SchemaProposalsSection = ({
         Pending schema proposals
       </h2>
       <p className="text-sm text-muted-foreground">
-        Agent proposals wait in created state until accepted or rejected.
+        Intern proposals wait in created state until accepted or rejected.
       </p>
     </SectionCardHeader>
     <SectionCardContent className="flex flex-col divide-y divide-border/70">

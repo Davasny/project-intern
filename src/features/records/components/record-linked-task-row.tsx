@@ -12,35 +12,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { RunStatusBadge } from "@/components/ui/status-badge/run-status-badge"
-import { TaskRecordRunStatusBadge } from "@/components/ui/status-badge/task-record-run-status-badge"
+import { RunStatusBadge } from "@/components/ui/status-badge/intern-run-status-badge"
+import { WorkRecordRunStatusBadge } from "@/components/ui/status-badge/work-record-intern-run-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
-import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
+import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
-import { isRetryableTaskRecordState } from "@/features/task-records/schemas/task-record-state"
-import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
+import { isRetryableWorkRecordState } from "@/features/work-records/schemas/work-record-state"
+import type { WorkRecordState } from "@/features/work-records/schemas/work-record-state"
 import { useTRPC } from "@/lib/trpc/client"
 
 type RecordLinkedTaskRowProps = {
   nextWaitingSortOrder: number | null
   recordId: string
   task: {
-    latestAgentRun: {
+    latestInternRun: {
       id: string
       failurePayload: Record<string, unknown> | null
-      state: AgentRunState
+      state: InternRunState
     } | null
     sortOrder: number
-    state: TaskRecordState
+    state: WorkRecordState
     errorCode: string | null
     taskId: string
-    taskRecordId: string
+    workRecordId: string
     title: string
   }
 }
 
 const getFailureMessage = (task: RecordLinkedTaskRowProps["task"]) => {
-  const failurePayload = task.latestAgentRun?.failurePayload
+  const failurePayload = task.latestInternRun?.failurePayload
 
   if (
     failurePayload &&
@@ -98,12 +98,12 @@ export const RecordLinkedTaskRow = ({
     )
   }
 
-  const retryTaskRecordMutation = useMutation(
-    trpc.records.retryTaskRecord.mutationOptions({
+  const retryWorkRecordMutation = useMutation(
+    trpc.records.retryWorkRecord.mutationOptions({
       onSuccess: invalidateRecordTaskQueries,
     }),
   )
-  const canRetry = isRetryableTaskRecordState(task.state)
+  const canRetry = isRetryableWorkRecordState(task.state)
   const canTrigger =
     task.state === "waiting" &&
     nextWaitingSortOrder !== null &&
@@ -111,69 +111,69 @@ export const RecordLinkedTaskRow = ({
 
   const handleRetry = async () => {
     try {
-      await retryTaskRecordMutation.mutateAsync({
+      await retryWorkRecordMutation.mutateAsync({
         organizationSlug,
         projectSlug,
         recordId,
-        taskRecordId: task.taskRecordId,
+        workRecordId: task.workRecordId,
       })
     } catch {
     }
   }
 
-  const triggerTaskRecordMutation = useMutation(
-    trpc.records.triggerTaskRecord.mutationOptions({
+  const triggerWorkRecordMutation = useMutation(
+    trpc.records.triggerWorkRecord.mutationOptions({
       onSuccess: invalidateRecordTaskQueries,
     }),
   )
 
   const handleTrigger = async () => {
     try {
-      await triggerTaskRecordMutation.mutateAsync({
+      await triggerWorkRecordMutation.mutateAsync({
         organizationSlug,
         projectSlug,
         recordId,
-        taskRecordId: task.taskRecordId,
+        workRecordId: task.workRecordId,
       })
     } catch {
     }
   }
 
-  const resetDownstreamTaskRecordMutation = useMutation(
-    trpc.records.resetDownstreamTaskRecord.mutationOptions({
+  const resetDownstreamWorkRecordMutation = useMutation(
+    trpc.records.resetDownstreamWorkRecord.mutationOptions({
       onSuccess: async (result) => {
         if (result.resetCount === 0) {
-          toast.info("No terminal downstream task-records to reset.")
+          toast.info("No terminal downstream work records to reset.")
         } else {
           toast.success(
-            `Reset ${result.resetCount} downstream task-record${result.resetCount === 1 ? "" : "s"} for this record.`,
+            `Reset ${result.resetCount} downstream work record${result.resetCount === 1 ? "" : "s"} for this record.`,
           )
         }
         await invalidateRecordTaskQueries()
         setIsResetDialogOpen(false)
       },
       onError: () => {
-        toast.error("Failed to reset downstream task-records for this record.")
+        toast.error("Failed to reset downstream work records for this record.")
       },
     }),
   )
 
   const handleResetDownstream = async () => {
-    await resetDownstreamTaskRecordMutation.mutateAsync({
+    await resetDownstreamWorkRecordMutation.mutateAsync({
       organizationSlug,
       projectSlug,
       recordId,
-      taskRecordId: task.taskRecordId,
+      workRecordId: task.workRecordId,
     })
   }
 
   const actionError =
-    triggerTaskRecordMutation.error ??
-    retryTaskRecordMutation.error ??
-    resetDownstreamTaskRecordMutation.error
-  const latestAgentRun = task.latestAgentRun
-  const latestRunHref = latestAgentRun
-    ? `/app/${organizationSlug}/${projectSlug}/runs/${latestAgentRun.id}`
+    triggerWorkRecordMutation.error ??
+    retryWorkRecordMutation.error ??
+    resetDownstreamWorkRecordMutation.error
+  const latestInternRun = task.latestInternRun
+  const latestRunHref = latestInternRun
+    ? `/app/${organizationSlug}/${projectSlug}/intern-runs/${latestInternRun.id}`
     : null
 
   return (
@@ -189,7 +189,7 @@ export const RecordLinkedTaskRow = ({
       </TableCell>
       <TableCell>
         <div className="flex flex-col gap-1">
-          <TaskRecordRunStatusBadge
+          <WorkRecordRunStatusBadge
             runHref={latestRunHref}
             state={task.state}
           />
@@ -201,12 +201,12 @@ export const RecordLinkedTaskRow = ({
         </div>
       </TableCell>
       <TableCell>
-        {latestAgentRun ? (
+        {latestInternRun ? (
           <Link
             className="cursor-pointer"
-            href={`/app/${organizationSlug}/${projectSlug}/runs/${latestAgentRun.id}`}
+            href={`/app/${organizationSlug}/${projectSlug}/intern-runs/${latestInternRun.id}`}
           >
-            <RunStatusBadge state={latestAgentRun.state} />
+            <RunStatusBadge state={latestInternRun.state} />
           </Link>
         ) : (
           <span className="text-sm text-muted-foreground">No run</span>
@@ -217,25 +217,25 @@ export const RecordLinkedTaskRow = ({
           <div className="flex flex-row gap-2">
             {canTrigger ? (
               <Button
-                disabled={triggerTaskRecordMutation.isPending}
+                disabled={triggerWorkRecordMutation.isPending}
                 onClick={handleTrigger}
                 variant="secondary"
               >
-                {triggerTaskRecordMutation.isPending
+                {triggerWorkRecordMutation.isPending
                   ? "Triggering..."
                   : "Trigger"}
               </Button>
             ) : canRetry ? (
               <Button
-                disabled={retryTaskRecordMutation.isPending}
+                disabled={retryWorkRecordMutation.isPending}
                 onClick={handleRetry}
                 variant="secondary"
               >
-                {retryTaskRecordMutation.isPending ? "Retrying..." : "Retry"}
+                {retryWorkRecordMutation.isPending ? "Retrying..." : "Retry"}
               </Button>
             ) : null}
             <Button
-              disabled={resetDownstreamTaskRecordMutation.isPending}
+              disabled={resetDownstreamWorkRecordMutation.isPending}
               onClick={() => setIsResetDialogOpen(true)}
               variant="outline"
             >
@@ -255,7 +255,7 @@ export const RecordLinkedTaskRow = ({
           <DialogHeader>
             <DialogTitle>Reset downstream tasks for this record</DialogTitle>
             <DialogDescription>
-              This will reset completed and skipped task-records from “
+              This will reset completed and skipped work records from “
               {task.title}” onward back to waiting state for this record only.
               Other records will not be affected.
             </DialogDescription>
@@ -269,11 +269,11 @@ export const RecordLinkedTaskRow = ({
               Cancel
             </Button>
             <Button
-              disabled={resetDownstreamTaskRecordMutation.isPending}
+              disabled={resetDownstreamWorkRecordMutation.isPending}
               onClick={handleResetDownstream}
               type="button"
             >
-              {resetDownstreamTaskRecordMutation.isPending
+              {resetDownstreamWorkRecordMutation.isPending
                 ? "Resetting..."
                 : "Reset downstream"}
             </Button>

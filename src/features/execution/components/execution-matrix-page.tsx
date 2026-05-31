@@ -59,7 +59,7 @@ export const ExecutionMatrixPage = () => {
     return <LoadingState label="Execution matrix could not be loaded." />
   }
 
-  const matrix = buildExecutionMatrix(executionQuery.data.taskRecords)
+  const matrix = buildExecutionMatrix(executionQuery.data.workRecords)
 
   const invalidateMonitor = async () => {
     await queryClient.invalidateQueries(
@@ -176,7 +176,7 @@ export const ExecutionMatrixPage = () => {
           <DialogHeader>
             <DialogTitle>Create task</DialogTitle>
             <DialogDescription>
-              New tasks fan out task-record rows to every current record.
+              New tasks fan out work record rows to every current record.
             </DialogDescription>
           </DialogHeader>
           <TaskForm

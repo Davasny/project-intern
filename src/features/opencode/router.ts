@@ -184,17 +184,17 @@ export const opencodeRouter = router({
     .input(
       z.object({
         serverId: z.string().uuid().optional(),
-        agentRunId: z.string().uuid().optional(),
-        taskRecordId: z.string().uuid().optional(),
+        internRunId: z.string().uuid().optional(),
+        workRecordId: z.string().uuid().optional(),
       }),
     )
     .mutation(async ({ input }) => {
       let performed = false
 
-      if (input.agentRunId && input.taskRecordId) {
+      if (input.internRunId && input.workRecordId) {
         await stopDebugSession({
-          agentRunId: input.agentRunId,
-          taskRecordId: input.taskRecordId,
+          internRunId: input.internRunId,
+          workRecordId: input.workRecordId,
         })
         performed = true
       }
@@ -210,7 +210,7 @@ export const opencodeRouter = router({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            "Either serverId or (agentRunId and taskRecordId) must be provided.",
+            "Either serverId or (internRunId and workRecordId) must be provided.",
         })
       }
     }),

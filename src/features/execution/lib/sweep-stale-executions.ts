@@ -1,80 +1,83 @@
 import { and, eq, inArray, lt } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
-import { failAgentRunCommand } from "@/features/agent-runs/lib/agent-run-commands"
-import { activeAgentRunStates } from "@/features/agent-runs/schemas/agent-run-state"
-import { taskRecordTable } from "@/features/task-records/db"
+import { internRunTable } from "@/features/intern-runs/db"
+import { failInternRunCommand } from "@/features/intern-runs/lib/intern-run-commands"
+import { activeInternRunStates } from "@/features/intern-runs/schemas/intern-run-state"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
 export const sweepStaleExecutions = async (): Promise<{
   sweptCount: number
-  agentRunIds: string[]
+  internRunIds: string[]
 }> => {
   const threshold = new Date(Date.now() - 10 * 60 * 1000)
 
   const staleRuns = await db
     .select({
-      agentRunId: agentRunTable.id,
-      taskRecordId: taskRecordTable.id,
+      internRunId: internRunTable.id,
+      workRecordId: workRecordTable.id,
     })
-    .from(agentRunTable)
+    .from(internRunTable)
     .innerJoin(
-      taskRecordTable,
-      eq(agentRunTable.taskRecordId, taskRecordTable.id),
+      workRecordTable,
+      eq(internRunTable.workRecordId, workRecordTable.id),
     )
     .where(
       and(
-        inArray(agentRunTable.state, activeAgentRunStates),
-        lt(agentRunTable.updatedAt, threshold),
+        inArray(internRunTable.state, activeInternRunStates),
+        lt(internRunTable.updatedAt, threshold),
       ),
     )
 
   if (staleRuns.length === 0) {
-    return { sweptCount: 0, agentRunIds: [] }
+    return { sweptCount: 0, internRunIds: [] }
   }
 
   logger.info(
     { staleCount: staleRuns.length },
-    "Found stale execution agent runs on startup",
+    "Found stale execution intern runs on startup",
   )
 
-  const sweptAgentRunIds: string[] = []
+  const sweptInternRunIds: string[] = []
 
   for (const run of staleRuns) {
     try {
-      await failAgentRunCommand({
-        agentRunId: run.agentRunId,
+      await failInternRunCommand({
+        internRunId: run.internRunId,
         costUsd: null,
         errorCode: "STALE_EXECUTION",
         failurePayload: {
           code: "STALE_EXECUTION",
-          message: "Execution agent run was stale and has been cleaned up",
+          message: "Execution intern run was stale and has been cleaned up",
           retryable: true,
         },
         latencyMs: null,
-        taskRecordId: run.taskRecordId,
+        workRecordId: run.workRecordId,
         tokenInput: null,
         tokenOutput: null,
         toolActivitySummary: {},
       })
 
-      sweptAgentRunIds.push(run.agentRunId)
+      sweptInternRunIds.push(run.internRunId)
     } catch (error) {
       logger.warn(
         {
-          agentRunId: run.agentRunId,
-          taskRecordId: run.taskRecordId,
+          internRunId: run.internRunId,
+          workRecordId: run.workRecordId,
           error,
         },
-        "Failed to sweep stale execution agent run, skipping",
+        "Failed to sweep stale execution intern run, skipping",
       )
     }
   }
 
   logger.info(
-    { sweptCount: sweptAgentRunIds.length, total: staleRuns.length },
-    "Completed stale execution agent run sweep",
+    { sweptCount: sweptInternRunIds.length, total: staleRuns.length },
+    "Completed stale execution intern run sweep",
   )
 
-  return { sweptCount: sweptAgentRunIds.length, agentRunIds: sweptAgentRunIds }
+  return {
+    sweptCount: sweptInternRunIds.length,
+    internRunIds: sweptInternRunIds,
+  }
 }

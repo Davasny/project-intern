@@ -66,9 +66,9 @@ export const spawnSession = async ({
     runtimeTemperature: null,
   })
 
-  const envAgentPath = path.join(directory, ".env.agent")
-  await fs.writeFile(envAgentPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)
-  logger.info({ envAgentPath }, "Wrote .env.agent")
+  const envInternPath = path.join(directory, ".env.intern")
+  await fs.writeFile(envInternPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)
+  logger.info({ envInternPath }, "Wrote .env.intern")
 
   const session = await started.client.session.create({
     body: { title },

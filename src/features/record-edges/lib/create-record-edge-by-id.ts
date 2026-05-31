@@ -11,7 +11,7 @@ import { db } from "@/lib/db"
 import { generateUuidV7Values } from "@/lib/db/generate-uuid-v7-values"
 
 type CreateRecordEdgeByIdParams = {
-  agentRunId: string
+  internRunId: string
   direction: "bidirectional" | "outbound"
   metadata: Record<string, unknown>
   relationType: "belongs_to" | "depends_on" | "duplicates" | "related_to"
@@ -23,7 +23,7 @@ type CreateRecordEdgeByIdParams = {
 }
 
 export const createRecordEdgeById = async ({
-  agentRunId,
+  internRunId,
   direction,
   metadata,
   relationType,
@@ -60,7 +60,7 @@ export const createRecordEdgeById = async ({
   const actor = await getRecordEdgeActor(recordEdgeId)
 
   await actor.send("activate", {
-    byAgentRunId: agentRunId,
+    byInternRunId: internRunId,
     byUserId: null,
     direction,
     fromProjectId: sourceProjectId,

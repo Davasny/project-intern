@@ -14,16 +14,16 @@ export const taskExecutorWorker = new Worker(taskExecutorQueue, async (job) => {
     queue: taskExecutorQueue.queueName,
     jobId: job.id,
     jobName: job.name,
-    agentRunId: payload.agentRunId,
-    taskRecordId: payload.taskRecordId,
+    internRunId: payload.internRunId,
+    workRecordId: payload.workRecordId,
   })
 
   childLogger.info("processing task executor job")
 
   try {
     const executionResult = await executorService({
-      agentRunId: payload.agentRunId,
-      taskRecordId: payload.taskRecordId,
+      internRunId: payload.internRunId,
+      workRecordId: payload.workRecordId,
     })
 
     childLogger.info(
@@ -39,17 +39,17 @@ export const taskExecutorWorker = new Worker(taskExecutorQueue, async (job) => {
       "task executor job failed during executor service",
     )
 
-    // Map the error to an agent run failure so the task record state machine
+    // Map the error to an intern run failure so the work record state machine
     // transitions properly. Do NOT re-throw — pg-bosser retries at the queue
     // level would conflict with state machine transitions. Instead the retry
-    // scan worker will pick up failed task records and retry them via the
+    // scan worker will pick up failed work records and retry them via the
     // state machine.
     try {
       await handleTaskExecutorWorkerError({ error, job })
     } catch (mappingError) {
       childLogger.error(
         { error: mappingError },
-        "Failed to map executor error to task record failure, re-throwing for pg-bosser retry",
+        "Failed to map executor error to work record failure, re-throwing for pg-bosser retry",
       )
       // Re-throw only when even the error mapping fails (infrastructure error)
       throw error

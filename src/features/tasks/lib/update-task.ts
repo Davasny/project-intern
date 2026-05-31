@@ -107,7 +107,6 @@ export const updateTask = async ({
       revisionNumber: latestRevision ? latestRevision.revisionNumber + 1 : 1,
       taskId: input.taskId,
     })
-
   }
 
   logger.info(

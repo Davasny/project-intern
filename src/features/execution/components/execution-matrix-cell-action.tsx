@@ -8,37 +8,37 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
-import { isFailedAgentRunState } from "@/features/execution/lib/is-failed-agent-run-state"
-import { isRetryableTaskRecordState } from "@/features/task-records/schemas/task-record-state"
-import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
+import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
+import { isFailedInternRunState } from "@/features/execution/lib/is-failed-intern-run-state"
+import { isRetryableWorkRecordState } from "@/features/work-records/schemas/work-record-state"
+import type { WorkRecordState } from "@/features/work-records/schemas/work-record-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 type ExecutionMatrixCellActionProps = {
   debugControlsEnabled: boolean
   isAutopickEnabled: boolean
-  taskRecord: {
-    latestAgentRun: {
-      state: AgentRunState
+  workRecord: {
+    latestInternRun: {
+      state: InternRunState
     } | null
     recordId: string
-    state: TaskRecordState
-    taskRecordId: string
+    state: WorkRecordState
+    workRecordId: string
   }
 }
 
 export const ExecutionMatrixCellAction = ({
   debugControlsEnabled,
   isAutopickEnabled,
-  taskRecord,
+  workRecord,
 }: ExecutionMatrixCellActionProps) => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
 
-  const triggerTaskRecordMutation = useMutation(
-    trpc.execution.triggerTaskRecord.mutationOptions({
+  const triggerWorkRecordMutation = useMutation(
+    trpc.execution.triggerWorkRecord.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries(
           trpc.execution.getMonitor.queryFilter({
@@ -49,8 +49,8 @@ export const ExecutionMatrixCellAction = ({
       },
     }),
   )
-  const retryTaskRecordMutation = useMutation(
-    trpc.records.retryTaskRecord.mutationOptions({
+  const retryWorkRecordMutation = useMutation(
+    trpc.records.retryWorkRecord.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries(
           trpc.execution.getMonitor.queryFilter({
@@ -63,19 +63,19 @@ export const ExecutionMatrixCellAction = ({
   )
 
   const canTrigger =
-    debugControlsEnabled && !isAutopickEnabled && taskRecord.state === "waiting"
-  const canRetry = isRetryableTaskRecordState(taskRecord.state)
-  const hasFailedLatestRun = taskRecord.latestAgentRun
-    ? isFailedAgentRunState(taskRecord.latestAgentRun.state)
+    debugControlsEnabled && !isAutopickEnabled && workRecord.state === "waiting"
+  const canRetry = isRetryableWorkRecordState(workRecord.state)
+  const hasFailedLatestRun = workRecord.latestInternRun
+    ? isFailedInternRunState(workRecord.latestInternRun.state)
     : false
   const shouldShowRetry = canRetry || (canTrigger && hasFailedLatestRun)
 
   const handleTrigger = async () => {
     try {
-      await triggerTaskRecordMutation.mutateAsync({
+      await triggerWorkRecordMutation.mutateAsync({
         organizationSlug,
         projectSlug,
-        taskRecordId: taskRecord.taskRecordId,
+        workRecordId: workRecord.workRecordId,
       })
     } catch {
     }
@@ -83,11 +83,11 @@ export const ExecutionMatrixCellAction = ({
 
   const handleRetry = async () => {
     try {
-      await retryTaskRecordMutation.mutateAsync({
+      await retryWorkRecordMutation.mutateAsync({
         organizationSlug,
         projectSlug,
-        recordId: taskRecord.recordId,
-        taskRecordId: taskRecord.taskRecordId,
+        recordId: workRecord.recordId,
+        workRecordId: workRecord.workRecordId,
       })
     } catch {
     }
@@ -98,11 +98,11 @@ export const ExecutionMatrixCellAction = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            aria-label="Retry task record"
+            aria-label="Retry work record"
             isLoading={
               canRetry
-                ? retryTaskRecordMutation.isPending
-                : triggerTaskRecordMutation.isPending
+                ? retryWorkRecordMutation.isPending
+                : triggerWorkRecordMutation.isPending
             }
             onClick={canRetry ? handleRetry : handleTrigger}
             size="icon-xs"
@@ -122,8 +122,8 @@ export const ExecutionMatrixCellAction = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            aria-label="Trigger task record"
-            isLoading={triggerTaskRecordMutation.isPending}
+            aria-label="Trigger work record"
+            isLoading={triggerWorkRecordMutation.isPending}
             onClick={handleTrigger}
             size="icon-xs"
             type="button"

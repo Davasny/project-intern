@@ -1,7 +1,7 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import type { createOpencodeClient } from "@opencode-ai/sdk"
-import { toSessionMessage } from "@/features/agent-runs/lib/map-session-message"
+import { toSessionMessage } from "@/features/intern-runs/lib/map-session-message"
 import { getDebugSessionDumpDirectory } from "@/features/opencode/lib/get-debug-session-dump-directory"
 import {
   listSessionDumpRuns,
@@ -10,7 +10,7 @@ import {
 import {
   renderIndexMarkdown,
   renderRunMarkdown,
-  renderTaskRecordContextMarkdown,
+  renderWorkRecordContextMarkdown,
 } from "@/features/opencode/lib/render-session-dump-markdown"
 import type { SessionDumpScope } from "@/features/opencode/schemas/session-dump-scope"
 import { logger } from "@/lib/logger"
@@ -36,11 +36,11 @@ const buildRecordDirectoryName = (run: SessionDumpRun) =>
 
 const formatRunFileName = ({
   attemptNumber,
-  agentRunId,
+  internRunId,
 }: {
   attemptNumber: number
-  agentRunId: string
-}) => `attempt-${String(attemptNumber).padStart(3, "0")}-${agentRunId}.md`
+  internRunId: string
+}) => `attempt-${String(attemptNumber).padStart(3, "0")}-${internRunId}.md`
 
 export const dumpDebugSessions = async ({
   client,
@@ -62,7 +62,7 @@ export const dumpDebugSessions = async ({
   const runs = await listSessionDumpRuns({ projectId, scope })
   const selectedRuns = runs.slice(0, maxRunsPerDump)
   const failedRunFiles: Array<string> = []
-  const taskRecordEntries = new Map<
+  const workRecordEntries = new Map<
     string,
     {
       contextPath: string
@@ -75,19 +75,19 @@ export const dumpDebugSessions = async ({
 
   for (const run of selectedRuns) {
     const fileName = formatRunFileName({
-      agentRunId: run.agentRunId,
+      internRunId: run.internRunId,
       attemptNumber: run.attemptNumber,
     })
     const taskDirectoryName = buildTaskDirectoryName(run)
     const recordDirectoryName = buildRecordDirectoryName(run)
-    const taskRecordDirectory = path.join(
+    const workRecordDirectory = path.join(
       directory,
       "tasks",
       taskDirectoryName,
       "records",
       recordDirectoryName,
     )
-    const runsDirectory = path.join(taskRecordDirectory, "runs")
+    const runsDirectory = path.join(workRecordDirectory, "runs")
     const relativeContextPath = path.join(
       "tasks",
       taskDirectoryName,
@@ -106,15 +106,15 @@ export const dumpDebugSessions = async ({
 
     await ensureDirectory(runsDirectory)
 
-    if (!taskRecordEntries.has(run.taskRecordId)) {
+    if (!workRecordEntries.has(run.workRecordId)) {
       await fs.writeFile(
-        path.join(taskRecordDirectory, "context.md"),
-        renderTaskRecordContextMarkdown({ run, scope }),
+        path.join(workRecordDirectory, "context.md"),
+        renderWorkRecordContextMarkdown({ run, scope }),
       )
 
-      taskRecordEntries.set(run.taskRecordId, {
+      workRecordEntries.set(run.workRecordId, {
         contextPath: relativeContextPath,
-        directory: taskRecordDirectory,
+        directory: workRecordDirectory,
         recordName: run.recordName,
         runPaths: [],
         taskTitle: run.taskTitle,
@@ -142,7 +142,7 @@ export const dumpDebugSessions = async ({
         failedRunFiles.push(fileName)
         logger.warn(
           {
-            agentRunId: run.agentRunId,
+            internRunId: run.internRunId,
             error,
             sessionReference: run.sessionReference,
           },
@@ -155,7 +155,7 @@ export const dumpDebugSessions = async ({
       path.join(runsDirectory, fileName),
       renderRunMarkdown({ errorMessage, messages, run }),
     )
-    taskRecordEntries.get(run.taskRecordId)?.runPaths.push(relativeRunPath)
+    workRecordEntries.get(run.workRecordId)?.runPaths.push(relativeRunPath)
   }
 
   await fs.writeFile(
@@ -165,7 +165,7 @@ export const dumpDebugSessions = async ({
       directory,
       failedRunCount: failedRunFiles.length,
       scope,
-      taskRecordEntries: Array.from(taskRecordEntries.values()),
+      workRecordEntries: Array.from(workRecordEntries.values()),
     }),
   )
 
@@ -173,7 +173,7 @@ export const dumpDebugSessions = async ({
     directory,
     failedRunCount: failedRunFiles.length,
     indexPath: path.join(directory, "index.md"),
-    runCount: Array.from(taskRecordEntries.values()).reduce(
+    runCount: Array.from(workRecordEntries.values()).reduce(
       (total, entry) => total + entry.runPaths.length,
       0,
     ),

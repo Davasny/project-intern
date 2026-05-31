@@ -1,26 +1,26 @@
 "use client"
 
 import Link from "next/link"
-import { TaskRecordStatusBadge } from "@/components/ui/status-badge/task-record-status-badge"
+import { WorkRecordStatusBadge } from "@/components/ui/status-badge/work-record-status-badge"
 import { ExecutionMatrixCellAction } from "@/features/execution/components/execution-matrix-cell-action"
-import { ExecutionMatrixRunStatusBadge } from "@/features/execution/components/execution-matrix-run-status-badge"
-import type { AgentRunState } from "@/features/agent-runs/schemas/agent-run-state"
-import type { TaskRecordState } from "@/features/task-records/schemas/task-record-state"
+import { ExecutionMatrixRunStatusBadge } from "@/features/execution/components/execution-matrix-intern-run-status-badge"
+import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
+import type { WorkRecordState } from "@/features/work-records/schemas/work-record-state"
 
 type ExecutionMatrixCellProps = {
   debugControlsEnabled: boolean
   isAutopickEnabled: boolean
   organizationSlug: string
   projectSlug: string
-  taskRecord: {
+  workRecord: {
     attemptCount: number
-    latestAgentRun: {
+    latestInternRun: {
       id: string
-      state: AgentRunState
+      state: InternRunState
     } | null
     recordId: string
-    state: TaskRecordState
-    taskRecordId: string
+    state: WorkRecordState
+    workRecordId: string
   } | null
 }
 
@@ -29,28 +29,28 @@ export const ExecutionMatrixCell = ({
   isAutopickEnabled,
   organizationSlug,
   projectSlug,
-  taskRecord,
+  workRecord,
 }: ExecutionMatrixCellProps) => {
-  if (!taskRecord) {
+  if (!workRecord) {
     return <span className="text-sm text-muted-foreground">—</span>
   }
 
-  if (taskRecord.latestAgentRun) {
+  if (workRecord.latestInternRun) {
     return (
       <div className="flex flex-row items-center gap-1.5">
         <Link
           className="inline-flex"
-          href={`/app/${organizationSlug}/${projectSlug}/runs/${taskRecord.latestAgentRun.id}`}
+          href={`/app/${organizationSlug}/${projectSlug}/intern-runs/${workRecord.latestInternRun.id}`}
         >
           <ExecutionMatrixRunStatusBadge
-            attemptCount={taskRecord.attemptCount}
-            state={taskRecord.latestAgentRun.state}
+            attemptCount={workRecord.attemptCount}
+            state={workRecord.latestInternRun.state}
           />
         </Link>
         <ExecutionMatrixCellAction
           debugControlsEnabled={debugControlsEnabled}
           isAutopickEnabled={isAutopickEnabled}
-          taskRecord={taskRecord}
+          workRecord={workRecord}
         />
       </div>
     )
@@ -58,11 +58,11 @@ export const ExecutionMatrixCell = ({
 
   return (
     <div className="flex flex-row items-center gap-1.5">
-      <TaskRecordStatusBadge state={taskRecord.state} />
+      <WorkRecordStatusBadge state={workRecord.state} />
       <ExecutionMatrixCellAction
         debugControlsEnabled={debugControlsEnabled}
         isAutopickEnabled={isAutopickEnabled}
-        taskRecord={taskRecord}
+        workRecord={workRecord}
       />
     </div>
   )

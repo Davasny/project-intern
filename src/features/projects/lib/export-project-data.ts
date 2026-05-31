@@ -1,11 +1,9 @@
 import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
-import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { projectTable } from "@/features/projects/db"
-import type {
-  ProjectExportRequest,
-} from "@/features/projects/schemas/project-export-data"
+import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
+import type { ProjectExportRequest } from "@/features/projects/schemas/project-export-data"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
 import { db } from "@/lib/db"
@@ -90,7 +88,7 @@ export const exportProjectData = async ({
   if (exportOptions.exportProjectSettings) {
     const [settings] = await db
       .select({
-        agentPythonRequirements: projectTable.agentPythonRequirements,
+        internPythonRequirements: projectTable.internPythonRequirements,
         defaultModel: projectTable.defaultModel,
         defaultTemperature: projectTable.defaultTemperature,
         isAutopickEnabled: projectTable.isAutopickEnabled,

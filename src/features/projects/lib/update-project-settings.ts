@@ -3,14 +3,14 @@ import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
-import { writeProjectAgentRequirements } from "@/features/projects/lib/write-project-agent-requirements"
+import { writeInternRequirements } from "@/features/projects/lib/write-intern-requirements"
 import { db } from "@/lib/db"
 import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
 import { validateRuntimeTemperature } from "@/lib/llm/validate-runtime-temperature"
 import { logger } from "@/lib/logger"
 
 const updateProjectSettingsInputSchema = z.object({
-  agentPythonRequirements: z.string(),
+  internPythonRequirements: z.string(),
   defaultModel: z.string().trim().min(1),
   defaultTemperature: z.number(),
   isAutopickEnabled: z.boolean(),
@@ -66,28 +66,28 @@ export const updateProjectSettings = async ({
   const [updated] = await db
     .update(projectTable)
     .set({
-      agentPythonRequirements: input.agentPythonRequirements,
+      internPythonRequirements: input.internPythonRequirements,
       defaultModel: validatedModel,
       defaultTemperature: validatedTemperature,
       isAutopickEnabled: input.isAutopickEnabled,
     })
     .where(eq(projectTable.id, project.id))
     .returning({
-      agentPythonRequirements: projectTable.agentPythonRequirements,
+      internPythonRequirements: projectTable.internPythonRequirements,
       defaultModel: projectTable.defaultModel,
       defaultTemperature: projectTable.defaultTemperature,
       isAutopickEnabled: projectTable.isAutopickEnabled,
     })
 
-  const requirementsFile = await writeProjectAgentRequirements({
+  const requirementsFile = await writeInternRequirements({
     projectId: project.id,
-    requirements: input.agentPythonRequirements,
+    requirements: input.internPythonRequirements,
   })
 
   logger.info(
     {
-      agentPythonRequirementsBytes: Buffer.byteLength(
-        input.agentPythonRequirements,
+      internPythonRequirementsBytes: Buffer.byteLength(
+        input.internPythonRequirements,
         "utf8",
       ),
       defaultModel: validatedModel,

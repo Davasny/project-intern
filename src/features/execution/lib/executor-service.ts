@@ -1,7 +1,7 @@
 import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
 import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
-import { getAgentRunExecutionScope } from "@/features/execution/lib/get-agent-run-execution-scope"
+import { getInternRunExecutionScope } from "@/features/execution/lib/get-intern-run-execution-scope"
 import { linkProjectSkillsToWorkspace } from "@/features/execution/lib/link-project-skills-to-workspace"
 import { prepareRecordWorkspaceData } from "@/features/execution/lib/prepare-record-workspace-data"
 import { runOpencodeExecution } from "@/features/execution/lib/run-opencode-execution"
@@ -14,24 +14,24 @@ import { resolveRuntimeTemperature } from "@/lib/llm/resolve-runtime-temperature
 import { logger } from "@/lib/logger"
 
 type ExecutorServiceParams = {
-  agentRunId: string
-  taskRecordId: string
+  internRunId: string
+  workRecordId: string
 }
 
 export const executorService = async ({
-  agentRunId,
-  taskRecordId,
+  internRunId,
+  workRecordId,
 }: ExecutorServiceParams) => {
   let executionLogger = logger.child({
-    agentRunId,
-    taskRecordId,
+    internRunId,
+    workRecordId,
   })
 
   try {
-    executionLogger.info("Loading agent run execution scope")
+    executionLogger.info("Loading intern run execution scope")
 
-    const initialScope = await getAgentRunExecutionScope({
-      agentRunId,
+    const initialScope = await getInternRunExecutionScope({
+      internRunId,
     })
 
     executionLogger = executionLogger.child({
@@ -45,7 +45,7 @@ export const executorService = async ({
         recordName: initialScope.record.name,
         taskTitle: initialScope.task.title,
       },
-      "Loaded agent run execution scope",
+      "Loaded intern run execution scope",
     )
 
     const runtimeModel = resolveRuntimeModel({

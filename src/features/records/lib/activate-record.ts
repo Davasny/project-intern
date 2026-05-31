@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
 import { recordTable } from "@/features/records/db"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
-import { backfillTaskRecordsForRecord } from "@/features/task-records/lib/backfill-task-records-for-record"
+import { backfillWorkRecordsForRecord } from "@/features/work-records/lib/backfill-work-records-for-record"
 import { db } from "@/lib/db"
 
 type ActivateRecordParams = {
@@ -48,7 +48,7 @@ export const activateRecord = async ({
     })
   }
 
-  await backfillTaskRecordsForRecord({
+  await backfillWorkRecordsForRecord({
     projectId,
     recordId: updatedRecord.id,
   })

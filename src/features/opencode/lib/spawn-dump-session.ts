@@ -51,9 +51,9 @@ You are in a special OpenCode session rooted at a generated debug-session dump d
 
 ## Available files
 
-- \`index.md\` lists all dumped task-record contexts and run transcripts.
-- \`tasks/*/records/*/context.md\` contains task and record context for one task-record pair.
-- \`tasks/*/records/*/runs/*.md\` contains bounded OpenCode transcript markdown for individual attempts.
+- \`index.md\` lists all dumped work record contexts and run transcripts.
+- \`tasks/*/records/*/context.md\` contains task and record context for one work record pair.
+- \`tasks/*/records/*/intern-runs/*.md\` contains bounded OpenCode transcript markdown for individual attempts.
 
 ## Current dump
 
@@ -106,8 +106,8 @@ export const spawnDumpSession = async ({
       ),
     })
 
-    const envAgentPath = path.join(dump.directory, ".env.agent")
-    await fs.writeFile(envAgentPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)
+    const envInternPath = path.join(dump.directory, ".env.intern")
+    await fs.writeFile(envInternPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)
 
     await writeDumpSessionAgentsMd({
       directory: dump.directory,

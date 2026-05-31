@@ -3,11 +3,11 @@ import { taskFailureSchema } from "@/features/execution/schemas/task-failure"
 import { projectSchemaDefinitionSchema } from "@/features/project-schema/schemas/project-schema-version"
 
 const executionScopeInputSchema = z.object({
-  agentRunId: z.string().uuid(),
+  internRunId: z.string().uuid(),
   projectId: z.string().uuid(),
   recordId: z.string().uuid(),
   taskId: z.string().uuid(),
-  taskRecordId: z.string().uuid(),
+  workRecordId: z.string().uuid(),
 })
 
 export const crmRecordReadInputSchema = executionScopeInputSchema

@@ -2,8 +2,8 @@ import { and, desc, eq, inArray, or } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
-import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
 type GetProjectSchemaSettingsReadModelParams = {
@@ -129,16 +129,16 @@ export const getProjectSchemaSettingsReadModel = async ({
           )
 
   const migrationTaskIds = migrationTasks.map((task) => task.id)
-  const migrationTaskRecords =
+  const migrationWorkRecords =
     migrationTaskIds.length === 0
       ? []
       : await db
           .select({
-            state: taskRecordTable.state,
-            taskId: taskRecordTable.taskId,
+            state: workRecordTable.state,
+            taskId: workRecordTable.taskId,
           })
-          .from(taskRecordTable)
-          .where(inArray(taskRecordTable.taskId, migrationTaskIds))
+          .from(workRecordTable)
+          .where(inArray(workRecordTable.taskId, migrationTaskIds))
 
   const activeVersion = versions.find(
     (version) => version.id === project.activeSchemaVersionId,
@@ -153,27 +153,27 @@ export const getProjectSchemaSettingsReadModel = async ({
         migrationTasks.find(
           (task) => task.targetSchemaVersionId === version.id,
         ) ?? null
-      const linkedTaskRecords = migrationTask
-        ? migrationTaskRecords.filter(
-            (taskRecord) => taskRecord.taskId === migrationTask.id,
+      const linkedWorkRecords = migrationTask
+        ? migrationWorkRecords.filter(
+            (workRecord) => workRecord.taskId === migrationTask.id,
           )
         : []
       const pendingRecordCount = records.filter(
         (record) => record.schemaVersion < version.version,
       ).length
-      const completedCount = linkedTaskRecords.filter(
-        (taskRecord) => taskRecord.state === "completed",
+      const completedCount = linkedWorkRecords.filter(
+        (workRecord) => workRecord.state === "completed",
       ).length
-      const failedCount = linkedTaskRecords.filter(
-        (taskRecord) => taskRecord.state === "failed",
+      const failedCount = linkedWorkRecords.filter(
+        (workRecord) => workRecord.state === "failed",
       ).length
-      const inProgressCount = linkedTaskRecords.filter(
-        (taskRecord) =>
-          taskRecord.state === "picked_up" ||
-          taskRecord.state === "in_progress",
+      const inProgressCount = linkedWorkRecords.filter(
+        (workRecord) =>
+          workRecord.state === "picked_up" ||
+          workRecord.state === "in_progress",
       ).length
-      const waitingCount = linkedTaskRecords.filter(
-        (taskRecord) => taskRecord.state === "waiting",
+      const waitingCount = linkedWorkRecords.filter(
+        (workRecord) => workRecord.state === "waiting",
       ).length
 
       return {
@@ -196,7 +196,7 @@ export const getProjectSchemaSettingsReadModel = async ({
                 affectedRecordCount:
                   migrationTask === null
                     ? pendingRecordCount
-                    : linkedTaskRecords.length,
+                    : linkedWorkRecords.length,
                 completedCount,
                 failedCount,
                 inProgressCount,

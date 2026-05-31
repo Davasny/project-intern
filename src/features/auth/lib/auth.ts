@@ -31,8 +31,7 @@ export const auth = betterAuth({
     }),
     anonymous({
       generateName: () => `Guest ${crypto.randomUUID().slice(0, 8)}`,
-      generateRandomEmail: () =>
-        `guest-${crypto.randomUUID()}@project-intern.local`,
+      generateRandomEmail: () => `guest-${crypto.randomUUID()}@intern.local`,
     }),
   ],
   advanced: {

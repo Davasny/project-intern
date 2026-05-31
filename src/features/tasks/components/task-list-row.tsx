@@ -286,7 +286,7 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
             <DialogTitle>Delete task</DialogTitle>
             <DialogDescription>
               {task.state === "accepted"
-                ? "This task and its task records will be permanently deleted. No agent runs exist for this task."
+                ? "This task and its work records will be permanently deleted. No intern runs exist for this task."
                 : `"${task.title}" will be permanently deleted.`}
             </DialogDescription>
           </DialogHeader>

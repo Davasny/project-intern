@@ -9,25 +9,25 @@ const executionScopeFailureReasonLabels: Record<
   ExecutionScopeValidationFailureReason,
   string
 > = {
-  agent_run_not_found: "agent run was not found",
+  intern_run_not_found: "intern run was not found",
   project_not_found: "project was not found",
   record_not_found: "record was not found",
   task_not_found: "task was not found",
-  task_record_not_found: "task record was not found",
-  agent_run_task_record_mismatch: "agent run does not belong to task record",
+  work_record_not_found: "work record was not found",
+  intern_run_work_record_mismatch: "intern run does not belong to work record",
   record_project_mismatch: "record does not belong to project",
   task_project_mismatch: "task does not belong to project",
-  task_record_record_mismatch: "task record does not belong to record",
-  task_record_task_mismatch: "task record does not belong to task",
+  work_record_record_mismatch: "work record does not belong to record",
+  work_record_task_mismatch: "work record does not belong to task",
 }
 
 const buildScopeSnippet = (scope: ExecutionRunScope) => {
   return [
-    `agentRunId=${formatScopeIdSnippet(scope.agentRunId)}`,
+    `internRunId=${formatScopeIdSnippet(scope.internRunId)}`,
     `projectId=${formatScopeIdSnippet(scope.projectId)}`,
     `recordId=${formatScopeIdSnippet(scope.recordId)}`,
     `taskId=${formatScopeIdSnippet(scope.taskId)}`,
-    `taskRecordId=${formatScopeIdSnippet(scope.taskRecordId)}`,
+    `workRecordId=${formatScopeIdSnippet(scope.workRecordId)}`,
   ].join(", ")
 }
 

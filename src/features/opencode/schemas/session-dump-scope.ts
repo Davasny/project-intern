@@ -7,8 +7,6 @@ export const sessionDumpScopeSchema = z.object({
 
 export type SessionDumpScopeInput = z.infer<typeof sessionDumpScopeSchema>
 
-export type SessionDumpScopeKind = "project" | "record" | "task" | "task_record"
-
 export type SessionDumpScope =
   | {
       kind: "project"
@@ -26,7 +24,7 @@ export type SessionDumpScope =
       taskId: string
     }
   | {
-      kind: "task_record"
+      kind: "work_record"
       recordId: string
       taskId: string
     }
@@ -36,7 +34,7 @@ export const resolveSessionDumpScope = ({
   taskId,
 }: SessionDumpScopeInput): SessionDumpScope => {
   if (taskId && recordId) {
-    return { kind: "task_record", recordId, taskId }
+    return { kind: "work_record", recordId, taskId }
   }
 
   if (taskId) {

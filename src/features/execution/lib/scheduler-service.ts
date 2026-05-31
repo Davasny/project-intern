@@ -1,3 +1,3 @@
-import { claimNextTaskRecord } from "@/features/execution/lib/claim-next-task-record"
+import { claimNextWorkRecord } from "@/features/execution/lib/claim-next-work-record"
 
-export const schedulerService = async () => claimNextTaskRecord()
+export const schedulerService = async () => claimNextWorkRecord()

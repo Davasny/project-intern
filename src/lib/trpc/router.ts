@@ -1,8 +1,8 @@
-import { agentRunsRouter } from "@/features/agent-runs/router"
 import { artifactsRouter } from "@/features/artifacts/router"
 import { authRouter } from "@/features/auth/router"
 import { executionRouter } from "@/features/execution/router"
 import { filesRouter } from "@/features/files/router"
+import { internRunsRouter } from "@/features/intern-runs/router"
 import { opencodeRouter } from "@/features/opencode/router"
 import { organizationsRouter } from "@/features/organizations/router"
 import { projectSchemaRouter } from "@/features/project-schema/router"
@@ -13,7 +13,7 @@ import { tasksRouter } from "@/features/tasks/router"
 import { router } from "@/lib/trpc/init"
 
 export const appRouter = router({
-  agentRuns: agentRunsRouter,
+  internRuns: internRunsRouter,
   artifacts: artifactsRouter,
   auth: authRouter,
   execution: executionRouter,

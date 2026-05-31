@@ -18,7 +18,7 @@ export const getDebugSessionDumpDirectory = ({
   scope: SessionDumpScope
 }) => {
   const scopeSlug =
-    scope.kind === "task_record"
+    scope.kind === "work_record"
       ? `task-${scope.taskId}-record-${scope.recordId}`
       : scope.kind === "task"
         ? `task-${scope.taskId}`

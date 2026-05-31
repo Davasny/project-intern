@@ -1,30 +1,30 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import { and, eq, sql } from "drizzle-orm"
-import { agentRunTable } from "@/features/agent-runs/db"
-import {
-  abortAgentRunCommand,
-  bootAgentRunCommand,
-  createAgentRunCommand,
-  runAgentRunCommand,
-} from "@/features/agent-runs/lib/agent-run-commands"
-import { getPreviousTaskExecutionsForRecord } from "@/features/agent-runs/lib/get-previous-task-executions-for-record"
 import { ensureProjectPythonEnv } from "@/features/execution/lib/ensure-project-python-env"
 import { ensureProjectSkillsOnDisk } from "@/features/execution/lib/ensure-project-skills-on-disk"
 import { ensureRecordWorkspace } from "@/features/execution/lib/ensure-record-workspace"
 import { linkProjectSkillsToWorkspace } from "@/features/execution/lib/link-project-skills-to-workspace"
 import { prepareRecordWorkspaceData } from "@/features/execution/lib/prepare-record-workspace-data"
 import { listRecordFiles } from "@/features/files/lib/list-record-files"
+import { internRunTable } from "@/features/intern-runs/db"
+import { getPreviousTaskExecutionsForRecord } from "@/features/intern-runs/lib/get-previous-task-executions-for-record"
+import {
+  abortInternRunCommand,
+  bootInternRunCommand,
+  createInternRunCommand,
+  runInternRunCommand,
+} from "@/features/intern-runs/lib/intern-run-commands"
 import { startInteractiveServer } from "@/features/opencode/lib/get-opencode-client"
 import { getActiveProjectSchemaVersionByProjectId } from "@/features/project-schema/lib/get-active-project-schema-version-by-project-id"
 import { projectTable } from "@/features/projects/db"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
 import { recordTable } from "@/features/records/db"
-import { taskRecordTable } from "@/features/task-records/db"
-import { createTaskRecordMachineContext } from "@/features/task-records/lib/create-task-record-machine-context"
-import { getTaskRecordActor } from "@/features/task-records/lib/get-task-record-actor"
-import { taskRecordMachine } from "@/features/task-records/lib/task-record-machine"
 import { taskTable } from "@/features/tasks/db"
+import { workRecordTable } from "@/features/work-records/db"
+import { createWorkRecordMachineContext } from "@/features/work-records/lib/create-work-record-machine-context"
+import { getWorkRecordActor } from "@/features/work-records/lib/get-work-record-actor"
+import { workRecordMachine } from "@/features/work-records/lib/work-record-machine"
 import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
 import { resolveEffectiveModel } from "@/lib/llm/resolve-effective-model"
@@ -40,14 +40,14 @@ type SpawnDebugSessionParams = {
 }
 
 type SpawnDebugSessionResult = {
-  agentRunId: string
+  internRunId: string
   baseUrl: string
   cliCommand: string
   directory: string
   port: number | null
   serverId: string | null
   sessionId: string
-  taskRecordId: string
+  workRecordId: string
 }
 
 const buildAttachCommand = (
@@ -56,7 +56,7 @@ const buildAttachCommand = (
   directory: string,
 ) => `opencode attach ${serverUrl} --session ${sessionId} --dir ${directory}`
 
-const getOrCreateTaskRecord = async ({
+const getOrCreateWorkRecord = async ({
   taskId,
   recordId,
 }: {
@@ -64,12 +64,12 @@ const getOrCreateTaskRecord = async ({
   recordId: string
 }) => {
   const existing = await db
-    .select({ id: taskRecordTable.id, state: taskRecordTable.state })
-    .from(taskRecordTable)
+    .select({ id: workRecordTable.id, state: workRecordTable.state })
+    .from(workRecordTable)
     .where(
       and(
-        eq(taskRecordTable.taskId, taskId),
-        eq(taskRecordTable.recordId, recordId),
+        eq(workRecordTable.taskId, taskId),
+        eq(workRecordTable.recordId, recordId),
       ),
     )
     .then((rows) => rows[0] ?? null)
@@ -82,25 +82,25 @@ const getOrCreateTaskRecord = async ({
   const id = idResult.rows[0]?.id
 
   if (!id) {
-    throw new Error("Could not generate UUID for task record")
+    throw new Error("Could not generate UUID for work record")
   }
 
-  await taskRecordMachine.createActor(
+  await workRecordMachine.createActor(
     id,
-    createTaskRecordMachineContext({ recordId, taskId }),
+    createWorkRecordMachineContext({ recordId, taskId }),
   )
 
   return { id, state: "waiting" as const }
 }
 
 const transitionToRunning = async ({
-  agentRunId,
-  taskRecordId,
+  internRunId,
+  workRecordId,
   directory,
   model,
 }: {
-  agentRunId: string
-  taskRecordId: string
+  internRunId: string
+  workRecordId: string
   directory: string
   model: string | null
 }) => {
@@ -108,32 +108,32 @@ const transitionToRunning = async ({
     model ?? "anthropic/claude-sonnet-4-5-20250514"
   ).split("/")
 
-  await bootAgentRunCommand({
-    agentRunId,
+  await bootInternRunCommand({
+    internRunId,
     directory,
     model: modelID,
     provider: providerID,
-    sessionReference: taskRecordId,
+    sessionReference: workRecordId,
     toolActivitySummary: {},
   })
 
-  const taskRecordActor = await getTaskRecordActor(taskRecordId)
-  await taskRecordActor.send("claim", {
-    agentRunId,
+  const workRecordActor = await getWorkRecordActor(workRecordId)
+  await workRecordActor.send("claim", {
+    internRunId,
     lastTransitionAt: new Date(),
   })
 
-  await taskRecordActor.send("start", {
-    agentRunId,
+  await workRecordActor.send("start", {
+    internRunId,
     lastTransitionAt: new Date(),
   })
 
-  await runAgentRunCommand({
-    agentRunId,
+  await runInternRunCommand({
+    internRunId,
     latencyMs: null,
     model: modelID,
     provider: providerID,
-    sessionReference: taskRecordId,
+    sessionReference: workRecordId,
     tokenInput: null,
     toolActivitySummary: {},
   })
@@ -184,11 +184,11 @@ export const spawnDebugSession = async ({
     throw new Error(`Record ${recordId} not found`)
   }
 
-  const { id: taskRecordId } = await getOrCreateTaskRecord({
+  const { id: workRecordId } = await getOrCreateWorkRecord({
     taskId,
     recordId,
   })
-  debugLogger = debugLogger.child({ taskRecordId })
+  debugLogger = debugLogger.child({ workRecordId })
 
   const resolvedModel = resolveEffectiveModel({
     projectDefaultModel: task.projectDefaultModel,
@@ -200,27 +200,27 @@ export const spawnDebugSession = async ({
   })
 
   const existingAttempts = await db
-    .select({ maxAttempt: sql<number>`max(${agentRunTable.attemptNumber})` })
-    .from(agentRunTable)
-    .where(eq(agentRunTable.taskRecordId, taskRecordId))
+    .select({ maxAttempt: sql<number>`max(${internRunTable.attemptNumber})` })
+    .from(internRunTable)
+    .where(eq(internRunTable.workRecordId, workRecordId))
     .then((rows) => rows[0]?.maxAttempt ?? 0)
 
-  debugLogger.info("Creating agent run for debug session")
-  const agentRunResult = await createAgentRunCommand({
+  debugLogger.info("Creating intern run for debug session")
+  const internRunResult = await createInternRunCommand({
     attemptNumber: existingAttempts + 1,
     model: resolvedModel,
     projectDefaultModel: task.projectDefaultModel,
     projectDefaultTemperature: task.projectDefaultTemperature,
-    taskRecordId,
+    workRecordId,
     temperature: resolvedTemperature,
   })
 
-  if (!agentRunResult) {
-    throw new Error("Could not create agent run")
+  if (!internRunResult) {
+    throw new Error("Could not create intern run")
   }
 
-  const agentRunId = agentRunResult.agentRunId
-  debugLogger = debugLogger.child({ agentRunId })
+  const internRunId = internRunResult.internRunId
+  debugLogger = debugLogger.child({ internRunId })
 
   debugLogger.info("Ensuring record workspace")
   const workspace = await ensureRecordWorkspace({ projectId, recordId })
@@ -270,9 +270,9 @@ export const spawnDebugSession = async ({
     runtimeTemperature: resolvedTemperature,
   })
 
-  const envAgentPath = path.join(workspace.workspaceDirectory, ".env.agent")
-  await fs.writeFile(envAgentPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)
-  debugLogger.info({ envAgentPath }, "Wrote .env.agent")
+  const envInternPath = path.join(workspace.workspaceDirectory, ".env.intern")
+  await fs.writeFile(envInternPath, `CRM_BEARER_TOKEN=${started.apiKey}\n`)
+  debugLogger.info({ envInternPath }, "Wrote .env.intern")
 
   const sessionTitle = title || `${task.title} · ${record.name}`
 
@@ -296,8 +296,8 @@ export const spawnDebugSession = async ({
   )
 
   await transitionToRunning({
-    agentRunId,
-    taskRecordId,
+    internRunId,
+    workRecordId,
     directory: workspace.workspaceDirectory,
     model: resolvedModel,
   })
@@ -321,7 +321,7 @@ export const spawnDebugSession = async ({
   try {
     previousExecutions = await getPreviousTaskExecutionsForRecord({
       recordId,
-      excludeAgentRunId: agentRunId,
+      excludeInternRunId: internRunId,
     })
 
     debugLogger.info(
@@ -356,14 +356,14 @@ export const spawnDebugSession = async ({
 
 ## Valid IDs for MCP Tool Calls
 When calling MCP tools, use these IDs:
-- agentRunId: \`${agentRunId}\`
-- taskRecordId: \`${taskRecordId}\`
+- internRunId: \`${internRunId}\`
+- workRecordId: \`${workRecordId}\`
 - projectId: \`${projectId}\`
 - recordId: \`${recordId}\`
 - taskId: \`${taskId}\`
 
 ## CRM REST API
-For better efficiency (avoiding MCP tool call overhead), you can call the REST API directly from scripts. The bearer token is available in \`.env.agent\` as \`CRM_BEARER_TOKEN\`. CRM API base URL: \`${backendConfig.BETTER_AUTH_URL}/api/crm\`. Fetch the OpenAPI spec at \`GET {CRM API base URL}/schema.json\` to discover all endpoints. All REST endpoints mirror MCP tools with the same request/response shape.
+For better efficiency (avoiding MCP tool call overhead), you can call the REST API directly from scripts. The bearer token is available in \`.env.intern\` as \`CRM_BEARER_TOKEN\`. CRM API base URL: \`${backendConfig.BETTER_AUTH_URL}/api/crm\`. Fetch the OpenAPI spec at \`GET {CRM API base URL}/schema.json\` to discover all endpoints. All REST endpoints mirror MCP tools with the same request/response shape.
 
 ## Previous Task Executions
 ${previousExecutionsSection}
@@ -373,12 +373,12 @@ ${previousExecutionsSection}
 ${JSON.stringify(
   {
     execution: {
-      agentRunId,
+      internRunId,
       projectId,
       pythonPath: pythonEnv.pythonPath,
       recordId,
       taskId,
-      taskRecordId,
+      workRecordId,
       workspaceDataDirectory: preparedWorkspaceData.dataDirectory,
     },
     files,
@@ -407,40 +407,40 @@ ${JSON.stringify(
   )
 
   debugLogger.info(
-    { sessionId: session.data.id, agentRunId, taskRecordId },
+    { sessionId: session.data.id, internRunId, workRecordId },
     "Debug session spawned successfully",
   )
 
   return {
-    agentRunId,
+    internRunId,
     baseUrl: serverUrl,
     cliCommand,
     directory: workspace.workspaceDirectory,
     port: started.port,
     serverId: started.serverId ?? null,
     sessionId: session.data.id,
-    taskRecordId,
+    workRecordId,
   }
 }
 
 type StopDebugSessionParams = {
-  agentRunId: string
-  taskRecordId: string
+  internRunId: string
+  workRecordId: string
 }
 
 export const stopDebugSession = async ({
-  agentRunId,
-  taskRecordId,
+  internRunId,
+  workRecordId,
 }: StopDebugSessionParams) => {
-  const debugLogger = logger.child({ agentRunId, taskRecordId })
+  const debugLogger = logger.child({ internRunId, workRecordId })
 
   try {
     debugLogger.info("Stopping debug session, transitioning to aborted")
 
-    await abortAgentRunCommand({
-      agentRunId,
+    await abortInternRunCommand({
+      internRunId,
       failurePayload: { stoppedByUser: true },
-      taskRecordId,
+      workRecordId,
       toolActivitySummary: {},
     })
 

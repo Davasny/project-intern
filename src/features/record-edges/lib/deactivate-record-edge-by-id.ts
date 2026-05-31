@@ -6,14 +6,14 @@ import { getRecordEdgeActor } from "@/features/record-edges/lib/record-edge-mach
 import { db } from "@/lib/db"
 
 type DeactivateRecordEdgeByIdParams = {
-  agentRunId: string
+  internRunId: string
   projectId: string
   recordEdgeId: string
   recordId: string
 }
 
 export const deactivateRecordEdgeById = async ({
-  agentRunId,
+  internRunId,
   projectId,
   recordEdgeId,
   recordId,
@@ -34,7 +34,7 @@ export const deactivateRecordEdgeById = async ({
   const actor = await getRecordEdgeActor(recordEdge.id)
 
   await actor.send("deactivate", {
-    byAgentRunId: agentRunId,
+    byInternRunId: internRunId,
     byUserId: null,
     fromRecordId: recordId,
   })

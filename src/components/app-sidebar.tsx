@@ -61,8 +61,8 @@ export const AppSidebar = () => {
       icon: <BracesIcon/>,
     },
     {
-      href: `/app/${organizationSlug}/${projectSlug}/runs`,
-      label: "Runs",
+      href: `/app/${organizationSlug}/${projectSlug}/intern-runs`,
+      label: "Intern runs",
       icon: <PlayIcon />,
     },
     {
@@ -78,7 +78,7 @@ export const AppSidebar = () => {
         <SidebarMenuButton asChild>
           <Link href="/app">
             <LogoIcon />
-            <span className="font-medium">Project Intern</span>
+            <span className="font-medium">Intern</span>
           </Link>
         </SidebarMenuButton>
       </SidebarHeader>

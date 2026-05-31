@@ -1,12 +1,12 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
-import { releaseClaimedTaskRecord } from "@/features/execution/lib/execution-claim-service"
+import { releaseClaimedWorkRecord } from "@/features/execution/lib/execution-claim-service"
 import { executionLogger } from "@/features/execution/lib/execution-logger"
 import { executionQueueService } from "@/features/execution/lib/execution-queue-service"
 import { getExecutionMonitorReadModel } from "@/features/execution/lib/get-execution-monitor-read-model"
 import { updateProjectAutopick } from "@/features/execution/lib/update-project-autopick"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
-import { launchTaskRecordExecution } from "@/features/task-records/lib/launch-task-record-execution"
+import { launchWorkRecordExecution } from "@/features/work-records/lib/launch-work-record-execution"
 import { backendConfig } from "@/lib/config/backend"
 import { logger } from "@/lib/logger"
 import { protectedProcedure, router } from "@/lib/trpc/init"
@@ -58,8 +58,8 @@ export const executionRouter = router({
         debugControlsEnabled: backendConfig.IS_DEVELOPMENT,
       }
     }),
-  triggerTaskRecord: protectedProcedure
-    .input(projectScopeSchema.extend({ taskRecordId: z.string().uuid() }))
+  triggerWorkRecord: protectedProcedure
+    .input(projectScopeSchema.extend({ workRecordId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       assertDevelopmentMode()
 
@@ -76,39 +76,39 @@ export const executionRouter = router({
         })
       }
 
-      const claimedTaskRecord = await launchTaskRecordExecution({
+      const claimedWorkRecord = await launchWorkRecordExecution({
         projectId: project.id,
-        taskRecordId: input.taskRecordId,
+        workRecordId: input.workRecordId,
       })
 
-      if (!claimedTaskRecord) {
+      if (!claimedWorkRecord) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Task record is not eligible for manual triggering.",
+          message: "Work record is not eligible for manual triggering.",
         })
       }
 
-      logger.info(claimedTaskRecord, "Claimed task record for manual trigger")
+      logger.info(claimedWorkRecord, "Claimed work record for manual trigger")
 
-      const jobId = await executionQueueService.enqueueTaskRecordExecution({
-        agentRunId: claimedTaskRecord.agentRunId,
-        taskRecordId: claimedTaskRecord.taskRecordId,
+      const jobId = await executionQueueService.enqueueWorkRecordExecution({
+        internRunId: claimedWorkRecord.internRunId,
+        workRecordId: claimedWorkRecord.workRecordId,
       })
 
       if (jobId === null) {
         executionLogger.error(
           {
-            agentRunId: claimedTaskRecord.agentRunId,
+            internRunId: claimedWorkRecord.internRunId,
             requestedBy: "manual",
-            taskRecordId: claimedTaskRecord.taskRecordId,
+            workRecordId: claimedWorkRecord.workRecordId,
           },
-          "Failed to enqueue claimed task record",
+          "Failed to enqueue claimed work record",
         )
 
-        await releaseClaimedTaskRecord({
-          agentRunId: claimedTaskRecord.agentRunId,
+        await releaseClaimedWorkRecord({
+          internRunId: claimedWorkRecord.internRunId,
           reason: "ENQUEUE_FAILED",
-          taskRecordId: claimedTaskRecord.taskRecordId,
+          workRecordId: claimedWorkRecord.workRecordId,
         })
 
         throw new TRPCError({
@@ -119,15 +119,15 @@ export const executionRouter = router({
 
       executionLogger.info(
         {
-          agentRunId: claimedTaskRecord.agentRunId,
+          internRunId: claimedWorkRecord.internRunId,
           jobId,
           requestedBy: "manual",
-          taskRecordId: claimedTaskRecord.taskRecordId,
+          workRecordId: claimedWorkRecord.workRecordId,
         },
-        "Enqueued claimed task record",
+        "Enqueued claimed work record",
       )
 
-      return { ...claimedTaskRecord, jobId }
+      return { ...claimedWorkRecord, jobId }
     }),
   updateAutopick: protectedProcedure
     .input(projectScopeSchema.extend({ isAutopickEnabled: z.boolean() }))

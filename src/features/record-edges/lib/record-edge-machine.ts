@@ -22,7 +22,7 @@ type RecordEdgeMachineContext = {
 }
 
 type CreateEdgeEvent = {
-  byAgentRunId: string | null
+  byInternRunId: string | null
   byUserId: string | null
   direction: "bidirectional" | "outbound"
   fromProjectId: string
@@ -55,7 +55,7 @@ type EditEdgeEvent = {
 }
 
 type DeactivateEdgeEvent = {
-  byAgentRunId: string | null
+  byInternRunId: string | null
   byUserId: string | null
   fromRecordId: string
 }
@@ -206,8 +206,8 @@ const recordEdgeMachineDefinition = machine<RecordEdgeMachineContext>().define({
           nextMetadata.deactivatedFromRecordId = event.fromRecordId
         }
 
-        if (event.byAgentRunId) {
-          nextMetadata.deactivatedByAgentRunId = event.byAgentRunId
+        if (event.byInternRunId) {
+          nextMetadata.deactivatedByInternRunId = event.byInternRunId
           nextMetadata.deactivatedFromRecordId = event.fromRecordId
         }
 

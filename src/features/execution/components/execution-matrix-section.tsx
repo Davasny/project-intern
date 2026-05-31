@@ -9,7 +9,7 @@ import { ExecutionMatrixAddRecordRow } from "@/features/execution/components/exe
 import { ExecutionMatrixAddTaskHeader } from "@/features/execution/components/execution-matrix-add-task-header"
 import { ExecutionMatrixHeaderCell } from "@/features/execution/components/execution-matrix-header-cell"
 import { ExecutionMatrixRecordRow } from "@/features/execution/components/execution-matrix-record-row"
-import type { ExecutionTaskRecordCell } from "@/features/execution/lib/build-execution-matrix"
+import type { ExecutionWorkRecordCell } from "@/features/execution/lib/build-execution-matrix"
 
 type ExecutionMatrixSectionProps = {
   debugControlsEnabled: boolean
@@ -19,7 +19,7 @@ type ExecutionMatrixSectionProps = {
       id: string
       name: string
     }>
-    taskRecordsByRecordId: Map<string, Map<string, ExecutionTaskRecordCell>>
+    workRecordsByRecordId: Map<string, Map<string, ExecutionWorkRecordCell>>
     tasks: Array<{
       id: string
       sortOrder: number
@@ -67,7 +67,7 @@ export const ExecutionMatrixSection = ({
           organizationSlug={organizationSlug}
           projectSlug={projectSlug}
           record={record}
-          recordCells={matrix.taskRecordsByRecordId.get(record.id) ?? null}
+          recordCells={matrix.workRecordsByRecordId.get(record.id) ?? null}
           tasks={matrix.tasks}
         />
       ))}

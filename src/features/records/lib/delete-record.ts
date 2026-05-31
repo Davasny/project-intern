@@ -3,8 +3,8 @@ import { and, eq, inArray } from "drizzle-orm"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
 import { getScopedRecord } from "@/features/records/lib/get-scoped-record"
-import { taskRecordTable } from "@/features/task-records/db"
-import { activeTaskRecordStates } from "@/features/task-records/schemas/task-record-state"
+import { workRecordTable } from "@/features/work-records/db"
+import { activeWorkRecordStates } from "@/features/work-records/schemas/work-record-state"
 import { db } from "@/lib/db"
 import { cleanupRecordDirectories } from "@/lib/utils/cleanup-record-directories"
 
@@ -39,17 +39,17 @@ export const deleteRecord = async ({
     recordId,
   })
 
-  const activeTaskRecords = await db
-    .select({ id: taskRecordTable.id })
-    .from(taskRecordTable)
+  const activeWorkRecords = await db
+    .select({ id: workRecordTable.id })
+    .from(workRecordTable)
     .where(
       and(
-        eq(taskRecordTable.recordId, record.id),
-        inArray(taskRecordTable.state, activeTaskRecordStates),
+        eq(workRecordTable.recordId, record.id),
+        inArray(workRecordTable.state, activeWorkRecordStates),
       ),
     )
 
-  if (activeTaskRecords.length > 0) {
+  if (activeWorkRecords.length > 0) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message:

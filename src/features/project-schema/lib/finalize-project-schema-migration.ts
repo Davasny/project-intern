@@ -1,7 +1,7 @@
 import { and, eq, sql } from "drizzle-orm"
 import { recordTable } from "@/features/records/db"
-import { taskRecordTable } from "@/features/task-records/db"
 import { taskTable } from "@/features/tasks/db"
+import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
 type FinalizeProjectSchemaMigrationParams = {
@@ -26,15 +26,15 @@ export const finalizeProjectSchemaMigration = async ({
     return null
   }
 
-  const taskRecords = await db
-    .select({ state: taskRecordTable.state })
-    .from(taskRecordTable)
-    .where(eq(taskRecordTable.taskId, task.id))
+  const workRecords = await db
+    .select({ state: workRecordTable.state })
+    .from(workRecordTable)
+    .where(eq(workRecordTable.taskId, task.id))
 
   if (
-    taskRecords.some(
-      (taskRecord) =>
-        taskRecord.state !== "completed" && taskRecord.state !== "skipped",
+    workRecords.some(
+      (workRecord) =>
+        workRecord.state !== "completed" && workRecord.state !== "skipped",
     )
   ) {
     return null

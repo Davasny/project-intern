@@ -162,6 +162,13 @@
       "when": 1780140625607,
       "tag": "0022_lethal_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1780232175461,
+      "tag": "0023_fast_strong_guy",
+      "breakpoints": true
     }
   ]
 }

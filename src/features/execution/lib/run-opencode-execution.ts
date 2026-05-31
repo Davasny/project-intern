@@ -1,26 +1,26 @@
 import type { OpencodeClient } from "@opencode-ai/sdk"
 import type { Logger } from "pino"
+import { getPreviousTaskExecutionsForRecord } from "@/features/intern-runs/lib/get-previous-task-executions-for-record"
 import {
-  bootAgentRunCommand,
-  runAgentRunCommand,
-} from "@/features/agent-runs/lib/agent-run-commands"
-import { getPreviousTaskExecutionsForRecord } from "@/features/agent-runs/lib/get-previous-task-executions-for-record"
+  bootInternRunCommand,
+  runInternRunCommand,
+} from "@/features/intern-runs/lib/intern-run-commands"
 import { pollSessionForMetrics } from "@/features/opencode/lib/poll-session-for-metrics"
-import { startTaskRecord } from "@/features/task-records/lib/start-task-record"
+import { startWorkRecord } from "@/features/work-records/lib/start-work-record"
 import { recordWorkerAgent } from "@/lib/llm/agents"
-import { buildTaskRecordAgentPrompt } from "@/lib/llm/build-task-record-agent-prompt"
-import { buildTaskRecordSystemPrompt } from "@/lib/llm/build-task-record-system-prompt"
+import { buildWorkRecordAgentPrompt } from "@/lib/llm/build-work-record-agent-prompt"
+import { buildWorkRecordSystemPrompt } from "@/lib/llm/build-work-record-system-prompt"
 
 type RunOpencodeExecutionParams = {
   client: OpencodeClient
   executionLogger: Logger
   files: Array<{ name: string; path: string }>
   initialScope: {
-    agentRun: { id: string }
+    internRun: { id: string }
     project: { id: string; displayName: string; organizationId: string }
     record: { id: string; name: string; context: object }
     task: { id: string; title: string; descriptionMarkdown: string }
-    taskRecord: { id: string }
+    workRecord: { id: string }
   }
   projectSkills: { skillsDirectory: string }
   preparedWorkspaceData: { copiedEntryCount: number }
@@ -90,11 +90,11 @@ export const runOpencodeExecution = async ({
       providerID,
       sessionId: session.data.id,
     },
-    "Marking agent run booting",
+    "Marking intern run booting",
   )
 
-  await bootAgentRunCommand({
-    agentRunId: initialScope.agentRun.id,
+  await bootInternRunCommand({
+    internRunId: initialScope.internRun.id,
     directory: workspace.workspaceDirectory,
     model: modelID,
     provider: providerID,
@@ -109,7 +109,7 @@ export const runOpencodeExecution = async ({
 
   executionLogger.info(
     { sessionId: session.data.id },
-    "Marked agent run booting",
+    "Marked intern run booting",
   )
 
   let previousExecutions: Awaited<
@@ -119,7 +119,7 @@ export const runOpencodeExecution = async ({
   try {
     previousExecutions = await getPreviousTaskExecutionsForRecord({
       recordId: initialScope.record.id,
-      excludeAgentRunId: initialScope.agentRun.id,
+      excludeInternRunId: initialScope.internRun.id,
     })
 
     executionLogger.info(
@@ -136,19 +136,19 @@ export const runOpencodeExecution = async ({
     )
   }
 
-  const promptText = buildTaskRecordAgentPrompt({
+  const promptText = buildWorkRecordAgentPrompt({
     taskTitle: initialScope.task.title,
     taskDescription: initialScope.task.descriptionMarkdown,
     recordContext: initialScope.record,
   })
 
-  const systemPrompt = buildTaskRecordSystemPrompt({
+  const systemPrompt = buildWorkRecordSystemPrompt({
     executionScope: {
-      agentRunId: initialScope.agentRun.id,
+      internRunId: initialScope.internRun.id,
       projectId: initialScope.project.id,
       recordId: initialScope.record.id,
       taskId: initialScope.task.id,
-      taskRecordId: initialScope.taskRecord.id,
+      workRecordId: initialScope.workRecord.id,
       pythonPath: pythonEnv.pythonPath,
       workspaceDataDirectory: workspace.workspaceDirectory,
     },
@@ -169,26 +169,26 @@ export const runOpencodeExecution = async ({
 
   executionLogger.info(
     { sessionId: session.data.id },
-    "Starting task record execution",
+    "Starting work record execution",
   )
 
-  await startTaskRecord({
-    agentRunId: initialScope.agentRun.id,
-    taskRecordId: initialScope.taskRecord.id,
+  await startWorkRecord({
+    internRunId: initialScope.internRun.id,
+    workRecordId: initialScope.workRecord.id,
   })
 
   executionLogger.info(
     { sessionId: session.data.id },
-    "Started task record execution",
+    "Started work record execution",
   )
 
   executionLogger.info(
     { sessionId: session.data.id },
-    "Marking agent run running",
+    "Marking intern run running",
   )
 
-  await runAgentRunCommand({
-    agentRunId: initialScope.agentRun.id,
+  await runInternRunCommand({
+    internRunId: initialScope.internRun.id,
     model: modelID,
     latencyMs: null,
     provider: providerID,
@@ -205,7 +205,7 @@ export const runOpencodeExecution = async ({
 
   executionLogger.info(
     { sessionId: session.data.id },
-    "Marked agent run running",
+    "Marked intern run running",
   )
 
   executionLogger.info(
@@ -247,13 +247,13 @@ export const runOpencodeExecution = async ({
 
   await pollSessionForMetrics({
     sessionId: session.data.id,
-    agentRunId: initialScope.agentRun.id,
+    internRunId: initialScope.internRun.id,
     client,
-    taskRecordId: initialScope.taskRecord.id,
+    workRecordId: initialScope.workRecord.id,
   })
 
   return {
-    agentRunId: initialScope.agentRun.id,
+    internRunId: initialScope.internRun.id,
     files,
     model: runtimeModel,
     projectId: initialScope.project.id,
@@ -262,7 +262,7 @@ export const runOpencodeExecution = async ({
     schema,
     sessionId: session.data.id,
     taskId: initialScope.task.id,
-    taskRecordId: initialScope.taskRecord.id,
+    workRecordId: initialScope.workRecord.id,
     temperature: runtimeTemperature,
     workspace,
   }
