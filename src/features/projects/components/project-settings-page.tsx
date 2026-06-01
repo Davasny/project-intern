@@ -7,6 +7,7 @@ import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
 import { ImportExportSection } from "@/features/projects/components/import-export-section"
+import { ProjectDescriptionForm } from "@/features/projects/components/project-description-form"
 import { ProjectDeleteSection } from "@/features/projects/components/project-delete-section"
 import { ProjectRenameForm } from "@/features/projects/components/project-rename-form"
 import { ProjectSettingsForm } from "@/features/projects/components/project-settings-form"
@@ -45,7 +46,13 @@ export const ProjectSettingsPage = () => {
           <h2 className="text-lg font-semibold text-foreground">Project</h2>
         </SectionCardHeader>
         <SectionCardContent>
-          <ProjectRenameForm initialDisplayName={settingsQuery.data.displayName} />
+          <div className="flex flex-col gap-6">
+            <ProjectRenameForm initialDisplayName={settingsQuery.data.displayName} />
+            <ProjectDescriptionForm
+              initialDescriptionMarkdown={settingsQuery.data.descriptionMarkdown}
+              onSubmitted={() => undefined}
+            />
+          </div>
         </SectionCardContent>
       </SectionCard>
       <SectionCard>

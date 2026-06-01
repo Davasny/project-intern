@@ -169,6 +169,13 @@
       "when": 1780232175461,
       "tag": "0023_fast_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1780315797805,
+      "tag": "0024_groovy_salo",
+      "breakpoints": true
     }
   ]
 }

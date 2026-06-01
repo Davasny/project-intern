@@ -19,6 +19,7 @@ type BuildWorkRecordSystemPromptParams = {
     pythonPath: string
   }
   projectDisplayName: string
+  projectDescriptionMarkdown: string
   recordName: string
   taskTitle: string
   previousExecutions: PreviousTaskExecution[]
@@ -54,6 +55,7 @@ const formatPreviousExecutions = (
 export const buildWorkRecordSystemPrompt = ({
   executionScope,
   projectDisplayName,
+  projectDescriptionMarkdown,
   recordName,
   taskTitle,
   previousExecutions,
@@ -98,7 +100,7 @@ If user asks you to create/remove/manage files, you have to use \`data/\` direct
 
 ${formatPreviousExecutions(previousExecutions)}
 
-<context>
+<record-context>
 Project name: ${projectDisplayName}
 Project ID: ${executionScope.projectId}
 
@@ -114,5 +116,9 @@ Work record ID: ${executionScope.workRecordId}
 
 Workspace data directory: ${executionScope.workspaceDataDirectory}
 Python executable path: ${executionScope.pythonPath}
-</context>
+</record-context>
+
+<project-description>
+${projectDescriptionMarkdown.trim().length > 0 ? projectDescriptionMarkdown : "No project description provided."}
+</project-description>
 `

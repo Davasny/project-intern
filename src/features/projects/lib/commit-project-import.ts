@@ -159,6 +159,10 @@ export const commitProjectImport = async ({
       let tasksImported = 0
 
       if (data.tasks && data.tasks.length > 0) {
+        const sortedTasks = [...data.tasks].sort(
+          (leftTask, rightTask) => leftTask.sortOrder - rightTask.sortOrder,
+        )
+
         const [maxRow] = await transaction
           .select({
             maxSortOrder: sql<number>`coalesce(max(${taskTable.sortOrder}), 0)`,
@@ -168,7 +172,7 @@ export const commitProjectImport = async ({
 
         const maxSortOrder = maxRow?.maxSortOrder ?? 0
 
-        for (const task of data.tasks) {
+        for (const task of sortedTasks) {
           if (existingTaskTitles.has(task.title)) {
             continue
           }
@@ -227,6 +231,7 @@ export const commitProjectImport = async ({
         await transaction
           .update(projectTable)
           .set({
+            descriptionMarkdown: data.projectSettings.descriptionMarkdown,
             internPythonRequirements:
               data.projectSettings.internPythonRequirements,
             defaultModel: data.projectSettings.defaultModel,

@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { eq } from "drizzle-orm"
+import { asc, eq } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
@@ -52,6 +52,7 @@ export const exportProjectData = async ({
       })
       .from(taskTable)
       .where(eq(taskTable.projectId, project.id))
+      .orderBy(asc(taskTable.sortOrder))
 
     data.tasks = tasks
   }
@@ -88,6 +89,7 @@ export const exportProjectData = async ({
   if (exportOptions.exportProjectSettings) {
     const [settings] = await db
       .select({
+        descriptionMarkdown: projectTable.descriptionMarkdown,
         internPythonRequirements: projectTable.internPythonRequirements,
         defaultModel: projectTable.defaultModel,
         defaultTemperature: projectTable.defaultTemperature,

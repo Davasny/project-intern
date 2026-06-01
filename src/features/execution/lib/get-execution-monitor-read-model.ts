@@ -13,6 +13,7 @@ export const getExecutionMonitorReadModel = async ({
 }: GetExecutionMonitorReadModelParams) => {
   const project = await db
     .select({
+      descriptionMarkdown: projectTable.descriptionMarkdown,
       id: projectTable.id,
       isAutopickEnabled: projectTable.isAutopickEnabled,
     })
@@ -61,6 +62,9 @@ export const getExecutionMonitorReadModel = async ({
   }
 
   return {
+    project: {
+      descriptionMarkdown: project.descriptionMarkdown,
+    },
     isAutopickEnabled: project.isAutopickEnabled,
     summary,
     workRecords,

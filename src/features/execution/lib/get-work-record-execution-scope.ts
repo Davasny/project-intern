@@ -47,6 +47,7 @@ export const getWorkRecordExecutionScope = async ({
       .select({
         defaultModel: projectTable.defaultModel,
         defaultTemperature: projectTable.defaultTemperature,
+        descriptionMarkdown: projectTable.descriptionMarkdown,
         displayName: projectTable.displayName,
         id: projectTable.id,
         organizationId: projectTable.organizationId,
@@ -203,6 +204,7 @@ export const getWorkRecordExecutionScope = async ({
     project: {
       defaultModel: project.defaultModel,
       defaultTemperature: project.defaultTemperature,
+      descriptionMarkdown: project.descriptionMarkdown,
       displayName: project.displayName,
       id: project.id,
       organizationId: project.organizationId,

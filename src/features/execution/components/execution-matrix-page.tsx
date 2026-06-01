@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { RefreshCwIcon, SettingsIcon } from "lucide-react"
+import { PencilIcon, RefreshCwIcon, SettingsIcon } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import { ExecutionMatrixSection } from "@/features/execution/components/executio
 import { ExecutionSummaryStrip } from "@/features/execution/components/execution-summary-strip"
 import { useExecutionMonitorQuery } from "@/features/execution/hooks/use-execution-monitor-query"
 import { buildExecutionMatrix } from "@/features/execution/lib/build-execution-matrix"
+import { ProjectDescriptionForm } from "@/features/projects/components/project-description-form"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { RecordForm } from "@/features/records/components/record-form"
 import { TaskForm } from "@/features/tasks/components/task-form"
@@ -31,6 +32,7 @@ export const ExecutionMatrixPage = () => {
   const executionQuery = useExecutionMonitorQuery()
   const [isCreateRecordOpen, setIsCreateRecordOpen] = useState(false)
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+  const [isDescriptionEditorOpen, setIsDescriptionEditorOpen] = useState(false)
 
   const initialSchemaQuery = useQuery(
     trpc.projectSchema.getByVersion.queryOptions({
@@ -80,6 +82,10 @@ export const ExecutionMatrixPage = () => {
     await invalidateMonitor()
   }
 
+  const handleDescriptionSaved = () => {
+    setIsDescriptionEditorOpen(false)
+  }
+
   const schemaVersionOptions = schemaVersionsQuery.data
     ? schemaVersionsQuery.data.map((version) => version.version)
     : []
@@ -95,10 +101,24 @@ export const ExecutionMatrixPage = () => {
               <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                 Dashboard
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Record-by-task execution grid with latest run results, queue
-                summary, and controls.
-              </p>
+              <div className="flex flex-row items-center gap-2">
+                <p className="max-w-3xl whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                  {executionQuery.data.project.descriptionMarkdown.trim().length >
+                  0 ? (
+                    executionQuery.data.project.descriptionMarkdown
+                  ) : (
+                    <span className="italic">No project description</span>
+                  )}
+                </p>
+                <Button
+                  onClick={() => setIsDescriptionEditorOpen(true)}
+                  size="icon"
+                  variant="ghost"
+                >
+                  <PencilIcon className="size-4" />
+                  <span className="sr-only">Edit project description</span>
+                </Button>
+              </div>
             </div>
             <div className="flex flex-row gap-2">
               <Button
@@ -139,6 +159,27 @@ export const ExecutionMatrixPage = () => {
           projectSlug={projectSlug}
         />
       </div>
+
+      <Dialog
+        onOpenChange={setIsDescriptionEditorOpen}
+        open={isDescriptionEditorOpen}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit project description</DialogTitle>
+            <DialogDescription>
+              This description appears on the dashboard and is passed to every
+              intern run.
+            </DialogDescription>
+          </DialogHeader>
+          <ProjectDescriptionForm
+            initialDescriptionMarkdown={
+              executionQuery.data.project.descriptionMarkdown
+            }
+            onSubmitted={handleDescriptionSaved}
+          />
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         onOpenChange={setIsCreateRecordOpen}

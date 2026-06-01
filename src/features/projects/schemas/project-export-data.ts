@@ -47,6 +47,7 @@ const schemaVersionExportSchema = z.object({
 })
 
 const projectSettingsExportSchema = z.object({
+  descriptionMarkdown: z.string().default(""),
   defaultModel: z.string().trim().min(1),
   defaultTemperature: z.number(),
   internPythonRequirements: z.string(),

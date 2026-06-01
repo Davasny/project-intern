@@ -28,6 +28,7 @@ export const projectTable = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     slug: text("slug").notNull(),
     displayName: text("display_name").notNull(),
+    descriptionMarkdown: text("description_markdown").notNull().default(""),
     defaultModel: text("default_model").notNull(),
     internPythonRequirements: text("intern_python_requirements")
       .notNull()

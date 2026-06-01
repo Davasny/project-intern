@@ -17,7 +17,12 @@ type RunOpencodeExecutionParams = {
   files: Array<{ name: string; path: string }>
   initialScope: {
     internRun: { id: string }
-    project: { id: string; displayName: string; organizationId: string }
+    project: {
+      id: string
+      descriptionMarkdown: string
+      displayName: string
+      organizationId: string
+    }
     record: { id: string; name: string; context: object }
     task: { id: string; title: string; descriptionMarkdown: string }
     workRecord: { id: string }
@@ -153,6 +158,7 @@ export const runOpencodeExecution = async ({
       workspaceDataDirectory: workspace.workspaceDirectory,
     },
     projectDisplayName: initialScope.project.displayName,
+    projectDescriptionMarkdown: initialScope.project.descriptionMarkdown,
     recordName: initialScope.record.name,
     taskTitle: initialScope.task.title,
     previousExecutions,

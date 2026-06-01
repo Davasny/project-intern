@@ -7,6 +7,7 @@ import { getProjectSettings } from "@/features/projects/lib/get-project-settings
 import { listOrganizationProjects } from "@/features/projects/lib/list-organization-projects"
 import { previewProjectImport } from "@/features/projects/lib/preview-project-import"
 import { renameProject } from "@/features/projects/lib/rename-project"
+import { updateProjectDescription } from "@/features/projects/lib/update-project-description"
 import { updateProjectSettings } from "@/features/projects/lib/update-project-settings"
 import {
   projectExportRequestSchema,
@@ -70,6 +71,24 @@ export const projectsRouter = router({
     )
     .mutation(({ ctx, input }) =>
       updateProjectSettings({
+        input: input.input,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
+  updateDescription: protectedProcedure
+    .input(
+      z.object({
+        organizationSlug: z.string().trim().min(1),
+        projectSlug: z.string().trim().min(1),
+        input: z.object({
+          descriptionMarkdown: z.string(),
+        }),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      updateProjectDescription({
         input: input.input,
         organizationSlug: input.organizationSlug,
         projectSlug: input.projectSlug,
