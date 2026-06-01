@@ -38,6 +38,7 @@ type TaskListRowProps = {
       totalCount: number
       waitingCount: number
     }
+    model: string | null
     schemaVersion: number
     sortOrder: number
     state:
@@ -204,10 +205,17 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
           </div>
         </TableCell>
         <TableCell>
-          <span className="text-sm text-muted-foreground">
-            {task.effectiveTemperature.toFixed(1)}
-            {task.temperature === null ? " (default)" : " (override)"}
-          </span>
+          <div className="flex flex-col gap-1">
+            <span className="text-sm text-muted-foreground">
+              {task.effectiveTemperature.toFixed(1)}
+              {task.temperature === null ? " (default)" : " (override)"}
+            </span>
+            {task.model !== null ? (
+              <span className="break-words text-xs text-muted-foreground">
+                {task.model}
+              </span>
+            ) : null}
+          </div>
         </TableCell>
         <TableCell>
           {task.state === "accepted" ? (
