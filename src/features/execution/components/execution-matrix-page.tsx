@@ -61,7 +61,11 @@ export const ExecutionMatrixPage = () => {
     return <LoadingState label="Execution matrix could not be loaded." />
   }
 
-  const matrix = buildExecutionMatrix(executionQuery.data.workRecords)
+  const matrix = buildExecutionMatrix({
+    records: executionQuery.data.records,
+    tasks: executionQuery.data.tasks,
+    workRecords: executionQuery.data.workRecords,
+  })
 
   const invalidateMonitor = async () => {
     await queryClient.invalidateQueries(

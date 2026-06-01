@@ -1,5 +1,7 @@
 import { eq } from "drizzle-orm"
 import { isFailedInternRunState } from "@/features/execution/lib/is-failed-intern-run-state"
+import { listExecutionMatrixRecords } from "@/features/execution/lib/list-execution-matrix-records"
+import { listExecutionMatrixTasks } from "@/features/execution/lib/list-execution-matrix-tasks"
 import { listWorkRecordExecutionReadModels } from "@/features/execution/lib/list-work-record-execution-read-models"
 import { projectTable } from "@/features/projects/db"
 import { db } from "@/lib/db"
@@ -25,11 +27,15 @@ export const getExecutionMonitorReadModel = async ({
     return null
   }
 
-  const workRecords = await listWorkRecordExecutionReadModels({
-    projectId,
-    recordId: null,
-    taskId: null,
-  })
+  const [records, tasks, workRecords] = await Promise.all([
+    listExecutionMatrixRecords({ projectId }),
+    listExecutionMatrixTasks({ projectId }),
+    listWorkRecordExecutionReadModels({
+      projectId,
+      recordId: null,
+      taskId: null,
+    }),
+  ])
 
   const summary = {
     activeCount: workRecords.filter(
@@ -66,7 +72,9 @@ export const getExecutionMonitorReadModel = async ({
       descriptionMarkdown: project.descriptionMarkdown,
     },
     isAutopickEnabled: project.isAutopickEnabled,
+    records,
     summary,
+    tasks,
     workRecords,
   }
 }

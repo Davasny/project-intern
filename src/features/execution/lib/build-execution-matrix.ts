@@ -27,32 +27,23 @@ type ExecutionMatrixRecord = {
   name: string
 }
 
-export const buildExecutionMatrix = (
-  workRecords: Array<ExecutionWorkRecordCell>,
-) => {
-  const tasksById = new Map<string, ExecutionMatrixTask>()
-  const recordsById = new Map<string, ExecutionMatrixRecord>()
+type BuildExecutionMatrixParams = {
+  records: Array<ExecutionMatrixRecord>
+  tasks: Array<ExecutionMatrixTask>
+  workRecords: Array<ExecutionWorkRecordCell>
+}
+
+export const buildExecutionMatrix = ({
+  records,
+  tasks,
+  workRecords,
+}: BuildExecutionMatrixParams) => {
   const workRecordsByRecordId = new Map<
     string,
     Map<string, ExecutionWorkRecordCell>
   >()
 
   for (const workRecord of workRecords) {
-    if (!tasksById.has(workRecord.taskId)) {
-      tasksById.set(workRecord.taskId, {
-        id: workRecord.taskId,
-        sortOrder: workRecord.taskSortOrder,
-        title: workRecord.taskTitle,
-      })
-    }
-
-    if (!recordsById.has(workRecord.recordId)) {
-      recordsById.set(workRecord.recordId, {
-        id: workRecord.recordId,
-        name: workRecord.recordName,
-      })
-    }
-
     const recordCells = workRecordsByRecordId.get(workRecord.recordId)
 
     if (recordCells) {
@@ -66,7 +57,7 @@ export const buildExecutionMatrix = (
     )
   }
 
-  const tasks = Array.from(tasksById.values()).sort((left, right) => {
+  const sortedTasks = [...tasks].sort((left, right) => {
     if (left.sortOrder !== right.sortOrder) {
       return left.sortOrder - right.sortOrder
     }
@@ -78,7 +69,7 @@ export const buildExecutionMatrix = (
     return left.id.localeCompare(right.id)
   })
 
-  const records = Array.from(recordsById.values()).sort((left, right) => {
+  const sortedRecords = [...records].sort((left, right) => {
     const leftName = left.name.toLocaleLowerCase()
     const rightName = right.name.toLocaleLowerCase()
 
@@ -90,8 +81,8 @@ export const buildExecutionMatrix = (
   })
 
   return {
-    records,
+    records: sortedRecords,
     workRecordsByRecordId,
-    tasks,
+    tasks: sortedTasks,
   }
 }
