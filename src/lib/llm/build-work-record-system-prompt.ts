@@ -89,7 +89,7 @@ If user asks you to create/remove/manage files, you have to use \`data/\` direct
 
 <files-instructions>
   <rule>Never read pdf, xls, xlsx files directly, always use skills to get detailed instruction on how to read specific file type</rule>
-  <rule>When working with pdf files use glm-ocr skill</rule>
+  <rule>Always use glm-ocr skill when working with pdf</rule>
 </files-instructions>
 
 <scripts-instructions>
