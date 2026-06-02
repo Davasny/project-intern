@@ -6,6 +6,8 @@ import { failInternRunCommand } from "@/features/intern-runs/lib/intern-run-comm
 import { updateInternRunMetrics } from "@/features/intern-runs/lib/update-intern-run-metrics"
 import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
+import { getSessionMetrics } from "@/features/opencode/lib/get-session-metrics"
+import { isAssistantSessionMessage } from "@/features/opencode/lib/is-assistant-session-message"
 import { db } from "@/lib/db"
 import { logger as rootLogger } from "@/lib/logger"
 
@@ -111,14 +113,13 @@ export const pollSessionForMetrics = async ({
       }
 
       const assistantMessages = messagesResult.data.filter(
-        (msg) => msg.info.role === "assistant",
+        isAssistantSessionMessage,
       )
 
       const lastAssistantMsg = assistantMessages[assistantMessages.length - 1]
 
       if (lastAssistantMsg) {
-        const finish = (lastAssistantMsg.info as { finish?: string | null })
-          .finish
+        const finish = lastAssistantMsg.info.finish
 
         if (finish && finish !== "tool-calls") {
           log.info(
@@ -129,7 +130,8 @@ export const pollSessionForMetrics = async ({
             internRunId,
             client,
             log,
-            messages: messagesResult.data,
+            sessionId,
+            fallbackLatencyMs: null,
           })
           return
         }
@@ -153,23 +155,44 @@ export const pollSessionForMetrics = async ({
     "Polling timed out waiting for session to finish, failing intern run",
   )
 
+  const elapsedMs = Date.now() - startTime
+  const timeoutMetrics = await fetchSessionMetricsForTimeout({
+    client,
+    elapsedMs,
+    log,
+    sessionId,
+  })
+
   try {
     await failInternRunCommand({
       internRunId,
-      costUsd: null,
+      costUsd:
+        timeoutMetrics?.costUsd !== null &&
+        timeoutMetrics?.costUsd !== undefined
+          ? String(timeoutMetrics.costUsd)
+          : null,
       errorCode: "EXECUTION_TIMEOUT",
       failurePayload: {
         code: "EXECUTION_TIMEOUT",
+        elapsedMs,
         message: `Execution timed out after ${timeoutMs}ms polling for session ${sessionId}`,
+        metricsCollected: timeoutMetrics !== null,
         retryable: true,
+        sessionId,
+        timeoutMs,
       },
-      latencyMs: null,
+      latencyMs: timeoutMetrics?.latencyMs ?? elapsedMs,
       workRecordId,
-      tokenInput: null,
-      tokenOutput: null,
-      toolActivitySummary: {},
+      tokenInput: timeoutMetrics?.inputTokens ?? null,
+      tokenOutput: timeoutMetrics?.outputTokens ?? null,
+      toolActivitySummary: {
+        metricsCollected: timeoutMetrics !== null,
+        sessionId,
+        toolCallCount: timeoutMetrics?.toolCallCount ?? 0,
+      },
     })
     log.info("Successfully failed intern run after polling timeout")
+    await abortOpencodeSession({ client, log, sessionId })
   } catch (failError) {
     log.error(
       { error: failError },
@@ -178,93 +201,49 @@ export const pollSessionForMetrics = async ({
   }
 }
 
-async function fetchAndUpdateMetrics({
+const fetchAndUpdateMetrics = async ({
+  fallbackLatencyMs,
   internRunId,
   client,
   log,
-  messages,
+  sessionId,
 }: {
+  fallbackLatencyMs: number | null
   internRunId: string
   client: OpencodeClient
   log: pino.Logger
-  messages: Awaited<ReturnType<typeof client.session.messages>>["data"]
-}) {
+  sessionId: string
+}) => {
   try {
-    if (!messages) {
-      log.warn("session.messages() returned no data")
+    const metrics = await getSessionMetrics({
+      client,
+      fallbackLatencyMs,
+      sessionId,
+    })
+
+    if (!metrics) {
+      log.warn("No session messages found for metrics")
       return
-    }
-
-    const assistantMessages = messages.filter(
-      (msg) => msg.info.role === "assistant",
-    )
-
-    if (assistantMessages.length === 0) {
-      log.warn("No assistant messages found in session")
-      return
-    }
-
-    let totalCost = 0
-    let totalInputTokens = 0
-    let totalOutputTokens = 0
-
-    for (const msg of assistantMessages) {
-      const assistantMsg = msg.info as {
-        cost: number
-        tokens: {
-          input: number
-          output: number
-        }
-      }
-      totalCost += assistantMsg.cost ?? 0
-      totalInputTokens += assistantMsg.tokens?.input ?? 0
-      totalOutputTokens += assistantMsg.tokens?.output ?? 0
-    }
-
-    const firstMsg = assistantMessages[0]
-    const lastMsg = assistantMessages[assistantMessages.length - 1]
-
-    const firstTime = firstMsg.info.time?.created
-    const lastTime =
-      (lastMsg.info as { time?: { created?: number; completed?: number } }).time
-        ?.completed ?? lastMsg.info.time?.created
-
-    let latencyMs: number | null = null
-    if (firstTime && lastTime) {
-      latencyMs = lastTime - firstTime
-    }
-
-    let toolCallCount = 0
-    for (const msg of messages) {
-      if (msg.parts) {
-        for (const part of msg.parts) {
-          const partType = (part as { type?: string }).type
-          if (partType === "tool") {
-            toolCallCount++
-          }
-        }
-      }
     }
 
     log.info(
       {
-        totalCost,
-        totalInputTokens,
-        totalOutputTokens,
-        latencyMs,
-        toolCallCount,
-        assistantMessageCount: assistantMessages.length,
+        totalCost: metrics.costUsd,
+        totalInputTokens: metrics.inputTokens,
+        totalOutputTokens: metrics.outputTokens,
+        latencyMs: metrics.latencyMs,
+        toolCallCount: metrics.toolCallCount,
       },
       "Updating intern run with metrics",
     )
 
     await updateInternRunMetrics({
       internRunId,
-      costUsd: totalCost,
-      inputTokens: totalInputTokens,
-      outputTokens: totalOutputTokens,
-      latencyMs,
-      toolCallCount,
+      costUsd: metrics.costUsd,
+      inputTokens: metrics.inputTokens,
+      outputTokens: metrics.outputTokens,
+      latencyMs: metrics.latencyMs,
+      toolCallCount: metrics.toolCallCount,
     })
 
     log.info("Successfully updated intern run with metrics")
@@ -276,5 +255,34 @@ async function fetchAndUpdateMetrics({
       },
       "Error fetching session messages",
     )
+  }
+}
+
+const fetchSessionMetricsForTimeout = async ({
+  client,
+  elapsedMs,
+  log,
+  sessionId,
+}: {
+  client: OpencodeClient
+  elapsedMs: number
+  log: pino.Logger
+  sessionId: string
+}) => {
+  try {
+    return await getSessionMetrics({
+      client,
+      fallbackLatencyMs: elapsedMs,
+      sessionId,
+    })
+  } catch (error) {
+    log.warn(
+      {
+        error,
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      "Failed to fetch session metrics before timeout failure",
+    )
+    return null
   }
 }

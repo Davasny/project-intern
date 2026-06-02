@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { InternRunListHeaderCell } from "@/features/intern-runs/components/intern-run-list-header-cell"
+import { InternRunRefreshMissingStatsButton } from "@/features/intern-runs/components/intern-run-refresh-missing-stats-button"
 import { InternRunListRow } from "@/features/intern-runs/components/intern-run-list-row"
 import { getInternRunListFilterOptions } from "@/features/intern-runs/lib/get-intern-run-list-filter-options"
 import { getInternRunListRangeFilterBounds } from "@/features/intern-runs/lib/get-intern-run-list-range-filter-bounds"
@@ -96,13 +97,17 @@ export const InternRunListPage = () => {
             records.
           </p>
         </div>
-        {hasFilters ? (
-          <PageHeaderActions>
+        <PageHeaderActions>
+          <InternRunRefreshMissingStatsButton
+            organizationSlug={organizationSlug}
+            projectSlug={projectSlug}
+          />
+          {hasFilters ? (
             <Button onClick={handleFiltersReset} type="button" variant="outline">
               Reset filters
             </Button>
-          </PageHeaderActions>
-        ) : null}
+          ) : null}
+        </PageHeaderActions>
       </PageHeader>
       <DataTable>
         <TableHead>

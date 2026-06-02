@@ -5,6 +5,7 @@ import { getInternRunById } from "@/features/intern-runs/lib/get-intern-run-by-i
 import { getInternRunSessionMessages } from "@/features/intern-runs/lib/get-intern-run-session-messages"
 import { abortInternRunCommand } from "@/features/intern-runs/lib/intern-run-commands"
 import { listInternRuns } from "@/features/intern-runs/lib/list-intern-runs"
+import { refreshMissingInternRunStats } from "@/features/intern-runs/lib/refresh-missing-intern-run-stats"
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
@@ -131,5 +132,32 @@ export const internRunsRouter = router({
       })
 
       return { success: true }
+    }),
+  refreshMissingStats: protectedProcedure
+    .input(projectScopeSchema)
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectAccess({
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      })
+
+      if (!project) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project.",
+        })
+      }
+
+      return withOpencodeForOrg({
+        fn: async ({ client }) =>
+          refreshMissingInternRunStats({
+            client,
+            projectId: project.id,
+          }),
+        organizationId: project.organizationId,
+        projectId: project.id,
+        runtimeTemperature: null,
+      })
     }),
 })
