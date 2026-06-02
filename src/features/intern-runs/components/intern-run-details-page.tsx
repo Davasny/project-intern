@@ -87,10 +87,7 @@ export const InternRunDetailsPage = ({
     }),
     refetchInterval: (query) => {
       const data = query.state.data
-      return data &&
-        (data.state === "running" || data.state === "booting")
-        ? 3000
-        : false
+      return data && isInternRunStateActive(data.state) ? 3000 : false
     },
   })
 

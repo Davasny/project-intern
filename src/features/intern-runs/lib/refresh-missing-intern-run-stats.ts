@@ -1,8 +1,11 @@
 import type { OpencodeClient } from "@opencode-ai/sdk"
-import { and, eq, isNotNull, isNull, or } from "drizzle-orm"
+import { and, eq, inArray, isNotNull, isNull, or } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
-import { updateInternRunMetrics } from "@/features/intern-runs/lib/update-intern-run-metrics"
-import { getSessionMetrics } from "@/features/opencode/lib/get-session-metrics"
+import { syncSessionMetricsToInternRun } from "@/features/intern-runs/lib/sync-session-metrics-to-intern-run"
+import {
+  activeInternRunStates,
+  isInternRunStateActive,
+} from "@/features/intern-runs/schemas/intern-run-state"
 import { taskTable } from "@/features/tasks/db"
 import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
@@ -11,30 +14,12 @@ import { logger } from "@/lib/logger"
 const missingStatsBatchLimit = 50
 
 type RefreshMissingInternRunStatsResult = {
+  activeUpdatedCount: number
   checkedCount: number
   failedCount: number
   skippedCount: number
   updatedCount: number
 }
-
-const hasRefreshableMetrics = ({
-  costUsd,
-  inputTokens,
-  latencyMs,
-  outputTokens,
-  toolCallCount,
-}: {
-  costUsd: number | null
-  inputTokens: number | null
-  latencyMs: number | null
-  outputTokens: number | null
-  toolCallCount: number
-}) =>
-  costUsd !== null ||
-  inputTokens !== null ||
-  latencyMs !== null ||
-  outputTokens !== null ||
-  toolCallCount > 0
 
 export const refreshMissingInternRunStats = async ({
   client,
@@ -45,8 +30,10 @@ export const refreshMissingInternRunStats = async ({
 }): Promise<RefreshMissingInternRunStatsResult> => {
   const runs = await db
     .select({
+      directory: internRunTable.directory,
       id: internRunTable.id,
       sessionReference: internRunTable.sessionReference,
+      state: internRunTable.state,
     })
     .from(internRunTable)
     .innerJoin(
@@ -59,6 +46,7 @@ export const refreshMissingInternRunStats = async ({
         eq(taskTable.projectId, projectId),
         isNotNull(internRunTable.sessionReference),
         or(
+          inArray(internRunTable.state, activeInternRunStates),
           isNull(internRunTable.costUsd),
           isNull(internRunTable.inputTokens),
           isNull(internRunTable.outputTokens),
@@ -68,6 +56,7 @@ export const refreshMissingInternRunStats = async ({
     )
     .limit(missingStatsBatchLimit)
 
+  let activeUpdatedCount = 0
   let failedCount = 0
   let skippedCount = 0
   let updatedCount = 0
@@ -78,42 +67,36 @@ export const refreshMissingInternRunStats = async ({
       continue
     }
 
-    try {
-      const metrics = await getSessionMetrics({
-        client,
-        fallbackLatencyMs: null,
-        sessionId: run.sessionReference,
-      })
+    const log = logger.child({ internRunId: run.id, projectId })
+    const result = await syncSessionMetricsToInternRun({
+      client,
+      directory: run.directory,
+      fallbackLatencyMs: null,
+      internRunId: run.id,
+      log,
+      sessionId: run.sessionReference,
+      trigger: "manual",
+    })
 
-      if (!metrics || !hasRefreshableMetrics(metrics)) {
-        skippedCount++
-        continue
-      }
-
-      await updateInternRunMetrics({
-        internRunId: run.id,
-        costUsd: metrics.costUsd,
-        inputTokens: metrics.inputTokens,
-        latencyMs: metrics.latencyMs,
-        outputTokens: metrics.outputTokens,
-        toolCallCount: metrics.toolCallCount,
-      })
-
-      updatedCount++
-    } catch (error) {
+    if (result.reason === "failed") {
       failedCount++
-      logger.warn(
-        {
-          error,
-          internRunId: run.id,
-          message: error instanceof Error ? error.message : "Unknown error",
-        },
-        "Failed to refresh missing intern run stats",
-      )
+      continue
+    }
+
+    if (!result.synced) {
+      skippedCount++
+      continue
+    }
+
+    updatedCount++
+
+    if (isInternRunStateActive(run.state)) {
+      activeUpdatedCount++
     }
   }
 
   return {
+    activeUpdatedCount,
     checkedCount: runs.length,
     failedCount,
     skippedCount,

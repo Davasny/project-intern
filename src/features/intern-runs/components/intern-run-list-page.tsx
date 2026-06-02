@@ -29,6 +29,7 @@ import {
   emptyInternRunListFilters,
   type InternRunListRangeFilterValue,
 } from "@/features/intern-runs/lib/intern-run-list-filters"
+import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { internRunListFiltersAtom } from "@/features/intern-runs/state/intern-run-list-filters-atom"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
@@ -42,6 +43,12 @@ export const InternRunListPage = () => {
       organizationSlug,
       projectSlug,
     }),
+    refetchInterval: (query) => {
+      const runs = query.state.data ?? []
+      return runs.some((run) => isInternRunStateActive(run.state))
+        ? 3000
+        : false
+    },
   })
 
   if (runsQuery.isLoading) {

@@ -6,15 +6,18 @@ import {
 
 export const getSessionMetrics = async ({
   client,
+  directory,
   fallbackLatencyMs,
   sessionId,
 }: {
   client: OpencodeClient
+  directory: string | null
   fallbackLatencyMs: number | null
   sessionId: string
 }): Promise<SessionMetrics | null> => {
   const messagesResult = await client.session.messages({
     path: { id: sessionId },
+    ...(directory ? { query: { directory } } : {}),
   })
 
   if (!messagesResult.data || messagesResult.data.length === 0) {

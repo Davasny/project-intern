@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm"
 import type pino from "pino"
 import { internRunTable } from "@/features/intern-runs/db"
 import { failInternRunCommand } from "@/features/intern-runs/lib/intern-run-commands"
-import { updateInternRunMetrics } from "@/features/intern-runs/lib/update-intern-run-metrics"
+import { syncSessionMetricsToInternRun } from "@/features/intern-runs/lib/sync-session-metrics-to-intern-run"
 import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { getSessionMetrics } from "@/features/opencode/lib/get-session-metrics"
@@ -15,6 +15,7 @@ type PollSessionForMetricsParams = {
   sessionId: string
   internRunId: string
   client: OpencodeClient
+  directory: string | null
   workRecordId: string
   intervalMs?: number
   timeoutMs?: number
@@ -70,6 +71,7 @@ export const pollSessionForMetrics = async ({
   sessionId,
   internRunId,
   client,
+  directory,
   workRecordId,
   intervalMs = DEFAULT_INTERVAL_MS,
   timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -95,6 +97,16 @@ export const pollSessionForMetrics = async ({
           "Intern run is no longer active, stopping session polling",
         )
 
+        await syncSessionMetricsToInternRun({
+          client,
+          directory,
+          fallbackLatencyMs: Date.now() - startTime,
+          internRunId,
+          log,
+          sessionId,
+          trigger: "terminal_state",
+        })
+
         if (shouldAbortSessionForState(internRunState)) {
           await abortOpencodeSession({ client, log, sessionId })
         }
@@ -112,6 +124,16 @@ export const pollSessionForMetrics = async ({
         continue
       }
 
+      await syncSessionMetricsToInternRun({
+        client,
+        directory,
+        fallbackLatencyMs: Date.now() - startTime,
+        internRunId,
+        log,
+        sessionId,
+        trigger: "poll_tick",
+      })
+
       const assistantMessages = messagesResult.data.filter(
         isAssistantSessionMessage,
       )
@@ -126,12 +148,14 @@ export const pollSessionForMetrics = async ({
             { finish, assistantMessageCount: assistantMessages.length },
             "Session finished, fetching messages for metrics",
           )
-          await fetchAndUpdateMetrics({
-            internRunId,
+          await syncSessionMetricsToInternRun({
             client,
+            directory,
+            fallbackLatencyMs: Date.now() - startTime,
+            internRunId,
             log,
             sessionId,
-            fallbackLatencyMs: null,
+            trigger: "final_finish",
           })
           return
         }
@@ -158,6 +182,7 @@ export const pollSessionForMetrics = async ({
   const elapsedMs = Date.now() - startTime
   const timeoutMetrics = await fetchSessionMetricsForTimeout({
     client,
+    directory,
     elapsedMs,
     log,
     sessionId,
@@ -201,70 +226,15 @@ export const pollSessionForMetrics = async ({
   }
 }
 
-const fetchAndUpdateMetrics = async ({
-  fallbackLatencyMs,
-  internRunId,
-  client,
-  log,
-  sessionId,
-}: {
-  fallbackLatencyMs: number | null
-  internRunId: string
-  client: OpencodeClient
-  log: pino.Logger
-  sessionId: string
-}) => {
-  try {
-    const metrics = await getSessionMetrics({
-      client,
-      fallbackLatencyMs,
-      sessionId,
-    })
-
-    if (!metrics) {
-      log.warn("No session messages found for metrics")
-      return
-    }
-
-    log.info(
-      {
-        totalCost: metrics.costUsd,
-        totalInputTokens: metrics.inputTokens,
-        totalOutputTokens: metrics.outputTokens,
-        latencyMs: metrics.latencyMs,
-        toolCallCount: metrics.toolCallCount,
-      },
-      "Updating intern run with metrics",
-    )
-
-    await updateInternRunMetrics({
-      internRunId,
-      costUsd: metrics.costUsd,
-      inputTokens: metrics.inputTokens,
-      outputTokens: metrics.outputTokens,
-      latencyMs: metrics.latencyMs,
-      toolCallCount: metrics.toolCallCount,
-    })
-
-    log.info("Successfully updated intern run with metrics")
-  } catch (error) {
-    log.error(
-      {
-        error,
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      "Error fetching session messages",
-    )
-  }
-}
-
 const fetchSessionMetricsForTimeout = async ({
   client,
+  directory,
   elapsedMs,
   log,
   sessionId,
 }: {
   client: OpencodeClient
+  directory: string | null
   elapsedMs: number
   log: pino.Logger
   sessionId: string
@@ -272,6 +242,7 @@ const fetchSessionMetricsForTimeout = async ({
   try {
     return await getSessionMetrics({
       client,
+      directory,
       fallbackLatencyMs: elapsedMs,
       sessionId,
     })

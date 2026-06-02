@@ -255,6 +255,7 @@ export const runOpencodeExecution = async ({
     sessionId: session.data.id,
     internRunId: initialScope.internRun.id,
     client,
+    directory: workspace.workspaceDirectory,
     workRecordId: initialScope.workRecord.id,
   })
 

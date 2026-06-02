@@ -33,13 +33,13 @@ export const InternRunRefreshMissingStatsButton = ({
       )
 
       toast.success(
-        `Stats refreshed: ${String(result.updatedCount)} updated, ${String(result.skippedCount)} skipped, ${String(result.failedCount)} failed.`,
+        `Stats synced: ${String(result.updatedCount)} updated (${String(result.activeUpdatedCount)} active), ${String(result.skippedCount)} skipped, ${String(result.failedCount)} failed.`,
       )
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to refresh missing stats.",
+          : "Failed to sync stats.",
       )
     }
   }
@@ -51,7 +51,7 @@ export const InternRunRefreshMissingStatsButton = ({
       type="button"
       variant="outline"
     >
-      Refresh missing stats
+      Sync stats
     </Button>
   )
 }
