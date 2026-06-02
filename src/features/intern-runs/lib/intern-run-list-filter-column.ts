@@ -32,24 +32,6 @@ export type InternRunListRangeFilterColumnId =
   | "tokensOut"
   | "cost"
 
-export const internRunListFilterColumnIds: Array<InternRunListFilterColumnId> =
-  [
-    "state",
-    "provider",
-    "model",
-    "temperature",
-    "selectedIntern",
-    "task",
-    "record",
-    "attempt",
-    "duration",
-    "toolCalls",
-    "tokensIn",
-    "tokensOut",
-    "cost",
-    "started",
-  ]
-
 export const internRunListFilterColumnLabels: Record<
   InternRunListFilterColumnId,
   string

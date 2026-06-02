@@ -1,5 +1,6 @@
 import type { InternRunListFilterColumnId } from "@/features/intern-runs/lib/intern-run-list-filter-column"
 import type { InternRunListItem } from "@/features/intern-runs/lib/intern-run-list-item"
+import { formatDurationMs } from "@/utils/format-duration-ms"
 
 export const getInternRunListFilterValue = ({
   columnId,
@@ -43,9 +44,7 @@ export const getInternRunListFilterValue = ({
   }
 
   if (columnId === "duration") {
-    return run.latencyMs !== null
-      ? `${(run.latencyMs / 1000).toFixed(1)}s`
-      : "—"
+    return formatDurationMs(run.latencyMs)
   }
 
   if (columnId === "toolCalls") {

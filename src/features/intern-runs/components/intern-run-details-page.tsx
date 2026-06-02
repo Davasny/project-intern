@@ -23,14 +23,11 @@ import { InternRunMessages } from "@/features/intern-runs/components/intern-run-
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
+import { formatDurationMs } from "@/utils/format-duration-ms"
 
 type InternRunDetailsPageProps = {
   anchorInternRunId: string
   attemptNumber: number
-}
-
-type InternRunDurationMetrics = {
-  latencyMs: number | null
 }
 
 type InternRunTokenMetrics = {
@@ -44,9 +41,6 @@ type InternRunCostMetrics = {
   costUsd: string | null
   estimatedCostUsd: string | null
 }
-
-const formatInternRunDuration = ({ latencyMs }: InternRunDurationMetrics) =>
-  latencyMs !== null ? `${(latencyMs / 1000).toFixed(1)}s` : "—"
 
 const formatInternRunTokenTotal = ({
   inputTokens,
@@ -124,7 +118,7 @@ export const InternRunDetailsPage = ({
   }
 
   const run = runQuery.data
-  const durationDisplay = formatInternRunDuration({ latencyMs: run.latencyMs })
+  const durationDisplay = formatDurationMs(run.latencyMs)
 
   const totalTokens =
     (run.inputTokens ?? run.tokenInput ?? 0) +
@@ -333,11 +327,7 @@ export const InternRunDetailsPage = ({
                         </Link>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {formatInternRunDuration({
-                        latencyMs: sibling.latencyMs,
-                      })}
-                    </TableCell>
+                    <TableCell>{formatDurationMs(sibling.latencyMs)}</TableCell>
                     <TableCell>
                       {formatInternRunTokenTotal({
                         inputTokens: sibling.inputTokens,
