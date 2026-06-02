@@ -19,7 +19,7 @@ type PollSessionForMetricsParams = {
 }
 
 const DEFAULT_INTERVAL_MS = 2000
-const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000
+const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000
 
 const getInternRunState = async (
   internRunId: string,
