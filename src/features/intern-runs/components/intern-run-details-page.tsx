@@ -29,6 +29,54 @@ type InternRunDetailsPageProps = {
   attemptNumber: number
 }
 
+type InternRunDurationMetrics = {
+  latencyMs: number | null
+}
+
+type InternRunTokenMetrics = {
+  inputTokens: number | null
+  outputTokens: number | null
+  tokenInput: number | null
+  tokenOutput: number | null
+}
+
+type InternRunCostMetrics = {
+  costUsd: string | null
+  estimatedCostUsd: string | null
+}
+
+const formatInternRunDuration = ({ latencyMs }: InternRunDurationMetrics) =>
+  latencyMs !== null ? `${(latencyMs / 1000).toFixed(1)}s` : "—"
+
+const formatInternRunTokenTotal = ({
+  inputTokens,
+  outputTokens,
+  tokenInput,
+  tokenOutput,
+}: InternRunTokenMetrics) => {
+  const tokensIn = inputTokens ?? tokenInput
+  const tokensOut = outputTokens ?? tokenOutput
+
+  if (tokensIn === null && tokensOut === null) {
+    return "—"
+  }
+
+  return ((tokensIn ?? 0) + (tokensOut ?? 0)).toLocaleString()
+}
+
+const formatInternRunCost = ({
+  costUsd,
+  estimatedCostUsd,
+}: InternRunCostMetrics) => {
+  if (costUsd !== null) {
+    return `$${Number(costUsd).toFixed(4)}`
+  }
+
+  return estimatedCostUsd !== null
+    ? `~$${Number(estimatedCostUsd).toFixed(4)}`
+    : "—"
+}
+
 export const InternRunDetailsPage = ({
   anchorInternRunId,
   attemptNumber,
@@ -76,9 +124,7 @@ export const InternRunDetailsPage = ({
   }
 
   const run = runQuery.data
-  const durationMs = run.latencyMs
-  const durationDisplay =
-    durationMs !== null ? `${(durationMs / 1000).toFixed(1)}s` : "—"
+  const durationDisplay = formatInternRunDuration({ latencyMs: run.latencyMs })
 
   const totalTokens =
     (run.inputTokens ?? run.tokenInput ?? 0) +
@@ -266,6 +312,9 @@ export const InternRunDetailsPage = ({
                 <TableRow>
                   <TableHeader>Attempt</TableHeader>
                   <TableHeader>State</TableHeader>
+                  <TableHeader>Duration</TableHeader>
+                  <TableHeader>Tokens</TableHeader>
+                  <TableHeader>Cost</TableHeader>
                   <TableHeader>Created</TableHeader>
                 </TableRow>
               </TableHead>
@@ -283,6 +332,25 @@ export const InternRunDetailsPage = ({
                           <RunStatusBadge state={sibling.state} />
                         </Link>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {formatInternRunDuration({
+                        latencyMs: sibling.latencyMs,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {formatInternRunTokenTotal({
+                        inputTokens: sibling.inputTokens,
+                        outputTokens: sibling.outputTokens,
+                        tokenInput: sibling.tokenInput,
+                        tokenOutput: sibling.tokenOutput,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {formatInternRunCost({
+                        costUsd: sibling.costUsd,
+                        estimatedCostUsd: sibling.estimatedCostUsd,
+                      })}
                     </TableCell>
                     <TableCell>{sibling.createdAt.toLocaleString()}</TableCell>
                   </TableRow>

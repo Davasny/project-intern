@@ -94,9 +94,16 @@ export const getInternRunById = async ({
   const siblingRuns = await db
     .select({
       attemptNumber: internRunTable.attemptNumber,
+      costUsd: internRunTable.costUsd,
       createdAt: internRunTable.createdAt,
+      estimatedCostUsd: internRunTable.estimatedCostUsd,
       id: internRunTable.id,
+      inputTokens: internRunTable.inputTokens,
+      latencyMs: internRunTable.latencyMs,
+      outputTokens: internRunTable.outputTokens,
       state: internRunTable.state,
+      tokenInput: internRunTable.tokenInput,
+      tokenOutput: internRunTable.tokenOutput,
     })
     .from(internRunTable)
     .where(eq(internRunTable.workRecordId, currentRun.workRecordId))
@@ -106,9 +113,16 @@ export const getInternRunById = async ({
     ...currentRun,
     siblingRuns: siblingRuns.map((sibling) => ({
       attemptNumber: sibling.attemptNumber,
+      costUsd: sibling.costUsd,
       createdAt: sibling.createdAt,
+      estimatedCostUsd: sibling.estimatedCostUsd,
       id: sibling.id,
+      inputTokens: sibling.inputTokens,
+      latencyMs: sibling.latencyMs,
+      outputTokens: sibling.outputTokens,
       state: sibling.state,
+      tokenInput: sibling.tokenInput,
+      tokenOutput: sibling.tokenOutput,
     })),
   }
 }
