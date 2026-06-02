@@ -70,6 +70,6 @@ Project "job offers":
 1. Job offer triage - read job offer and compare with my skills: <skills list>
 2. Apply - if my skills match the job listing use agent-browser skill and apply
 
+# License
 
-- markitdown leci z homebrew zamiast z python3
-- tool glm powinien być prostszy i bez info o configu
+MIT License
