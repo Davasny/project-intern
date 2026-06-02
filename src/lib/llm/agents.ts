@@ -1,15 +1,17 @@
 import type { AgentConfig } from "@opencode-ai/sdk"
 import { buildWorkRecordSystemPrompt } from "@/lib/llm/build-work-record-system-prompt"
 
-type Agent = AgentConfig & {
+type Agent = {
   name: string
   description: string
+  permission: NonNullable<AgentConfig["permission"]>
   prompt: string
   systemPromptFn: typeof buildWorkRecordSystemPrompt
+  tools: NonNullable<AgentConfig["tools"]>
 }
 
-export const recordWorkerAgent: Agent = {
-  name: "record-worker",
+export const internAgent: Agent = {
+  name: "intern",
   description: "Scoped CRM record worker",
   prompt: `
 You execute one scoped CRM record task at a time. 

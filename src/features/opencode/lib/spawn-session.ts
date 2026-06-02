@@ -64,6 +64,7 @@ export const spawnSession = async ({
     organizationId,
     projectId,
     runtimeTemperature: null,
+    sessionPurpose: "interactive",
   })
 
   const envInternPath = path.join(directory, ".env.intern")

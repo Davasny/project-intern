@@ -1,24 +1,26 @@
 import type { Config } from "@opencode-ai/sdk"
-import { buildSkillPermission } from "@/features/opencode/lib/build-skill-permission"
+import { buildInternPermission } from "@/features/opencode/lib/build-intern-permission"
+import type { OpencodeSessionPurpose } from "@/features/opencode/lib/opencode-session-purpose"
 import { backendConfig } from "@/lib/config/backend"
-import { recordWorkerAgent } from "@/lib/llm/agents"
+import { internAgent } from "@/lib/llm/agents"
 
 export const buildOpencodeConfig = (params: {
   enabledSkillNames: string[]
   mcpToken: string
   runtimeTemperature: number | null
+  sessionPurpose: OpencodeSessionPurpose
 }): Config => ({
   agent: {
-    [recordWorkerAgent.name]: {
-      description: recordWorkerAgent.description,
-      permission: {
-        ...recordWorkerAgent.permission,
-        // @ts-expect-error supported by OpenCode config schema but missing from SDK type
-        skill: buildSkillPermission(params.enabledSkillNames),
-      },
-      prompt: recordWorkerAgent.prompt,
+    [internAgent.name]: {
+      description: internAgent.description,
+      permission: buildInternPermission({
+        basePermission: internAgent.permission,
+        enabledSkillNames: params.enabledSkillNames,
+        sessionPurpose: params.sessionPurpose,
+      }),
+      prompt: internAgent.prompt,
       temperature: params.runtimeTemperature ?? undefined,
-      tools: recordWorkerAgent.tools,
+      tools: internAgent.tools,
     },
   },
   mcp: {

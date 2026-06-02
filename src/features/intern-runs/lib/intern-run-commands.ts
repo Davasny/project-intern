@@ -64,7 +64,7 @@ export const createInternRunCommand = async ({
       outputTokens: null,
       provider: null,
       resultPayload: null,
-      selectedIntern: "record-worker",
+      selectedIntern: "intern",
       selectedModel,
       selectedTemperature,
       sessionReference: null,

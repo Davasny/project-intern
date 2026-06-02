@@ -1,4 +1,4 @@
-type SkillPermission = Record<string, "allow" | "deny">
+export type SkillPermission = Record<string, "allow" | "deny">
 
 export const buildSkillPermission = (skillNames: string[]): SkillPermission => {
   const permission: SkillPermission = {

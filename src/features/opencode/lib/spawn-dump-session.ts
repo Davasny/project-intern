@@ -81,6 +81,7 @@ export const spawnDumpSession = async ({
     organizationId,
     projectId,
     runtimeTemperature: null,
+    sessionPurpose: "dump",
   })
 
   try {

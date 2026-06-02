@@ -268,6 +268,7 @@ export const spawnDebugSession = async ({
     organizationId,
     projectId,
     runtimeTemperature: resolvedTemperature,
+    sessionPurpose: "debug",
   })
 
   const envInternPath = path.join(workspace.workspaceDirectory, ".env.intern")

@@ -5,6 +5,7 @@ import { createOrgMcpApiKey } from "@/features/auth/lib/create-org-mcp-api-key"
 import { opencodeServerTable } from "@/features/opencode/db"
 import { buildOpencodeConfig } from "@/features/opencode/lib/build-opencode-config"
 import { getEnabledProjectSkillNames } from "@/features/opencode/lib/get-enabled-project-skill-names"
+import type { OpencodeSessionPurpose } from "@/features/opencode/lib/opencode-session-purpose"
 import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
@@ -72,10 +73,12 @@ const startEmbeddedServer = async ({
   organizationId,
   projectId,
   runtimeTemperature,
+  sessionPurpose,
 }: {
   organizationId: string
   projectId: string
   runtimeTemperature: number | null
+  sessionPurpose: OpencodeSessionPurpose
 }) => {
   const { key } = await createOrgMcpApiKey({ organizationId })
   const enabledSkillNames = await getEnabledProjectSkillNames({
@@ -105,6 +108,7 @@ const startEmbeddedServer = async ({
       enabledSkillNames,
       mcpToken: key,
       runtimeTemperature,
+      sessionPurpose,
     }),
     hostname: backendConfig.CRM_OPENCODE_HOST,
     port,
@@ -198,6 +202,7 @@ export const withOpencodeForOrg = async <T>({
     organizationId,
     projectId,
     runtimeTemperature,
+    sessionPurpose: "execution",
   })
 
   const dbRow = await db
@@ -244,10 +249,12 @@ export const startInteractiveServer = async ({
   organizationId,
   projectId,
   runtimeTemperature,
+  sessionPurpose,
 }: {
   organizationId: string
   projectId: string
   runtimeTemperature: number | null
+  sessionPurpose: OpencodeSessionPurpose
 }) => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
     const client = createOpencodeClient({
@@ -266,6 +273,7 @@ export const startInteractiveServer = async ({
     organizationId,
     projectId,
     runtimeTemperature,
+    sessionPurpose,
   })
 
   const dbRow = await db

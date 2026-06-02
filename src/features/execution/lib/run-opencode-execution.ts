@@ -7,7 +7,7 @@ import {
 } from "@/features/intern-runs/lib/intern-run-commands"
 import { pollSessionForMetrics } from "@/features/opencode/lib/poll-session-for-metrics"
 import { startWorkRecord } from "@/features/work-records/lib/start-work-record"
-import { recordWorkerAgent } from "@/lib/llm/agents"
+import { internAgent } from "@/lib/llm/agents"
 import { buildWorkRecordAgentPrompt } from "@/lib/llm/build-work-record-agent-prompt"
 import { buildWorkRecordSystemPrompt } from "@/lib/llm/build-work-record-system-prompt"
 
@@ -221,7 +221,7 @@ export const runOpencodeExecution = async ({
 
   await client.session.promptAsync({
     body: {
-      agent: recordWorkerAgent.name,
+      agent: internAgent.name,
       model: {
         modelID,
         providerID,
