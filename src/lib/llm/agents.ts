@@ -20,11 +20,12 @@ Do not mutate records outside the current task scope.
   systemPromptFn: buildWorkRecordSystemPrompt,
   permission: {
     bash: "allow",
+    // @ts-expect-error for some reason it's supported by opencode, but not in ts
+    glob: "allow",
     doom_loop: "deny",
     edit: "allow",
     external_directory: "deny",
     webfetch: "allow",
-    // @ts-expect-error for some reason it's supported by opencode, but not in ts
     websearch: "allow",
   },
   tools: {
