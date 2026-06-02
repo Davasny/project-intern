@@ -1,24 +1,41 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import Link from "next/link"
+import { useAtom } from "jotai"
+import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
-import { RunStatusBadge } from "@/components/ui/status-badge/intern-run-status-badge"
+import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
 import {
   TableBody,
   TableCell,
   TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { InternRunListHeaderCell } from "@/features/intern-runs/components/intern-run-list-header-cell"
+import { InternRunListRow } from "@/features/intern-runs/components/intern-run-list-row"
+import { getInternRunListFilterOptions } from "@/features/intern-runs/lib/get-intern-run-list-filter-options"
+import { getInternRunListRangeFilterBounds } from "@/features/intern-runs/lib/get-intern-run-list-range-filter-bounds"
+import { getInternRunListVisibleRuns } from "@/features/intern-runs/lib/get-intern-run-list-visible-runs"
+import { hasInternRunListFilters } from "@/features/intern-runs/lib/has-intern-run-list-filters"
+import {
+  type InternRunListRangeFilterColumnId,
+  type InternRunListTextFilterColumnId,
+  internRunListFilterColumnLabels,
+} from "@/features/intern-runs/lib/intern-run-list-filter-column"
+import {
+  emptyInternRunListFilters,
+  type InternRunListRangeFilterValue,
+} from "@/features/intern-runs/lib/intern-run-list-filters"
+import { internRunListFiltersAtom } from "@/features/intern-runs/state/intern-run-list-filters-atom"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
 
 export const InternRunListPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
+  const [filters, setFilters] = useAtom(internRunListFiltersAtom)
   const runsQuery = useQuery({
     ...trpc.internRuns.list.queryOptions({
       organizationSlug,
@@ -34,103 +51,235 @@ export const InternRunListPage = () => {
     return <LoadingState label="Intern runs could not be loaded." />
   }
 
+  const hasFilters = hasInternRunListFilters(filters)
+  const filteredRuns = getInternRunListVisibleRuns({
+    filters,
+    runs: runsQuery.data,
+  })
+  const handleFilterChange = (
+    columnId: InternRunListTextFilterColumnId,
+    value: string,
+  ) => {
+    setFilters({
+      ...filters,
+      text: {
+        ...filters.text,
+        [columnId]: value,
+      },
+    })
+  }
+  const handleRangeFilterChange = (
+    columnId: InternRunListRangeFilterColumnId,
+    value: InternRunListRangeFilterValue | undefined,
+  ) => {
+    setFilters({
+      ...filters,
+      ranges: {
+        ...filters.ranges,
+        [columnId]: value,
+      },
+    })
+  }
+  const handleFiltersReset = () => {
+    setFilters(emptyInternRunListFilters)
+  }
+
   return (
     <div className="flex flex-col gap-6">
-        <PageHeader>
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Intern runs
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Complete history of all intern run executions across tasks and
-              records.
-            </p>
-          </div>
-        </PageHeader>
+      <PageHeader>
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Intern runs
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Complete history of all intern run executions across tasks and
+            records.
+          </p>
+        </div>
+        {hasFilters ? (
+          <PageHeaderActions>
+            <Button onClick={handleFiltersReset} type="button" variant="outline">
+              Reset filters
+            </Button>
+          </PageHeaderActions>
+        ) : null}
+      </PageHeader>
       <DataTable>
         <TableHead>
           <TableRow>
-            <TableHeader>State</TableHeader>
-            <TableHeader>Provider</TableHeader>
-            <TableHeader>Model</TableHeader>
-            <TableHeader>Temperature</TableHeader>
-            <TableHeader>Selected Intern</TableHeader>
-            <TableHeader>Task</TableHeader>
-            <TableHeader>Record</TableHeader>
-            <TableHeader>Attempt</TableHeader>
-            <TableHeader>Duration</TableHeader>
-            <TableHeader>Tool Calls</TableHeader>
-            <TableHeader>Tokens In</TableHeader>
-            <TableHeader>Tokens Out</TableHeader>
-            <TableHeader>Cost</TableHeader>
-            <TableHeader>Started</TableHeader>
+            <InternRunListHeaderCell
+              columnId="state"
+              filterValue={filters.text.state ?? ""}
+              kind="text"
+              label={internRunListFilterColumnLabels.state}
+              onFilterChange={handleFilterChange}
+              options={getInternRunListFilterOptions({
+                columnId: "state",
+                runs: runsQuery.data,
+              })}
+            />
+            <InternRunListHeaderCell
+              columnId="provider"
+              filterValue={filters.text.provider ?? ""}
+              kind="text"
+              label={internRunListFilterColumnLabels.provider}
+              onFilterChange={handleFilterChange}
+              options={getInternRunListFilterOptions({
+                columnId: "provider",
+                runs: runsQuery.data,
+              })}
+            />
+            <InternRunListHeaderCell
+              columnId="model"
+              filterValue={filters.text.model ?? ""}
+              kind="text"
+              label={internRunListFilterColumnLabels.model}
+              onFilterChange={handleFilterChange}
+              options={getInternRunListFilterOptions({
+                columnId: "model",
+                runs: runsQuery.data,
+              })}
+            />
+            <InternRunListHeaderCell
+              bounds={getInternRunListRangeFilterBounds({
+                columnId: "temperature",
+                runs: runsQuery.data,
+              })}
+              columnId="temperature"
+              filterValue={filters.ranges.temperature}
+              kind="range"
+              label={internRunListFilterColumnLabels.temperature}
+              onFilterChange={handleRangeFilterChange}
+            />
+            <InternRunListHeaderCell
+              columnId="selectedIntern"
+              filterValue={filters.text.selectedIntern ?? ""}
+              kind="text"
+              label={internRunListFilterColumnLabels.selectedIntern}
+              onFilterChange={handleFilterChange}
+              options={getInternRunListFilterOptions({
+                columnId: "selectedIntern",
+                runs: runsQuery.data,
+              })}
+            />
+            <InternRunListHeaderCell
+              columnId="task"
+              filterValue={filters.text.task ?? ""}
+              kind="text"
+              label={internRunListFilterColumnLabels.task}
+              onFilterChange={handleFilterChange}
+              options={getInternRunListFilterOptions({
+                columnId: "task",
+                runs: runsQuery.data,
+              })}
+            />
+            <InternRunListHeaderCell
+              columnId="record"
+              filterValue={filters.text.record ?? ""}
+              kind="text"
+              label={internRunListFilterColumnLabels.record}
+              onFilterChange={handleFilterChange}
+              options={getInternRunListFilterOptions({
+                columnId: "record",
+                runs: runsQuery.data,
+              })}
+            />
+            <InternRunListHeaderCell
+              bounds={getInternRunListRangeFilterBounds({
+                columnId: "attempt",
+                runs: runsQuery.data,
+              })}
+              columnId="attempt"
+              filterValue={filters.ranges.attempt}
+              kind="range"
+              label={internRunListFilterColumnLabels.attempt}
+              onFilterChange={handleRangeFilterChange}
+            />
+            <InternRunListHeaderCell
+              bounds={getInternRunListRangeFilterBounds({
+                columnId: "duration",
+                runs: runsQuery.data,
+              })}
+              columnId="duration"
+              filterValue={filters.ranges.duration}
+              kind="range"
+              label={internRunListFilterColumnLabels.duration}
+              onFilterChange={handleRangeFilterChange}
+            />
+            <InternRunListHeaderCell
+              bounds={getInternRunListRangeFilterBounds({
+                columnId: "toolCalls",
+                runs: runsQuery.data,
+              })}
+              columnId="toolCalls"
+              filterValue={filters.ranges.toolCalls}
+              kind="range"
+              label={internRunListFilterColumnLabels.toolCalls}
+              onFilterChange={handleRangeFilterChange}
+            />
+            <InternRunListHeaderCell
+              bounds={getInternRunListRangeFilterBounds({
+                columnId: "tokensIn",
+                runs: runsQuery.data,
+              })}
+              columnId="tokensIn"
+              filterValue={filters.ranges.tokensIn}
+              kind="range"
+              label={internRunListFilterColumnLabels.tokensIn}
+              onFilterChange={handleRangeFilterChange}
+            />
+            <InternRunListHeaderCell
+              bounds={getInternRunListRangeFilterBounds({
+                columnId: "tokensOut",
+                runs: runsQuery.data,
+              })}
+              columnId="tokensOut"
+              filterValue={filters.ranges.tokensOut}
+              kind="range"
+              label={internRunListFilterColumnLabels.tokensOut}
+              onFilterChange={handleRangeFilterChange}
+            />
+            <InternRunListHeaderCell
+              bounds={getInternRunListRangeFilterBounds({
+                columnId: "cost",
+                runs: runsQuery.data,
+              })}
+              columnId="cost"
+              filterValue={filters.ranges.cost}
+              kind="range"
+              label={internRunListFilterColumnLabels.cost}
+              onFilterChange={handleRangeFilterChange}
+            />
+            <InternRunListHeaderCell
+              columnId="started"
+              filterValue={filters.text.started ?? ""}
+              kind="text"
+              label={internRunListFilterColumnLabels.started}
+              onFilterChange={handleFilterChange}
+              options={getInternRunListFilterOptions({
+                columnId: "started",
+                runs: runsQuery.data,
+              })}
+            />
           </TableRow>
         </TableHead>
         <TableBody>
-          {runsQuery.data.map((run) => (
-            <TableRow key={run.id}>
-              <TableCell>
-                <Link
-                  href={`/app/${organizationSlug}/${projectSlug}/intern-runs/${run.id}`}
-                >
-                  <RunStatusBadge state={run.state} />
-                </Link>
+          {filteredRuns.length > 0 ? (
+            filteredRuns.map((run) => (
+              <InternRunListRow
+                key={run.id}
+                organizationSlug={organizationSlug}
+                projectSlug={projectSlug}
+                run={run}
+              />
+            ))
+          ) : (
+            <TableRow>
+              <TableCell className="py-8 text-center text-muted-foreground" colSpan={14}>
+                No intern runs match the current filters.
               </TableCell>
-              <TableCell>{run.provider ?? "—"}</TableCell>
-              <TableCell>{run.model ?? "—"}</TableCell>
-              <TableCell>
-                {run.selectedTemperature !== null
-                  ? run.selectedTemperature.toFixed(1)
-                  : "—"}
-              </TableCell>
-              <TableCell>{run.selectedIntern ?? "—"}</TableCell>
-              <TableCell>
-                <Link
-                  className="font-medium text-foreground hover:text-muted-foreground"
-                  href={`/app/${organizationSlug}/${projectSlug}/tasks/${run.taskId}`}
-                >
-                  {run.taskTitle}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <Link
-                  className="font-medium text-foreground hover:text-muted-foreground"
-                  href={`/app/${organizationSlug}/${projectSlug}/records/${run.recordId}`}
-                >
-                  {run.recordName}
-                </Link>
-              </TableCell>
-              <TableCell>#{run.attemptNumber}</TableCell>
-              <TableCell>
-                {run.latencyMs !== null
-                  ? `${(run.latencyMs / 1000).toFixed(1)}s`
-                  : "—"}
-              </TableCell>
-              <TableCell>{run.taskCallCount}</TableCell>
-              <TableCell>
-                {run.inputTokens !== null
-                  ? run.inputTokens.toLocaleString()
-                  : run.tokenInput !== null
-                    ? run.tokenInput.toLocaleString()
-                    : "—"}
-              </TableCell>
-              <TableCell>
-                {run.outputTokens !== null
-                  ? run.outputTokens.toLocaleString()
-                  : run.tokenOutput !== null
-                    ? run.tokenOutput.toLocaleString()
-                    : "—"}
-              </TableCell>
-              <TableCell>
-                {run.costUsd !== null
-                  ? `$${Number(run.costUsd).toFixed(4)}`
-                  : run.estimatedCostUsd !== null
-                    ? `~$${Number(run.estimatedCostUsd).toFixed(4)}`
-                    : "—"}
-              </TableCell>
-              <TableCell>{run.startedAt?.toLocaleString() ?? "—"}</TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </DataTable>
     </div>
