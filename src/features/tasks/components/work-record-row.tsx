@@ -46,6 +46,14 @@ const getFailureMessage = (workRecord: WorkRecordRowProps["workRecord"]) => {
 
   if (
     failurePayload &&
+    "reason" in failurePayload &&
+    typeof failurePayload.reason === "string"
+  ) {
+    return failurePayload.reason
+  }
+
+  if (
+    failurePayload &&
     "message" in failurePayload &&
     typeof failurePayload.message === "string"
   ) {

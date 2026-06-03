@@ -11,14 +11,12 @@ type SkipScopedWorkRecordParams = {
     taskId: string
     workRecordId: string
   }
-  reason: string
-  resultPayload: Record<string, unknown> | null
+  resultPayload: Record<string, unknown> & { reason: string }
   toolActivitySummary: Record<string, unknown>
 }
 
 export const skipScopedWorkRecord = async ({
   executionScope,
-  reason,
   resultPayload,
   toolActivitySummary,
 }: SkipScopedWorkRecordParams) => {
@@ -32,9 +30,8 @@ export const skipScopedWorkRecord = async ({
   await skipInternRunCommand({
     internRunId: scope.internRun.id,
     resultPayload: {
-      ...(resultPayload ?? {}),
+      ...resultPayload,
       outcome: "skipped",
-      reason,
     },
     workRecordId: scope.workRecord.id,
     toolActivitySummary: {

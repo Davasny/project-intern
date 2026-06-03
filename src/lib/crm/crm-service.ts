@@ -222,7 +222,6 @@ export const skipWorkRecord = async (
   })
   return skipScopedWorkRecord({
     executionScope: input.execution,
-    reason: input.reason,
     resultPayload: input.resultPayload,
     toolActivitySummary: { skipSource: "rest" },
   })

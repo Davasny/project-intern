@@ -79,10 +79,22 @@ export type CrmRecordProposePatchInput = z.infer<
 >
 export type CrmRecordApplyPatchInput = z.infer<typeof crmRecordPatchInputSchema>
 
+const completionResultPayloadSchema = z
+  .object({
+    summary: z.string().trim().min(1, "Completion summary is required."),
+  })
+  .catchall(z.unknown())
+
+const skipResultPayloadSchema = z
+  .object({
+    reason: z.string().trim().min(1, "Skip reason is required."),
+  })
+  .catchall(z.unknown())
+
 export const crmRecordCompleteTaskInputSchema = z.object({
   execution: executionScopeInputSchema,
   patch: patchProposalSchema.nullable(),
-  resultPayload: z.record(z.string(), z.unknown()).nullable(),
+  resultPayload: completionResultPayloadSchema,
 })
 
 export type CrmRecordCompleteTaskInput = z.infer<
@@ -100,8 +112,7 @@ export type CrmRecordFailTaskInput = z.infer<
 
 export const crmRecordSkipTaskInputSchema = z.object({
   execution: executionScopeInputSchema,
-  reason: z.string().trim().min(1, "Skip reason is required."),
-  resultPayload: z.record(z.string(), z.unknown()).nullable(),
+  resultPayload: skipResultPayloadSchema,
 })
 
 export type CrmRecordSkipTaskInput = z.infer<

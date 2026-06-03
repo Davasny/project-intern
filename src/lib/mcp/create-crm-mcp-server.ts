@@ -153,7 +153,7 @@ export const createCrmMcpServer = () => {
     "crm_record_complete_task",
     {
       description:
-        "Complete the scoped work record and optionally apply a patch. Pass patch as null when no record values need to change, including schema-only migrations.",
+        "Complete the scoped work record and optionally apply a patch. Pass patch as null when no record values need to change. resultPayload is required and must include a user-facing summary string.",
       inputSchema: crmRecordCompleteTaskInputSchema,
     },
     async (input) => {
@@ -171,7 +171,7 @@ export const createCrmMcpServer = () => {
     "crm_record_fail_task",
     {
       description:
-        "Fail the scoped work record with a structured failure payload. Use this whenever you cannot complete the task, including repeated tool validation errors or inability to produce a valid patch.",
+        "Fail the scoped work record with a structured failure payload. Use this whenever you cannot complete the task. failure.reason is required and should be user-facing.",
       inputSchema: crmRecordFailTaskInputSchema,
     },
     async (input) => {
@@ -189,7 +189,7 @@ export const createCrmMcpServer = () => {
     "crm_record_skip_task",
     {
       description:
-        "Skip the scoped work record with a required reason. Use this when the task is not applicable or cannot be completed usefully, but should unblock downstream tasks without being treated as a failure.",
+        "Skip the scoped work record with a required resultPayload.reason. Use this when the task is not applicable or cannot be completed usefully, but should unblock downstream tasks without being treated as a failure.",
       inputSchema: crmRecordSkipTaskInputSchema,
     },
     async (input) => {

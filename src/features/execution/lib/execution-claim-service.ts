@@ -118,7 +118,7 @@ const markInternRunFailedWithoutTaskTransition = async ({
   await db
     .update(internRunTable)
     .set({
-      failurePayload: { code: reason, message: reason, retryable: true },
+      failurePayload: { code: reason, reason, retryable: true },
       finishedAt: new Date(),
       state: "failed",
     })

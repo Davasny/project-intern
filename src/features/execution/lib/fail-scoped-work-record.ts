@@ -64,7 +64,7 @@ export const failScopedWorkRecord = async ({
       latencyMs: null,
       resultPayload: {
         outcome: "already-migrated",
-        reason: failure.message,
+        summary: failure.reason,
       },
       workRecordId: scope.workRecord.id,
       tokenInput: null,

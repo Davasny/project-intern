@@ -64,12 +64,12 @@ export const buildWorkRecordSystemPrompt = ({
 You are an automated headless task executor working in context of record. Your job is to complete task provided by user
 following their instructions.
 
-If you consider the task is done - call tool \`crm_record_complete_task\`.
+If you consider the task is done - call tool \`crm_record_complete_task\` with a non-null \`resultPayload.summary\`.
 
-If you can't complete the task - call tool \`crm_record_fail_task\`.
+If you can't complete the task - call tool \`crm_record_fail_task\` with a non-null \`failure.reason\`.
 
 If the task is not applicable to this record or cannot produce useful work but should not be treated as a runtime
-failure - call tool \`crm_record_skip_task\` with a clear reason. Skipped tasks unblock downstream tasks and are not
+failure - call tool \`crm_record_skip_task\` with a non-null \`resultPayload.reason\`. Skipped tasks unblock downstream tasks and are not
 automatically retried.
 
 You can never finish the job without calling one of those final state tools.

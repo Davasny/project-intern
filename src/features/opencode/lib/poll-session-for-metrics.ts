@@ -200,7 +200,7 @@ export const pollSessionForMetrics = async ({
       failurePayload: {
         code: "EXECUTION_TIMEOUT",
         elapsedMs,
-        message: `Execution timed out after ${timeoutMs}ms polling for session ${sessionId}`,
+        reason: `Execution timed out after ${timeoutMs}ms polling for session ${sessionId}`,
         metricsCollected: timeoutMetrics !== null,
         retryable: true,
         sessionId,

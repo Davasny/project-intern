@@ -77,6 +77,6 @@ const isRetryableError = (error: unknown) => {
 
 export const createTaskFailureFromError = (error: unknown): TaskFailure => ({
   code: getErrorCode(error),
-  message: getErrorMessage(error),
+  reason: getErrorMessage(error),
   retryable: isRetryableError(error),
 })

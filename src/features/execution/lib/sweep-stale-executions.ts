@@ -48,7 +48,7 @@ export const sweepStaleExecutions = async (): Promise<{
         errorCode: "STALE_EXECUTION",
         failurePayload: {
           code: "STALE_EXECUTION",
-          message: "Execution intern run was stale and has been cleaned up",
+          reason: "Execution intern run was stale and has been cleaned up",
           retryable: true,
         },
         latencyMs: null,

@@ -16,7 +16,7 @@ type CompleteScopedWorkRecordParams = {
     workRecordId: string
   }
   patch: PatchProposal | null
-  resultPayload: Record<string, unknown> | null
+  resultPayload: Record<string, unknown> & { summary: string }
   toolActivitySummary: Record<string, unknown>
 }
 
