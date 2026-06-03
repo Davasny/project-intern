@@ -18,7 +18,11 @@ export const InternRunListRow = ({
   <TableRow>
     <TableCell>
       <Link href={`/app/${organizationSlug}/${projectSlug}/intern-runs/${run.id}`}>
-        <RunStatusBadge state={run.state} />
+        <RunStatusBadge
+          labelSuffix={null}
+          state={run.state}
+          tooltipText={run.statusTooltipText}
+        />
       </Link>
     </TableCell>
     <TableCell>{getInternRunListFilterValue({ columnId: "provider", run })}</TableCell>

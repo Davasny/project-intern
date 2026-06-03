@@ -16,6 +16,7 @@ type RecordListRowProps = {
   record: {
     activeRun: {
       state: InternRunState
+      statusTooltipText: string | null
     } | null
     id: string
     context: Record<string, unknown>
@@ -125,7 +126,11 @@ export const RecordListRow = ({
       <TableCell>{record.progress.waitingCount}</TableCell>
       <TableCell>
         {record.activeRun ? (
-          <RunStatusBadge state={record.activeRun.state} />
+          <RunStatusBadge
+            labelSuffix={null}
+            state={record.activeRun.state}
+            tooltipText={record.activeRun.statusTooltipText}
+          />
         ) : (
           "—"
         )}

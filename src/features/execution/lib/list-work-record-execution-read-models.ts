@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
+import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
 import { workRecordTable } from "@/features/work-records/db"
@@ -82,9 +83,17 @@ export const listWorkRecordExecutionReadModels = async ({
           .where(inArray(internRunTable.workRecordId, workRecordIds))
       : []
 
-  const internRunsByWorkRecordId = new Map<string, typeof internRuns>()
+  const internRunReadModels = internRuns.map((internRun) => ({
+    ...internRun,
+    statusTooltipText: getInternRunStatusTooltipText({
+      failurePayload: internRun.failurePayload,
+      resultPayload: internRun.resultPayload,
+    }),
+  }))
 
-  for (const internRun of internRuns) {
+  const internRunsByWorkRecordId = new Map<string, typeof internRunReadModels>()
+
+  for (const internRun of internRunReadModels) {
     const existingInternRuns =
       internRunsByWorkRecordId.get(internRun.workRecordId) ?? []
     existingInternRuns.push(internRun)

@@ -6,6 +6,7 @@ export type ExecutionWorkRecordCell = {
   latestInternRun: {
     id: string
     state: InternRunState
+    statusTooltipText: string | null
   } | null
   recordId: string
   recordName: string

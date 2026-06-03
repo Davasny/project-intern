@@ -159,6 +159,9 @@ export const RecordDetailsPage = ({
     <div className="flex flex-col gap-6">
       <RecordDetailsHeader
         activeRunState={recordQuery.data.activeRunSummary?.state ?? null}
+        activeRunTooltipText={
+          recordQuery.data.activeRunSummary?.statusTooltipText ?? null
+        }
         deleteDisabled={hasActiveTasks}
         deletePending={deleteMutation.isPending}
         isTogglePending={isTogglePending}

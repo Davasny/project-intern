@@ -1,9 +1,10 @@
 "use client"
 
 import Link from "next/link"
+import { RunStatusBadge } from "@/components/ui/status-badge/intern-run-status-badge"
 import { WorkRecordStatusBadge } from "@/components/ui/status-badge/work-record-status-badge"
 import { ExecutionMatrixCellAction } from "@/features/execution/components/execution-matrix-cell-action"
-import { ExecutionMatrixRunStatusBadge } from "@/features/execution/components/execution-matrix-intern-run-status-badge"
+import { isFailedInternRunState } from "@/features/execution/lib/is-failed-intern-run-state"
 import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 import type { WorkRecordState } from "@/features/work-records/schemas/work-record-state"
 
@@ -17,6 +18,7 @@ type ExecutionMatrixCellProps = {
     latestInternRun: {
       id: string
       state: InternRunState
+      statusTooltipText: string | null
     } | null
     recordId: string
     state: WorkRecordState
@@ -36,15 +38,22 @@ export const ExecutionMatrixCell = ({
   }
 
   if (workRecord.latestInternRun) {
+    const labelSuffix =
+      isFailedInternRunState(workRecord.latestInternRun.state) &&
+      workRecord.attemptCount > 1
+        ? `(${workRecord.attemptCount.toLocaleString()})`
+        : null
+
     return (
       <div className="flex flex-row items-center gap-1.5">
         <Link
           className="inline-flex"
           href={`/app/${organizationSlug}/${projectSlug}/intern-runs/${workRecord.latestInternRun.id}`}
         >
-          <ExecutionMatrixRunStatusBadge
-            attemptCount={workRecord.attemptCount}
+          <RunStatusBadge
+            labelSuffix={labelSuffix}
             state={workRecord.latestInternRun.state}
+            tooltipText={workRecord.latestInternRun.statusTooltipText}
           />
         </Link>
         <ExecutionMatrixCellAction

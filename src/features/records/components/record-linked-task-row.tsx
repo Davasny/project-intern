@@ -29,6 +29,7 @@ type RecordLinkedTaskRowProps = {
       id: string
       failurePayload: Record<string, unknown> | null
       state: InternRunState
+      statusTooltipText: string | null
     } | null
     sortOrder: number
     state: WorkRecordState
@@ -206,7 +207,11 @@ export const RecordLinkedTaskRow = ({
             className="cursor-pointer"
             href={`/app/${organizationSlug}/${projectSlug}/intern-runs/${latestInternRun.id}`}
           >
-            <RunStatusBadge state={latestInternRun.state} />
+            <RunStatusBadge
+              labelSuffix={null}
+              state={latestInternRun.state}
+              tooltipText={latestInternRun.statusTooltipText}
+            />
           </Link>
         ) : (
           <span className="text-sm text-muted-foreground">No run</span>

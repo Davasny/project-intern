@@ -9,6 +9,7 @@ import type { RecordState } from "@/features/records/schemas/record-state"
 
 type RecordDetailsHeaderProps = {
   activeRunState: InternRunState | null
+  activeRunTooltipText: string | null
   deleteDisabled: boolean
   deletePending: boolean
   isTogglePending: boolean
@@ -20,6 +21,7 @@ type RecordDetailsHeaderProps = {
 
 export const RecordDetailsHeader = ({
   activeRunState,
+  activeRunTooltipText,
   deleteDisabled,
   deletePending,
   isTogglePending,
@@ -43,7 +45,13 @@ export const RecordDetailsHeader = ({
               onCheckedChange={onActiveToggle}
             />
           ) : null}
-          {activeRunState ? <RunStatusBadge state={activeRunState} /> : null}
+          {activeRunState ? (
+            <RunStatusBadge
+              labelSuffix={null}
+              state={activeRunState}
+              tooltipText={activeRunTooltipText}
+            />
+          ) : null}
         </div>
       </div>
       <PageHeaderActions className="md:justify-end">

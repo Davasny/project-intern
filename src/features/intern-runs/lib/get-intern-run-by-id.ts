@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { and, desc, eq } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
+import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
@@ -97,10 +98,12 @@ export const getInternRunById = async ({
       costUsd: internRunTable.costUsd,
       createdAt: internRunTable.createdAt,
       estimatedCostUsd: internRunTable.estimatedCostUsd,
+      failurePayload: internRunTable.failurePayload,
       id: internRunTable.id,
       inputTokens: internRunTable.inputTokens,
       latencyMs: internRunTable.latencyMs,
       outputTokens: internRunTable.outputTokens,
+      resultPayload: internRunTable.resultPayload,
       state: internRunTable.state,
       tokenInput: internRunTable.tokenInput,
       tokenOutput: internRunTable.tokenOutput,
@@ -111,6 +114,10 @@ export const getInternRunById = async ({
 
   return {
     ...currentRun,
+    statusTooltipText: getInternRunStatusTooltipText({
+      failurePayload: currentRun.failurePayload,
+      resultPayload: currentRun.resultPayload,
+    }),
     siblingRuns: siblingRuns.map((sibling) => ({
       attemptNumber: sibling.attemptNumber,
       costUsd: sibling.costUsd,
@@ -121,6 +128,10 @@ export const getInternRunById = async ({
       latencyMs: sibling.latencyMs,
       outputTokens: sibling.outputTokens,
       state: sibling.state,
+      statusTooltipText: getInternRunStatusTooltipText({
+        failurePayload: sibling.failurePayload,
+        resultPayload: sibling.resultPayload,
+      }),
       tokenInput: sibling.tokenInput,
       tokenOutput: sibling.tokenOutput,
     })),

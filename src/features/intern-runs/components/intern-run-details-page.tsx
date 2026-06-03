@@ -224,7 +224,11 @@ export const InternRunDetailsPage = ({
               <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                 Intern Run
               </h1>
-              <RunStatusBadge state={run.state} />
+              <RunStatusBadge
+                labelSuffix={null}
+                state={run.state}
+                tooltipText={run.statusTooltipText}
+              />
             </div>
             <p className="text-sm text-muted-foreground">
               Attempt #{run.attemptNumber} for task{" "}
@@ -315,12 +319,20 @@ export const InternRunDetailsPage = ({
                     <TableCell>#{sibling.attemptNumber}</TableCell>
                     <TableCell>
                       {sibling.id === run.id ? (
-                        <RunStatusBadge state={sibling.state} />
+                        <RunStatusBadge
+                          labelSuffix={null}
+                          state={sibling.state}
+                          tooltipText={sibling.statusTooltipText}
+                        />
                       ) : (
                         <Link
                           href={`/app/${organizationSlug}/${projectSlug}/intern-runs/${anchorInternRunId}/attempts/${String(sibling.attemptNumber)}`}
                         >
-                          <RunStatusBadge state={sibling.state} />
+                          <RunStatusBadge
+                            labelSuffix={null}
+                            state={sibling.state}
+                            tooltipText={sibling.statusTooltipText}
+                          />
                         </Link>
                       )}
                     </TableCell>

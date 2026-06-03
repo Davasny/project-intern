@@ -24,6 +24,7 @@ type WorkRecordsSectionProps = {
       selectedModel: string | null
       selectedTemperature: number | null
       state: InternRunState
+      statusTooltipText: string | null
     } | null
     recordId: string
     recordName: string

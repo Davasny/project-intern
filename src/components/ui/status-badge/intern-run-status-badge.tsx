@@ -1,4 +1,11 @@
+"use client"
+
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 
 const runStatusMap: Record<
@@ -23,9 +30,30 @@ const runStatusMap: Record<
 }
 
 type RunStatusBadgeProps = {
+  labelSuffix: string | null
   state: InternRunState
+  tooltipText: string | null
 }
 
-export const RunStatusBadge = ({ state }: RunStatusBadgeProps) => (
-  <StatusBadge {...runStatusMap[state]} />
-)
+export const RunStatusBadge = ({
+  labelSuffix,
+  state,
+  tooltipText,
+}: RunStatusBadgeProps) => {
+  const status = runStatusMap[state]
+  const label = labelSuffix ? `${status.label} ${labelSuffix}` : status.label
+  const badge = <StatusBadge label={label} tone={status.tone} />
+
+  return tooltipText ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex cursor-pointer">{badge}</span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-80 whitespace-pre-wrap leading-relaxed">
+        {tooltipText}
+      </TooltipContent>
+    </Tooltip>
+  ) : (
+    badge
+  )
+}

@@ -33,6 +33,7 @@ type WorkRecordRowProps = {
       selectedModel: string | null
       selectedTemperature: number | null
       state: InternRunState
+      statusTooltipText: string | null
     } | null
     recordId: string
     recordName: string
@@ -155,7 +156,11 @@ export const WorkRecordRow = ({
                 className="cursor-pointer"
                 href={`/app/${organizationSlug}/${projectSlug}/intern-runs/${workRecord.latestInternRun.id}`}
               >
-                <RunStatusBadge state={workRecord.latestInternRun.state} />
+                <RunStatusBadge
+                  labelSuffix={null}
+                  state={workRecord.latestInternRun.state}
+                  tooltipText={workRecord.latestInternRun.statusTooltipText}
+                />
               </Link>
               {workRecord.latestInternRun.selectedModel ? (
                 <span className="max-w-64 truncate text-xs text-muted-foreground">

@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { desc, eq } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
+import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
@@ -38,6 +39,7 @@ export const listInternRuns = async ({
       createdAt: internRunTable.createdAt,
       estimatedCostUsd: internRunTable.estimatedCostUsd,
       finishedAt: internRunTable.finishedAt,
+      failurePayload: internRunTable.failurePayload,
       id: internRunTable.id,
       inputTokens: internRunTable.inputTokens,
       latencyMs: internRunTable.latencyMs,
@@ -46,6 +48,7 @@ export const listInternRuns = async ({
       provider: internRunTable.provider,
       recordId: recordTable.id,
       recordName: recordTable.name,
+      resultPayload: internRunTable.resultPayload,
       selectedIntern: internRunTable.selectedIntern,
       selectedModel: internRunTable.selectedModel,
       selectedTemperature: internRunTable.selectedTemperature,
@@ -90,6 +93,10 @@ export const listInternRuns = async ({
     sessionReference: run.sessionReference,
     startedAt: run.startedAt,
     state: run.state,
+    statusTooltipText: getInternRunStatusTooltipText({
+      failurePayload: run.failurePayload,
+      resultPayload: run.resultPayload,
+    }),
     taskCallCount: run.taskCallCount,
     taskId: run.taskId,
     workRecordId: run.workRecordId,

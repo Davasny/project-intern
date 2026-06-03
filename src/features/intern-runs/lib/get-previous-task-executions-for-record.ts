@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray, isNotNull, ne } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
+import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { taskTable } from "@/features/tasks/db"
 import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
@@ -12,28 +13,6 @@ type PreviousTaskExecution = {
   resultSummary: string | null
   finishedAt: string | null
   attemptNumber: number
-}
-
-const extractSummary = (
-  resultPayload: Record<string, unknown> | null,
-  failurePayload: Record<string, unknown> | null,
-): string | null => {
-  const payload = resultPayload ?? failurePayload
-
-  if (!payload || Object.keys(payload).length === 0) {
-    return null
-  }
-
-  const summaryField =
-    (payload.summary as string | undefined) ??
-    (payload.message as string | undefined) ??
-    (payload.error as string | undefined)
-
-  if (summaryField !== undefined) {
-    return String(summaryField).slice(0, 120)
-  }
-
-  return JSON.stringify(payload).slice(0, 120)
 }
 
 type GetPreviousTaskExecutionsForRecordParams = {
@@ -76,7 +55,10 @@ export const getPreviousTaskExecutionsForRecord = async ({
   return rows.map((row) => ({
     taskTitle: row.taskTitle,
     state: row.state,
-    resultSummary: extractSummary(row.resultPayload, row.failurePayload),
+    resultSummary: getInternRunStatusTooltipText({
+      failurePayload: row.failurePayload,
+      resultPayload: row.resultPayload,
+    }),
     finishedAt: row.finishedAt?.toISOString() ?? null,
     attemptNumber: row.attemptNumber,
   }))

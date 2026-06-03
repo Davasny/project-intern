@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { asc, eq, inArray, sql } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
+import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { listRecordRelationSummaries } from "@/features/record-edges/lib/list-record-relation-summaries"
 import { recordTable } from "@/features/records/db"
@@ -75,6 +76,8 @@ export const listRecords = async ({
       ? await db
           .select({
             id: internRunTable.id,
+            failurePayload: internRunTable.failurePayload,
+            resultPayload: internRunTable.resultPayload,
             selectedModel: internRunTable.selectedModel,
             state: internRunTable.state,
           })
@@ -92,7 +95,18 @@ export const listRecords = async ({
 
   const taskMap = new Map(tasks.map((task) => [task.id, task]))
   const internRunMap = new Map(
-    internRuns.map((internRun) => [internRun.id, internRun]),
+    internRuns.map((internRun) => [
+      internRun.id,
+      {
+        id: internRun.id,
+        selectedModel: internRun.selectedModel,
+        state: internRun.state,
+        statusTooltipText: getInternRunStatusTooltipText({
+          failurePayload: internRun.failurePayload,
+          resultPayload: internRun.resultPayload,
+        }),
+      },
+    ]),
   )
   const relationSummaryMap = await listRecordRelationSummaries({
     projectId: project.id,
