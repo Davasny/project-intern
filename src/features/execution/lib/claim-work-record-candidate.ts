@@ -18,6 +18,7 @@ import { workRecordTable } from "@/features/work-records/db"
 import type { WorkRecordState } from "@/features/work-records/schemas/work-record-state"
 import {
   activeWorkRecordStates,
+  autoPickableWorkRecordStates,
   claimableWorkRecordStates,
   terminalWorkRecordStates,
 } from "@/features/work-records/schemas/work-record-state"
@@ -102,7 +103,7 @@ export const claimWorkRecordCandidate = async (
         and(
           params.mode === "manual"
             ? inArray(workRecordTable.state, claimableWorkRecordStates)
-            : eq(workRecordTable.state, "waiting"),
+            : inArray(workRecordTable.state, autoPickableWorkRecordStates),
           notExists(
             tx
               .select({ id: earlierWorkRecordTable.id })

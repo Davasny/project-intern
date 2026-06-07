@@ -317,6 +317,7 @@ export const abortInternRunCommand = async ({
   await actor.send("abort", {
     internRunId,
     failurePayload,
+    finishedAt: new Date(),
     workRecordId,
     toolActivitySummary,
     toolSummary: toolActivitySummary,

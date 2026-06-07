@@ -68,14 +68,17 @@ const getExistingActiveInternRun = async (workRecordId: string) =>
 
 const sendClaimEvent = async ({
   internRunId,
+  requestedBy,
   workRecordId,
 }: {
   internRunId: string
+  requestedBy: ClaimRequestedBy
   workRecordId: string
 }) => {
   let actor = await getWorkRecordActor(workRecordId)
 
   if (
+    requestedBy !== "scheduler" &&
     !actor.nextEvents.includes("claim") &&
     actor.nextEvents.includes("retry")
   ) {
@@ -207,6 +210,7 @@ export const claimAndCreateRun = async (
   try {
     await sendClaimEvent({
       internRunId: internRunResult.internRunId,
+      requestedBy: input.requestedBy,
       workRecordId: candidate.workRecordId,
     })
   } catch (error) {

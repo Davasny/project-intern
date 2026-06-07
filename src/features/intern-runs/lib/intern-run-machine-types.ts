@@ -95,6 +95,7 @@ export type FailedEvent = {
 export type AbortedEvent = {
   internRunId: string
   failurePayload: Record<string, unknown> | null
+  finishedAt: Date
   workRecordId: string
   toolActivitySummary: Record<string, unknown>
   toolSummary: Record<string, unknown>

@@ -191,15 +191,16 @@ const internRunMachineDefinition = machine<InternRunMachineContext>().define({
     },
     aborted: {
       entry: async (context, event: AbortedEvent) => {
-        await skipWorkRecord({
+        await failWorkRecord({
           internRunId: event.internRunId,
-          errorCode: null,
+          errorCode: "ABORTED",
           workRecordId: event.workRecordId,
         })
 
         return {
           ...context,
           failurePayload: event.failurePayload,
+          finishedAt: event.finishedAt,
           toolActivitySummary: event.toolActivitySummary,
           toolSummary: event.toolSummary,
         }

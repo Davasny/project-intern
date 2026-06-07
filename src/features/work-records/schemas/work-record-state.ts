@@ -37,6 +37,11 @@ export const autoRetryableWorkRecordStates = [
   "failed_failed",
 ] satisfies Array<WorkRecordState>
 
+export const autoPickableWorkRecordStates = [
+  "waiting",
+  "picked_up_failed",
+] satisfies Array<WorkRecordState>
+
 /** States eligible for a manual claim (trigger or retry-and-claim). */
 export const claimableWorkRecordStates = [
   "waiting",
