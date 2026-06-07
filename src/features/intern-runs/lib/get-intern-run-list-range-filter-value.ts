@@ -17,7 +17,7 @@ export const getInternRunListRangeFilterValue = ({
   }
 
   if (columnId === "duration") {
-    return run.latencyMs !== null ? run.latencyMs / 1000 : null
+    return run.durationMs !== null ? run.durationMs / 1000 : null
   }
 
   if (columnId === "toolCalls") {

@@ -10,6 +10,7 @@ export const buildOpencodeConfig = (params: {
   runtimeTemperature: number | null
   sessionPurpose: OpencodeSessionPurpose
 }): Config => ({
+  // @ts-expect-error OpenCode supports external_directory rule maps, but SDK 1.15.11 types only expose scalar actions.
   agent: {
     [internAgent.name]: {
       description: internAgent.description,

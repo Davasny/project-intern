@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { InternRunMessages } from "@/features/intern-runs/components/intern-run-messages"
+import { InternRunRefreshStatsButton } from "@/features/intern-runs/components/intern-run-refresh-stats-button"
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
@@ -115,7 +116,7 @@ export const InternRunDetailsPage = ({
   }
 
   const run = runQuery.data
-  const durationDisplay = formatDurationMs(run.latencyMs)
+  const durationDisplay = formatDurationMs(run.durationMs)
 
   const totalTokens =
     (run.inputTokens ?? run.tokenInput ?? 0) +
@@ -248,6 +249,13 @@ export const InternRunDetailsPage = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <InternRunRefreshStatsButton
+              attemptNumber={run.attemptNumber}
+              internRunId={run.id}
+              organizationSlug={organizationSlug}
+              projectSlug={projectSlug}
+              queryInternRunId={anchorInternRunId}
+            />
             {isAbortable ? (
               <Button
                 disabled={abortMutation.isPending}
@@ -336,7 +344,7 @@ export const InternRunDetailsPage = ({
                         </Link>
                       )}
                     </TableCell>
-                    <TableCell>{formatDurationMs(sibling.latencyMs)}</TableCell>
+                    <TableCell>{formatDurationMs(sibling.durationMs)}</TableCell>
                     <TableCell>
                       {formatInternRunTokenTotal({
                         inputTokens: sibling.inputTokens,

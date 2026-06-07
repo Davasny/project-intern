@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
+import { calculateInternRunDurationMs } from "@/features/intern-runs/lib/calculate-intern-run-duration-ms"
 import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
@@ -85,6 +86,11 @@ export const listWorkRecordExecutionReadModels = async ({
 
   const internRunReadModels = internRuns.map((internRun) => ({
     ...internRun,
+    durationMs: calculateInternRunDurationMs({
+      finishedAt: internRun.finishedAt,
+      latencyMs: internRun.latencyMs,
+      startedAt: internRun.startedAt,
+    }),
     statusTooltipText: getInternRunStatusTooltipText({
       failurePayload: internRun.failurePayload,
       resultPayload: internRun.resultPayload,

@@ -8,6 +8,7 @@ import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-s
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { getSessionMetrics } from "@/features/opencode/lib/get-session-metrics"
 import { isAssistantSessionMessage } from "@/features/opencode/lib/is-assistant-session-message"
+import { opencodeSessionMessagesLimit } from "@/features/opencode/lib/opencode-session-messages-limit"
 import { db } from "@/lib/db"
 import { logger as rootLogger } from "@/lib/logger"
 
@@ -116,6 +117,10 @@ export const pollSessionForMetrics = async ({
 
       const messagesResult = await client.session.messages({
         path: { id: sessionId },
+        query: {
+          ...(directory ? { directory } : {}),
+          limit: opencodeSessionMessagesLimit,
+        },
       })
 
       if (!messagesResult.data || messagesResult.data.length === 0) {

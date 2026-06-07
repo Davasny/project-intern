@@ -3,6 +3,7 @@ import {
   collectSessionMetrics,
   type SessionMetrics,
 } from "@/features/opencode/lib/collect-session-metrics"
+import { opencodeSessionMessagesLimit } from "@/features/opencode/lib/opencode-session-messages-limit"
 
 export const getSessionMetrics = async ({
   client,
@@ -17,7 +18,10 @@ export const getSessionMetrics = async ({
 }): Promise<SessionMetrics | null> => {
   const messagesResult = await client.session.messages({
     path: { id: sessionId },
-    ...(directory ? { query: { directory } } : {}),
+    query: {
+      ...(directory ? { directory } : {}),
+      limit: opencodeSessionMessagesLimit,
+    },
   })
 
   if (!messagesResult.data || messagesResult.data.length === 0) {

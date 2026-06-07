@@ -5,6 +5,7 @@ import { getInternRunById } from "@/features/intern-runs/lib/get-intern-run-by-i
 import { getInternRunSessionMessages } from "@/features/intern-runs/lib/get-intern-run-session-messages"
 import { abortInternRunCommand } from "@/features/intern-runs/lib/intern-run-commands"
 import { listInternRuns } from "@/features/intern-runs/lib/list-intern-runs"
+import { refreshInternRunStats } from "@/features/intern-runs/lib/refresh-intern-run-stats"
 import { refreshMissingInternRunStats } from "@/features/intern-runs/lib/refresh-missing-intern-run-stats"
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { withOpencodeForOrg } from "@/features/opencode/lib/get-opencode-client"
@@ -160,4 +161,18 @@ export const internRunsRouter = router({
         runtimeTemperature: null,
       })
     }),
+  refreshRunStats: protectedProcedure
+    .input(
+      projectScopeSchema.extend({
+        internRunId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) =>
+      refreshInternRunStats({
+        internRunId: input.internRunId,
+        organizationSlug: input.organizationSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.session.user.id,
+      }),
+    ),
 })

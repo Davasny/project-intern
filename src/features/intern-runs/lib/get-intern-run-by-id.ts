@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { and, desc, eq } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
+import { calculateInternRunDurationMs } from "@/features/intern-runs/lib/calculate-intern-run-duration-ms"
 import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
@@ -99,11 +100,13 @@ export const getInternRunById = async ({
       createdAt: internRunTable.createdAt,
       estimatedCostUsd: internRunTable.estimatedCostUsd,
       failurePayload: internRunTable.failurePayload,
+      finishedAt: internRunTable.finishedAt,
       id: internRunTable.id,
       inputTokens: internRunTable.inputTokens,
       latencyMs: internRunTable.latencyMs,
       outputTokens: internRunTable.outputTokens,
       resultPayload: internRunTable.resultPayload,
+      startedAt: internRunTable.startedAt,
       state: internRunTable.state,
       tokenInput: internRunTable.tokenInput,
       tokenOutput: internRunTable.tokenOutput,
@@ -114,6 +117,11 @@ export const getInternRunById = async ({
 
   return {
     ...currentRun,
+    durationMs: calculateInternRunDurationMs({
+      finishedAt: currentRun.finishedAt,
+      latencyMs: currentRun.latencyMs,
+      startedAt: currentRun.startedAt,
+    }),
     statusTooltipText: getInternRunStatusTooltipText({
       failurePayload: currentRun.failurePayload,
       resultPayload: currentRun.resultPayload,
@@ -123,9 +131,15 @@ export const getInternRunById = async ({
       costUsd: sibling.costUsd,
       createdAt: sibling.createdAt,
       estimatedCostUsd: sibling.estimatedCostUsd,
+      finishedAt: sibling.finishedAt,
       id: sibling.id,
       inputTokens: sibling.inputTokens,
       latencyMs: sibling.latencyMs,
+      durationMs: calculateInternRunDurationMs({
+        finishedAt: sibling.finishedAt,
+        latencyMs: sibling.latencyMs,
+        startedAt: sibling.startedAt,
+      }),
       outputTokens: sibling.outputTokens,
       state: sibling.state,
       statusTooltipText: getInternRunStatusTooltipText({

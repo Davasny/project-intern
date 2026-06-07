@@ -38,9 +38,9 @@ export const syncInternRunMetricsFromSession = async ({
 
   log.info("Syncing intern run metrics from session")
 
-  await withOpencodeForOrg({
+  return withOpencodeForOrg({
     fn: async ({ client }) => {
-      await syncSessionMetricsToInternRun({
+      return syncSessionMetricsToInternRun({
         client,
         directory: run.directory,
         fallbackLatencyMs: null,

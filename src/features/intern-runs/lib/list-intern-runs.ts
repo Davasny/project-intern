@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { desc, eq } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
+import { calculateInternRunDurationMs } from "@/features/intern-runs/lib/calculate-intern-run-duration-ms"
 import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
@@ -77,6 +78,11 @@ export const listInternRuns = async ({
     attemptNumber: run.attemptNumber,
     costUsd: run.costUsd,
     createdAt: run.createdAt,
+    durationMs: calculateInternRunDurationMs({
+      finishedAt: run.finishedAt,
+      latencyMs: run.latencyMs,
+      startedAt: run.startedAt,
+    }),
     estimatedCostUsd: run.estimatedCostUsd,
     finishedAt: run.finishedAt,
     id: run.id,

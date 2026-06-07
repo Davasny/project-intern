@@ -44,7 +44,7 @@ export const getInternRunListFilterValue = ({
   }
 
   if (columnId === "duration") {
-    return formatDurationMs(run.latencyMs)
+    return formatDurationMs(run.durationMs)
   }
 
   if (columnId === "toolCalls") {
