@@ -89,14 +89,26 @@ const importSummarySchema = z.object({
   hasProjectSettings: z.boolean(),
 })
 
+const recordImportConflictSchema = z.object({
+  name: z.string().trim().min(1),
+})
+
 const projectImportPreviewResultSchema = z.object({
   summary: importSummarySchema,
   warnings: z.array(importWarningSchema),
+  recordConflicts: z.array(recordImportConflictSchema),
   data: projectExportDataSchema.shape.data,
 })
 
+export const schemaImportModeSchema = z.enum([
+  "overwrite_existing_versions",
+  "append_as_new_versions",
+])
+
 export const projectImportCommitInputSchema = z.object({
   data: projectExportDataSchema.shape.data,
+  recordNamesToOverride: z.array(z.string().trim().min(1)),
+  schemaImportMode: schemaImportModeSchema,
 })
 
 export type ProjectExportData = z.infer<typeof projectExportDataSchema>
@@ -108,3 +120,4 @@ export type ProjectImportCommitInput = z.infer<
   typeof projectImportCommitInputSchema
 >
 export type ImportWarning = z.infer<typeof importWarningSchema>
+export type SchemaImportMode = z.infer<typeof schemaImportModeSchema>

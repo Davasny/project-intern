@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 import { projectSchemaVersionTable } from "@/features/project-schema/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import type {
@@ -68,15 +68,6 @@ const fetchExistingSchemaVersionNumbers = async (projectId: string) => {
   return new Set(existingRows.map((row) => row.version))
 }
 
-const countProjectRecords = async (projectId: string) => {
-  const [result] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(recordTable)
-    .where(eq(recordTable.projectId, projectId))
-
-  return result?.count ?? 0
-}
-
 export const previewProjectImport = async ({
   fileContent,
   organizationSlug,
@@ -104,6 +95,7 @@ export const previewProjectImport = async ({
 
   const data = parsed.data
   const warnings: ImportWarning[] = []
+  const recordConflicts: ProjectImportPreviewResult["recordConflicts"] = []
 
   let recordsFound = 0
   let tasksFound = 0
@@ -117,11 +109,14 @@ export const previewProjectImport = async ({
       project.id,
     )
 
-    for (const name of recordNames) {
+    const uniqueRecordNames = [...new Set(recordNames)]
+
+    for (const name of uniqueRecordNames) {
       if (existingNames.has(name)) {
+        recordConflicts.push({ name })
         warnings.push({
           entityType: "record",
-          message: `Record "${name}" already exists and will be skipped.`,
+          message: `Record "${name}" already exists. Choose whether to overwrite it or skip it.`,
           name,
         })
       }
@@ -149,30 +144,21 @@ export const previewProjectImport = async ({
     const existingVersionNumbers = await fetchExistingSchemaVersionNumbers(
       project.id,
     )
-    const projectHasRecords = (await countProjectRecords(project.id)) > 0
 
-    if (projectHasRecords) {
-      warnings.push({
-        entityType: "schema_version",
-        message:
-          "Target project has records. Schema versions cannot be imported via file import. Use the schema migration workflow instead.",
-        name: "",
-      })
-    } else {
-      for (const sv of data.schemaVersions) {
-        if (existingVersionNumbers.has(sv.version)) {
-          warnings.push({
-            entityType: "schema_version",
-            message: `Schema version ${sv.version} already exists and will be skipped.`,
-            name: `v${sv.version}`,
-          })
-        }
+    for (const sv of data.schemaVersions) {
+      if (existingVersionNumbers.has(sv.version)) {
+        warnings.push({
+          entityType: "schema_version",
+          message: `Schema version ${sv.version} already exists. Choose whether to overwrite it or import this schema as a new version.`,
+          name: `v${sv.version}`,
+        })
       }
     }
   }
 
   return {
     data,
+    recordConflicts,
     summary: {
       hasProjectSettings: data.projectSettings !== undefined,
       recordsFound,

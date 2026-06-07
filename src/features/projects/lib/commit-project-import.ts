@@ -47,12 +47,12 @@ export const commitProjectImport = async ({
 
   try {
     const result = await db.transaction(async (transaction) => {
-      let existingRecordNames = new Set<string>()
+      const existingRecordIdsByName = new Map<string, string>()
 
       if (data.records && data.records.length > 0) {
         const recordNames = data.records.map((r) => r.name)
         const rows = await transaction
-          .select({ name: recordTable.name })
+          .select({ id: recordTable.id, name: recordTable.name })
           .from(recordTable)
           .where(
             and(
@@ -61,7 +61,9 @@ export const commitProjectImport = async ({
             ),
           )
 
-        existingRecordNames = new Set(rows.map((row) => row.name))
+        for (const row of rows) {
+          existingRecordIdsByName.set(row.name, row.id)
+        }
       }
 
       let existingTaskTitles = new Set<string>()
@@ -81,32 +83,73 @@ export const commitProjectImport = async ({
         existingTaskTitles = new Set(rows.map((row) => row.title))
       }
 
-      let existingSchemaVersionNumbers = new Set<number>()
+      const existingSchemaVersionIdsByVersion = new Map<number, string>()
+      let maxExistingSchemaVersion = 0
 
       if (data.schemaVersions && data.schemaVersions.length > 0) {
         const svRows = await transaction
-          .select({ version: projectSchemaVersionTable.version })
+          .select({
+            id: projectSchemaVersionTable.id,
+            version: projectSchemaVersionTable.version,
+          })
           .from(projectSchemaVersionTable)
           .where(eq(projectSchemaVersionTable.projectId, project.id))
 
-        existingSchemaVersionNumbers = new Set(svRows.map((row) => row.version))
+        for (const row of svRows) {
+          existingSchemaVersionIdsByVersion.set(row.version, row.id)
+
+          if (row.version > maxExistingSchemaVersion) {
+            maxExistingSchemaVersion = row.version
+          }
+        }
       }
 
       const schemaVersionIdMap = new Map<string, string>()
+      const schemaVersionNumberMap = new Map<number, number>()
       let schemaVersionsImported = 0
       let maxSchemaVersion = 0
 
       if (data.schemaVersions && data.schemaVersions.length > 0) {
-        const toInsert = data.schemaVersions.filter(
-          (sv) => !existingSchemaVersionNumbers.has(sv.version),
+        const sorted = [...data.schemaVersions].sort(
+          (a, b) => a.version - b.version,
         )
-        const sorted = [...toInsert].sort((a, b) => a.version - b.version)
+        let nextAppendedSchemaVersion = maxExistingSchemaVersion + 1
 
         for (const sv of sorted) {
+          const appliedVersion =
+            input.schemaImportMode === "append_as_new_versions"
+              ? nextAppendedSchemaVersion
+              : sv.version
           const remappedParentId =
             sv.parentVersionId !== null
               ? (schemaVersionIdMap.get(sv.parentVersionId) ?? null)
               : null
+          const existingSchemaVersionId =
+            input.schemaImportMode === "overwrite_existing_versions"
+              ? existingSchemaVersionIdsByVersion.get(sv.version)
+              : undefined
+
+          if (existingSchemaVersionId) {
+            await transaction
+              .update(projectSchemaVersionTable)
+              .set({
+                parentVersionId: sql`${remappedParentId}::uuid`,
+                proposedBy: null,
+                schemaDefinition: sql`${JSON.stringify(sv.schemaDefinition)}::jsonb`,
+                state: sql`${sv.state}`,
+              })
+              .where(eq(projectSchemaVersionTable.id, existingSchemaVersionId))
+
+            schemaVersionIdMap.set(sv.id, existingSchemaVersionId)
+            schemaVersionNumberMap.set(sv.version, appliedVersion)
+            schemaVersionsImported++
+
+            if (appliedVersion > maxSchemaVersion) {
+              maxSchemaVersion = appliedVersion
+            }
+
+            continue
+          }
 
           const [inserted] = await transaction
             .insert(projectSchemaVersionTable)
@@ -116,17 +159,24 @@ export const commitProjectImport = async ({
               proposedBy: null,
               schemaDefinition: sql`${JSON.stringify(sv.schemaDefinition)}::jsonb`,
               state: sql`${sv.state}`,
-              version: sv.version,
+              version: appliedVersion,
             })
             .returning({ id: projectSchemaVersionTable.id })
 
-          if (inserted) {
-            schemaVersionIdMap.set(sv.id, inserted.id)
-            schemaVersionsImported++
+          if (!inserted) {
+            continue
+          }
 
-            if (sv.version > maxSchemaVersion) {
-              maxSchemaVersion = sv.version
-            }
+          schemaVersionIdMap.set(sv.id, inserted.id)
+          schemaVersionNumberMap.set(sv.version, appliedVersion)
+          schemaVersionsImported++
+
+          if (appliedVersion > maxSchemaVersion) {
+            maxSchemaVersion = appliedVersion
+          }
+
+          if (input.schemaImportMode === "append_as_new_versions") {
+            nextAppendedSchemaVersion++
           }
         }
       }
@@ -134,8 +184,29 @@ export const commitProjectImport = async ({
       let recordsImported = 0
 
       if (data.records && data.records.length > 0) {
+        const recordNamesToOverride = new Set(input.recordNamesToOverride)
+
         for (const record of data.records) {
-          if (existingRecordNames.has(record.name)) {
+          const schemaVersion =
+            schemaVersionNumberMap.get(record.schemaVersion) ??
+            record.schemaVersion
+          const existingRecordId = existingRecordIdsByName.get(record.name)
+
+          if (existingRecordId && !recordNamesToOverride.has(record.name)) {
+            continue
+          }
+
+          if (existingRecordId) {
+            await transaction
+              .update(recordTable)
+              .set({
+                context: record.context,
+                schemaVersion,
+                state: "inactive",
+              })
+              .where(eq(recordTable.id, existingRecordId))
+
+            recordsImported++
             continue
           }
 
@@ -145,7 +216,7 @@ export const commitProjectImport = async ({
               context: record.context,
               name: record.name,
               projectId: project.id,
-              schemaVersion: record.schemaVersion,
+              schemaVersion,
               state: "inactive",
             })
             .returning({ id: recordTable.id })
@@ -197,7 +268,9 @@ export const commitProjectImport = async ({
             projectId: project.id,
             proposedBy: null,
             rejectedBy: null,
-            schemaVersion: task.schemaVersion,
+            schemaVersion:
+              schemaVersionNumberMap.get(task.schemaVersion) ??
+              task.schemaVersion,
             sortOrder: maxSortOrder + tasksImported,
             sourceSchemaVersionId: sql`${remappedSourceId}::uuid`,
             state: sql`${task.state}`,

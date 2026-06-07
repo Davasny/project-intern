@@ -178,8 +178,10 @@ export const ImportExportSection = () => {
         <div className="flex flex-col gap-4">
           <h3 className="text-sm font-semibold text-foreground">Import</h3>
           <p className="text-sm text-muted-foreground">
-            Import data from a previously exported JSON file. Duplicate records
-            and tasks will be skipped.
+            Import data from a previously exported JSON file. Conflicting
+            records can be overwritten or skipped. Duplicate tasks will be
+            skipped. Schema versions can be appended or overwritten during
+            import.
           </p>
           <div className="flex flex-col gap-4 rounded-lg border border-border bg-muted/30 p-4">
             <p className="text-sm text-muted-foreground">

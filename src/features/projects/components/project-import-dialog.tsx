@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { FileUpIcon } from "lucide-react"
+import type { ChangeEvent } from "react"
 import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -34,7 +35,9 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 import type {
   ProjectExportData,
   ProjectImportPreviewResult,
+  SchemaImportMode,
 } from "@/features/projects/schemas/project-export-data"
+import { schemaImportModeSchema } from "@/features/projects/schemas/project-export-data"
 import { useTRPC } from "@/lib/trpc/client"
 
 type ProjectImportDialogProps = {
@@ -47,6 +50,8 @@ const importSelectionSchema = z.object({
   importRecords: z.boolean(),
   importSchemaVersions: z.boolean(),
   importProjectSettings: z.boolean(),
+  recordNamesToOverride: z.array(z.string().trim().min(1)),
+  schemaImportMode: schemaImportModeSchema,
 })
 
 type ImportSelectionValues = z.infer<typeof importSelectionSchema>
@@ -56,6 +61,8 @@ const DEFAULT_SELECTION: ImportSelectionValues = {
   importRecords: false,
   importSchemaVersions: false,
   importTasks: false,
+  recordNamesToOverride: [],
+  schemaImportMode: "append_as_new_versions",
 }
 
 const buildInitialSelection = (
@@ -65,6 +72,8 @@ const buildInitialSelection = (
   importRecords: preview.summary.recordsFound > 0,
   importSchemaVersions: preview.summary.schemaVersionsFound > 0,
   importTasks: preview.summary.tasksFound > 0,
+  recordNamesToOverride: [],
+  schemaImportMode: "append_as_new_versions",
 })
 
 const buildCommitData = (
@@ -97,6 +106,25 @@ const importCheckboxItems = [
   {
     name: "importProjectSettings" as const,
     label: "Runtime settings",
+  },
+]
+
+const schemaImportModeItems: {
+  description: string
+  label: string
+  name: SchemaImportMode
+}[] = [
+  {
+    description:
+      "Keep current schemas intact and import file schemas after the latest version.",
+    label: "Append as new versions",
+    name: "append_as_new_versions",
+  },
+  {
+    description:
+      "Replace existing schemas with the same version numbers from the file.",
+    label: "Overwrite matching versions",
+    name: "overwrite_existing_versions",
   },
 ]
 
@@ -172,7 +200,7 @@ export const ProjectImportDialog = ({
   }
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0]
 
@@ -198,7 +226,11 @@ export const ProjectImportDialog = ({
     const commitData = buildCommitData(previewResult, selection)
 
     await importCommitMutation.mutateAsync({
-      input: { data: commitData },
+      input: {
+        data: commitData,
+        recordNamesToOverride: selection.recordNamesToOverride,
+        schemaImportMode: selection.schemaImportMode,
+      },
       organizationSlug,
       projectSlug,
     })
@@ -219,14 +251,56 @@ export const ProjectImportDialog = ({
     (selectionForm.watch("importSchemaVersions") ? 1 : 0) +
     (selectionForm.watch("importProjectSettings") ? 1 : 0)
 
+  const shouldShowSchemaImportMode =
+    previewResult &&
+    previewResult.summary.schemaVersionsFound > 0 &&
+    selectionForm.watch("importSchemaVersions")
+  const selectedRecordNamesToOverride = selectionForm.watch(
+    "recordNamesToOverride",
+  )
+  const shouldShowRecordConflictControls =
+    previewResult && previewResult.recordConflicts.length > 0
+  const recordConflictNames = previewResult
+    ? previewResult.recordConflicts.map((conflict) => conflict.name)
+    : []
+  const areAllRecordConflictsSelected =
+    recordConflictNames.length > 0 &&
+    recordConflictNames.every((name) =>
+      selectedRecordNamesToOverride.includes(name),
+    )
+
+  const toggleRecordOverride = (name: string, checked: boolean) => {
+    const currentNames = selectionForm.getValues("recordNamesToOverride")
+
+    if (checked) {
+      selectionForm.setValue("recordNamesToOverride", [
+        ...new Set([...currentNames, name]),
+      ])
+      return
+    }
+
+    selectionForm.setValue(
+      "recordNamesToOverride",
+      currentNames.filter((currentName) => currentName !== name),
+    )
+  }
+
+  const toggleAllRecordOverrides = (checked: boolean) => {
+    selectionForm.setValue(
+      "recordNamesToOverride",
+      checked ? recordConflictNames : [],
+    )
+  }
+
   return (
     <Dialog onOpenChange={handleDialogOpenChange} open={isOpen}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import project data</DialogTitle>
           <DialogDescription>
             Upload a JSON file exported from another project. Select what to
-            import, then confirm. Duplicate names will be skipped.
+            import, choose conflict handling, then confirm. Duplicate tasks will
+            be skipped.
           </DialogDescription>
         </DialogHeader>
 
@@ -245,44 +319,6 @@ export const ProjectImportDialog = ({
                 : ""}{" "}
               found in file.
             </div>
-
-            {previewResult.warnings.length > 0 ? (
-              <div className="flex flex-col gap-2 rounded-md border border-tone-warning/30 bg-tone-warning/10 p-3">
-                <p className="text-sm font-medium text-tone-warning-foreground">
-                  Warnings
-                </p>
-                <DataTable>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader>Entity</TableHeader>
-                      <TableHeader>Name</TableHeader>
-                      <TableHeader>Message</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {previewResult.warnings.map((warning, index) => (
-                      <TableRow
-                        key={`${warning.entityType}-${warning.name}-${index}`}
-                      >
-                        <TableCell className="text-sm">
-                          {warning.entityType === "record"
-                            ? "Record"
-                            : warning.entityType === "task"
-                              ? "Task"
-                              : "Schema version"}
-                        </TableCell>
-                        <TableCell className="text-sm font-medium">
-                          {warning.name || "—"}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {warning.message}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </DataTable>
-              </div>
-            ) : null}
 
             <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-4">
               <p className="text-sm font-medium text-foreground">
@@ -312,17 +348,150 @@ export const ProjectImportDialog = ({
                                 type="checkbox"
                               />
                             </FormControl>
-                            <FormLabel className="cursor-pointer text-sm">
+                            <span className="cursor-pointer text-sm">
                               {item.label}
-                            </FormLabel>
+                            </span>
                           </label>
                         </FormItem>
                       )}
                     />
                   ))}
                 </div>
+                {shouldShowSchemaImportMode ? (
+                  <div className="flex flex-col gap-3 border-border border-t pt-4">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Schema import strategy
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Choose how imported schema versions interact with the
+                        schemas already in this project.
+                      </p>
+                    </div>
+                    <FormField
+                      control={selectionForm.control}
+                      name="schemaImportMode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                            {schemaImportModeItems.map((item) => (
+                              <label
+                                className="flex cursor-pointer flex-row items-start gap-3 rounded-md border border-border bg-background p-3 transition-colors hover:bg-muted/50 has-checked:border-foreground"
+                                htmlFor={`schema-import-mode-${item.name}`}
+                                key={item.name}
+                              >
+                                <FormControl>
+                                  <input
+                                    checked={field.value === item.name}
+                                    className="mt-0.5 size-4 shrink-0 accent-foreground"
+                                    id={`schema-import-mode-${item.name}`}
+                                    name={field.name}
+                                    onBlur={field.onBlur}
+                                    onChange={() => field.onChange(item.name)}
+                                    type="radio"
+                                  />
+                                </FormControl>
+                                <div className="flex flex-col gap-1">
+                                  <FormLabel className="cursor-pointer text-sm">
+                                    {item.label}
+                                  </FormLabel>
+                                  <p className="text-sm text-muted-foreground">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                ) : null}
               </Form>
             </div>
+
+            {previewResult.warnings.length > 0 ? (
+              <div className="flex flex-col gap-2 rounded-md border border-tone-warning/30 bg-tone-warning/10 p-3">
+                <p className="text-sm font-medium text-tone-warning-foreground">
+                  Warnings
+                </p>
+                <DataTable>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Entity</TableHeader>
+                      <TableHeader>Name</TableHeader>
+                      <TableHeader>Message</TableHeader>
+                      {shouldShowRecordConflictControls ? (
+                        <TableHeader>
+                          <label className="flex cursor-pointer flex-row items-center gap-2">
+                            <input
+                              aria-label="Select all record conflicts to overwrite"
+                              checked={areAllRecordConflictsSelected}
+                              className="size-4 rounded border-border accent-foreground"
+                              onChange={(event) =>
+                                toggleAllRecordOverrides(event.target.checked)
+                              }
+                              type="checkbox"
+                            />
+                            <span>Override</span>
+                          </label>
+                        </TableHeader>
+                      ) : null}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {previewResult.warnings.map((warning, index) => {
+                      const isRecordConflict = recordConflictNames.includes(
+                        warning.name,
+                      )
+                      const isSelected = selectedRecordNamesToOverride.includes(
+                        warning.name,
+                      )
+
+                      return (
+                        <TableRow
+                          key={`${warning.entityType}-${warning.name}-${index}`}
+                        >
+                          <TableCell className="text-sm">
+                            {warning.entityType === "record"
+                              ? "Record"
+                              : warning.entityType === "task"
+                                ? "Task"
+                                : "Schema version"}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium">
+                            {warning.name || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {warning.message}
+                          </TableCell>
+                          {shouldShowRecordConflictControls ? (
+                            <TableCell className="text-sm text-muted-foreground">
+                              {isRecordConflict ? (
+                                <input
+                                  aria-label={`Overwrite ${warning.name}`}
+                                  checked={isSelected}
+                                  className="size-4 rounded border-border accent-foreground"
+                                  onChange={(event) =>
+                                    toggleRecordOverride(
+                                      warning.name,
+                                      event.target.checked,
+                                    )
+                                  }
+                                  type="checkbox"
+                                />
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                          ) : null}
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </DataTable>
+              </div>
+            ) : null}
 
             <div className="flex flex-row justify-end gap-2">
               <Button
