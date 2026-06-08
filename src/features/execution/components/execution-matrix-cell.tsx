@@ -3,6 +3,12 @@
 import Link from "next/link"
 import { RunStatusBadge } from "@/components/ui/status-badge/intern-run-status-badge"
 import { WorkRecordStatusBadge } from "@/components/ui/status-badge/work-record-status-badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { ExecutionMatrixBlockedBadge } from "@/features/execution/components/execution-matrix-blocked-badge"
 import { ExecutionMatrixCellAction } from "@/features/execution/components/execution-matrix-cell-action"
 import { isFailedInternRunState } from "@/features/execution/lib/is-failed-intern-run-state"
 import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
@@ -15,6 +21,10 @@ type ExecutionMatrixCellProps = {
   projectSlug: string
   workRecord: {
     attemptCount: number
+    blocker: {
+      state: WorkRecordState
+      taskTitle: string
+    } | null
     latestInternRun: {
       id: string
       state: InternRunState
@@ -65,9 +75,24 @@ export const ExecutionMatrixCell = ({
     )
   }
 
+  const blocker = workRecord.state === "waiting" ? workRecord.blocker : null
+
   return (
     <div className="flex flex-row items-center gap-1.5">
-      <WorkRecordStatusBadge state={workRecord.state} />
+      {blocker ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <ExecutionMatrixBlockedBadge />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            Blocked by “{blocker.taskTitle}” ({blocker.state})
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <WorkRecordStatusBadge state={workRecord.state} />
+      )}
       <ExecutionMatrixCellAction
         debugControlsEnabled={debugControlsEnabled}
         isAutopickEnabled={isAutopickEnabled}

@@ -112,11 +112,17 @@ export const listWorkRecordExecutionReadModels = async ({
   return workRecords.map((workRecord) => {
     const linkedInternRuns =
       internRunsByWorkRecordId.get(workRecord.workRecordId) ?? []
+    const linkedCurrentInternRun = workRecord.internRunId
+      ? linkedInternRuns.find(
+          (internRun) => internRun.id === workRecord.internRunId,
+        )
+      : null
     const latestInternRun = linkedInternRuns[0] ?? null
 
     return {
       ...workRecord,
       attemptCount: linkedInternRuns.length,
+      currentInternRun: linkedCurrentInternRun ?? null,
       latestInternRun,
       latestFailurePayload: latestInternRun?.failurePayload ?? null,
       latestResultPayload: latestInternRun?.resultPayload ?? null,

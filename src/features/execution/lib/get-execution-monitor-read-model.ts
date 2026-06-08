@@ -36,13 +36,17 @@ export const getExecutionMonitorReadModel = async ({
       taskId: null,
     }),
   ])
+  const matrixWorkRecords = workRecords.map((workRecord) => ({
+    ...workRecord,
+    latestInternRun: workRecord.currentInternRun,
+  }))
 
   const summary = {
-    activeCount: workRecords.filter(
+    activeCount: matrixWorkRecords.filter(
       (workRecord) =>
         workRecord.state === "picked_up" || workRecord.state === "in_progress",
     ).length,
-    failedCount: workRecords.filter((workRecord) => {
+    failedCount: matrixWorkRecords.filter((workRecord) => {
       if (
         workRecord.state === "failed" ||
         workRecord.state === "picked_up_failed" ||
@@ -56,13 +60,13 @@ export const getExecutionMonitorReadModel = async ({
         ? isFailedInternRunState(workRecord.latestInternRun.state)
         : false
     }).length,
-    retriedCount: workRecords.filter(
+    retriedCount: matrixWorkRecords.filter(
       (workRecord) => workRecord.attemptCount > 1,
     ).length,
-    skippedCount: workRecords.filter(
+    skippedCount: matrixWorkRecords.filter(
       (workRecord) => workRecord.state === "skipped",
     ).length,
-    waitingCount: workRecords.filter(
+    waitingCount: matrixWorkRecords.filter(
       (workRecord) => workRecord.state === "waiting",
     ).length,
   }
@@ -75,6 +79,6 @@ export const getExecutionMonitorReadModel = async ({
     records,
     summary,
     tasks,
-    workRecords,
+    workRecords: matrixWorkRecords,
   }
 }

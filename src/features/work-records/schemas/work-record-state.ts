@@ -55,5 +55,12 @@ export const terminalWorkRecordStates = [
   "skipped",
 ] satisfies Array<WorkRecordState>
 
+const terminalWorkRecordStateSet: ReadonlySet<WorkRecordState> = new Set(
+  terminalWorkRecordStates,
+)
+
+export const isTerminalWorkRecordState = (state: WorkRecordState): boolean =>
+  terminalWorkRecordStateSet.has(state)
+
 export const isRetryableWorkRecordState = (state: WorkRecordState): boolean =>
   new Set<WorkRecordState>(retryableWorkRecordStates).has(state)

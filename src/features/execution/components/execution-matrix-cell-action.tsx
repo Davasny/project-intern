@@ -19,6 +19,10 @@ type ExecutionMatrixCellActionProps = {
   debugControlsEnabled: boolean
   isAutopickEnabled: boolean
   workRecord: {
+    blocker: {
+      state: WorkRecordState
+      taskTitle: string
+    } | null
     latestInternRun: {
       state: InternRunState
     } | null
@@ -63,7 +67,10 @@ export const ExecutionMatrixCellAction = ({
   )
 
   const canTrigger =
-    debugControlsEnabled && !isAutopickEnabled && workRecord.state === "waiting"
+    debugControlsEnabled &&
+    !isAutopickEnabled &&
+    workRecord.state === "waiting" &&
+    workRecord.blocker === null
   const canRetry = isRetryableWorkRecordState(workRecord.state)
   const hasFailedLatestRun = workRecord.latestInternRun
     ? isFailedInternRunState(workRecord.latestInternRun.state)

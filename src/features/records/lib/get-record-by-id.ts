@@ -91,7 +91,7 @@ export const getRecordById = async ({
         .map(
           (workRecord) =>
             executionReadModelMap.get(workRecord.workRecordId)
-              ?.latestInternRun ?? null,
+              ?.currentInternRun ?? null,
         )
         .find((internRun) => internRun !== null) ?? null,
     linkedTasks: linkedWorkRecords.map((workRecord) => ({

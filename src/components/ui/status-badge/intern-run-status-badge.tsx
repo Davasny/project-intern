@@ -12,7 +12,7 @@ const runStatusMap: Record<
   InternRunState,
   { label: string; tone: "danger" | "info" | "muted" | "success" | "warning" }
 > = {
-  aborted: { label: "Aborted", tone: "muted" },
+  aborted: { label: "Aborted", tone: "danger" },
   aborted_failed: { label: "Abort failed", tone: "danger" },
   booting: { label: "Booting", tone: "info" },
   booting_failed: { label: "Boot failed", tone: "danger" },
