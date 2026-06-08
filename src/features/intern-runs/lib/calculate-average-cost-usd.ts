@@ -1,7 +1,7 @@
 export const calculateAverageCostUsd = ({
-  denominator,
+  runCount,
   totalCostUsd,
 }: {
-  denominator: number
+  runCount: number
   totalCostUsd: number
-}) => (denominator > 0 ? totalCostUsd / denominator : 0)
+}) => (runCount > 0 ? totalCostUsd / runCount : null)

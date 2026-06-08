@@ -206,6 +206,7 @@ export const RecordDetailsPage = ({
         totalCachedInputTokens={recordQuery.data.usage.totalCachedInputTokens}
         totalCacheWriteTokens={recordQuery.data.usage.totalCacheWriteTokens}
         totalCostUsd={recordQuery.data.usage.totalCostUsd}
+        totalDurationMs={recordQuery.data.usage.totalDurationMs}
         totalInputTokens={recordQuery.data.usage.totalInputTokens}
         totalOutputTokens={recordQuery.data.usage.totalOutputTokens}
         totalTokens={recordQuery.data.usage.totalTokens}

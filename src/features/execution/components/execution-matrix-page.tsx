@@ -155,7 +155,12 @@ export const ExecutionMatrixPage = () => {
           summary={executionQuery.data.summary}
         />
         <UsageBreakdownCard
-          averageCostUsd={null}
+          averageCostUsd={
+            executionQuery.data.usage.runCount > 0
+              ? executionQuery.data.usage.totalCostUsd /
+                executionQuery.data.usage.runCount
+              : null
+          }
           runCount={executionQuery.data.usage.runCount}
           title="Project usage"
           totalCachedInputTokens={
@@ -163,6 +168,7 @@ export const ExecutionMatrixPage = () => {
           }
           totalCacheWriteTokens={executionQuery.data.usage.totalCacheWriteTokens}
           totalCostUsd={executionQuery.data.usage.totalCostUsd}
+          totalDurationMs={executionQuery.data.usage.totalDurationMs}
           totalInputTokens={executionQuery.data.usage.totalInputTokens}
           totalOutputTokens={executionQuery.data.usage.totalOutputTokens}
           totalTokens={executionQuery.data.usage.totalTokens}

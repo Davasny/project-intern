@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
 import { addInternRunUsage } from "@/features/intern-runs/lib/add-intern-run-usage"
+import { calculateInternRunDurationMs } from "@/features/intern-runs/lib/calculate-intern-run-duration-ms"
 import {
   emptyInternRunUsageSummary,
   type InternRunUsageSummary,
@@ -22,12 +23,15 @@ export const listProjectInternRunUsageSummaries = async ({
       cacheWriteTokens: internRunTable.cacheWriteTokens,
       costUsd: internRunTable.costUsd,
       estimatedCostUsd: internRunTable.estimatedCostUsd,
+      finishedAt: internRunTable.finishedAt,
       inputTokens: internRunTable.inputTokens,
+      latencyMs: internRunTable.latencyMs,
       outputTokens: internRunTable.outputTokens,
       recordId: workRecordTable.recordId,
       taskId: workRecordTable.taskId,
       tokenInput: internRunTable.tokenInput,
       tokenOutput: internRunTable.tokenOutput,
+      startedAt: internRunTable.startedAt,
       workRecordId: workRecordTable.id,
     })
     .from(internRunTable)
@@ -62,6 +66,11 @@ export const listProjectInternRunUsageSummaries = async ({
         cachedInputTokens: row.cachedInputTokens,
         cacheWriteTokens: row.cacheWriteTokens,
         costUsd: row.costUsd,
+        durationMs: calculateInternRunDurationMs({
+          finishedAt: row.finishedAt,
+          latencyMs: row.latencyMs,
+          startedAt: row.startedAt,
+        }),
         estimatedCostUsd: row.estimatedCostUsd,
         inputTokens: row.inputTokens,
         outputTokens: row.outputTokens,

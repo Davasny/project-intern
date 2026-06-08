@@ -233,6 +233,7 @@ export const TaskDetailsPage = ({
           totalCachedInputTokens={taskQuery.data.usage.totalCachedInputTokens}
           totalCacheWriteTokens={taskQuery.data.usage.totalCacheWriteTokens}
           totalCostUsd={taskQuery.data.usage.totalCostUsd}
+          totalDurationMs={taskQuery.data.usage.totalDurationMs}
           totalInputTokens={taskQuery.data.usage.totalInputTokens}
           totalOutputTokens={taskQuery.data.usage.totalOutputTokens}
           totalTokens={taskQuery.data.usage.totalTokens}

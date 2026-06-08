@@ -139,7 +139,7 @@ export const getRecordById = async ({
       ...(usageSummaries.recordUsageMap.get(record.id) ??
         emptyInternRunUsageSummary()),
       averageCostUsd: calculateAverageCostUsd({
-        denominator: linkedWorkRecords.length,
+        runCount: usageSummaries.recordUsageMap.get(record.id)?.runCount ?? 0,
         totalCostUsd:
           usageSummaries.recordUsageMap.get(record.id)?.totalCostUsd ?? 0,
       }),

@@ -72,6 +72,7 @@ export const InternRunListPage = () => {
       const cachedInputTokens = run.cachedInputTokens ?? 0
       const cacheWriteTokens = run.cacheWriteTokens ?? 0
       const costUsd = run.costUsd ?? run.estimatedCostUsd
+      const durationMs = run.durationMs ?? 0
 
       return {
         runCount: usage.runCount + 1,
@@ -79,6 +80,7 @@ export const InternRunListPage = () => {
           usage.totalCachedInputTokens + cachedInputTokens,
         totalCacheWriteTokens: usage.totalCacheWriteTokens + cacheWriteTokens,
         totalCostUsd: usage.totalCostUsd + (costUsd === null ? 0 : Number(costUsd)),
+        totalDurationMs: usage.totalDurationMs + durationMs,
         totalInputTokens: usage.totalInputTokens + inputTokens,
         totalOutputTokens: usage.totalOutputTokens + outputTokens,
         totalTokens: usage.totalTokens + inputTokens + outputTokens + cachedInputTokens,
@@ -89,6 +91,7 @@ export const InternRunListPage = () => {
       totalCachedInputTokens: 0,
       totalCacheWriteTokens: 0,
       totalCostUsd: 0,
+      totalDurationMs: 0,
       totalInputTokens: 0,
       totalOutputTokens: 0,
       totalTokens: 0,
@@ -147,12 +150,17 @@ export const InternRunListPage = () => {
         </PageHeaderActions>
       </PageHeader>
       <UsageBreakdownCard
-        averageCostUsd={null}
+        averageCostUsd={
+          projectUsage.runCount > 0
+            ? projectUsage.totalCostUsd / projectUsage.runCount
+            : null
+        }
         runCount={projectUsage.runCount}
         title="Project usage"
         totalCachedInputTokens={projectUsage.totalCachedInputTokens}
         totalCacheWriteTokens={projectUsage.totalCacheWriteTokens}
         totalCostUsd={projectUsage.totalCostUsd}
+        totalDurationMs={projectUsage.totalDurationMs}
         totalInputTokens={projectUsage.totalInputTokens}
         totalOutputTokens={projectUsage.totalOutputTokens}
         totalTokens={projectUsage.totalTokens}

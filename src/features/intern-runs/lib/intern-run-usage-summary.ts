@@ -1,5 +1,6 @@
 export type InternRunUsageSummary = {
   totalCostUsd: number
+  totalDurationMs: number
   totalInputTokens: number
   totalOutputTokens: number
   totalCachedInputTokens: number
@@ -10,6 +11,7 @@ export type InternRunUsageSummary = {
 
 export const emptyInternRunUsageSummary = (): InternRunUsageSummary => ({
   totalCostUsd: 0,
+  totalDurationMs: 0,
   totalInputTokens: 0,
   totalOutputTokens: 0,
   totalCachedInputTokens: 0,

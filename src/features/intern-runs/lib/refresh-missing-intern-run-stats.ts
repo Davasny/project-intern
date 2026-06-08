@@ -47,6 +47,8 @@ export const refreshMissingInternRunStats = async ({
         isNotNull(internRunTable.sessionReference),
         or(
           inArray(internRunTable.state, activeInternRunStates),
+          isNull(internRunTable.cachedInputTokens),
+          isNull(internRunTable.cacheWriteTokens),
           isNull(internRunTable.costUsd),
           isNull(internRunTable.inputTokens),
           isNull(internRunTable.outputTokens),

@@ -61,7 +61,7 @@ type TaskListRowProps = {
     temperature: number | null
     title: string
     usage: {
-      averageCostUsd: number
+      averageCostUsd: number | null
       totalCostUsd: number
       totalTokens: number
     }
@@ -248,7 +248,9 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
           />
         </TableCell>
         <TableCell className="tabular-nums">
-          {formatCostUsd(task.usage.averageCostUsd)}
+          {task.usage.averageCostUsd === null
+            ? "—"
+            : formatCostUsd(task.usage.averageCostUsd)}
         </TableCell>
         <TableCell>
           <div className="flex flex-row gap-2">

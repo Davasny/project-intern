@@ -4,6 +4,7 @@ type AddInternRunUsageParams = {
   summary: InternRunUsageSummary
   costUsd: string | null
   estimatedCostUsd: string | null
+  durationMs: number | null
   inputTokens: number | null
   outputTokens: number | null
   cachedInputTokens: number | null
@@ -16,6 +17,7 @@ export const addInternRunUsage = ({
   summary,
   costUsd,
   estimatedCostUsd,
+  durationMs,
   inputTokens,
   outputTokens,
   cachedInputTokens,
@@ -30,6 +32,7 @@ export const addInternRunUsage = ({
   const resolvedCacheWriteTokens = cacheWriteTokens ?? 0
 
   summary.totalCostUsd += resolvedCostUsd !== null ? Number(resolvedCostUsd) : 0
+  summary.totalDurationMs += durationMs ?? 0
   summary.totalInputTokens += resolvedInputTokens
   summary.totalOutputTokens += resolvedOutputTokens
   summary.totalCachedInputTokens += resolvedCachedInputTokens

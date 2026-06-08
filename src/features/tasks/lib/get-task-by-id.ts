@@ -140,7 +140,7 @@ export const getTaskById = async ({
       ...(usageSummaries.taskUsageMap.get(task.id) ??
         emptyInternRunUsageSummary()),
       averageCostUsd: calculateAverageCostUsd({
-        denominator: workRecords.length,
+        runCount: usageSummaries.taskUsageMap.get(task.id)?.runCount ?? 0,
         totalCostUsd:
           usageSummaries.taskUsageMap.get(task.id)?.totalCostUsd ?? 0,
       }),
