@@ -25,7 +25,7 @@ const runStatusMap: Record<
   persisting_outputs_failed: { label: "Persisting outputs failed", tone: "danger" },
   running: { label: "Running", tone: "info" },
   running_failed: { label: "Run failed", tone: "danger" },
-  skipped: { label: "Skipped", tone: "muted" },
+  skipped: { label: "Skipped", tone: "success" },
   skipped_failed: { label: "Skip failed", tone: "danger" },
 }
 

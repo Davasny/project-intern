@@ -12,7 +12,7 @@ const workRecordStatusMap: Record<
   in_progress: { label: "In progress", tone: "info" },
   picked_up: { label: "Picked up", tone: "warning" },
   picked_up_failed: { label: "Claim failed", tone: "danger" },
-  skipped: { label: "Skipped", tone: "muted" },
+  skipped: { label: "Skipped", tone: "success" },
   waiting: { label: "Waiting", tone: "muted" },
 }
 
