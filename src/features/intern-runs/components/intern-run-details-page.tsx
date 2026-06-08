@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table/data-table"
-import { JsonViewer } from "@/components/ui/json-viewer/json-viewer"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { SectionCard } from "@/components/ui/section-card/section-card"
@@ -20,7 +19,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { InternRunMessages } from "@/features/intern-runs/components/intern-run-messages"
+import { InternRunPayloadCard } from "@/features/intern-runs/components/intern-run-payload-card"
 import { InternRunRefreshStatsButton } from "@/features/intern-runs/components/intern-run-refresh-stats-button"
+import { InternRunSummaryReasonCard } from "@/features/intern-runs/components/intern-run-summary-reason-card"
+import { getInternRunOutcomeDetails } from "@/features/intern-runs/lib/get-intern-run-outcome-details"
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
@@ -117,6 +119,10 @@ export const InternRunDetailsPage = ({
 
   const run = runQuery.data
   const durationDisplay = formatDurationMs(run.durationMs)
+  const outcomeDetails = getInternRunOutcomeDetails({
+    failurePayload: run.failurePayload,
+    resultPayload: run.resultPayload,
+  })
 
   const totalTokens =
     (run.inputTokens ?? run.tokenInput ?? 0) +
@@ -277,30 +283,14 @@ export const InternRunDetailsPage = ({
         </div>
       </PageHeader>
       <StatsBar stats={stats} details={details} />
+      {outcomeDetails !== null ? (
+        <InternRunSummaryReasonCard details={outcomeDetails} />
+      ) : null}
       {run.resultPayload ? (
-        <SectionCard>
-          <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-foreground">
-              Result Payload
-            </h2>
-          </SectionCardHeader>
-          <SectionCardContent>
-            <JsonViewer value={run.resultPayload} />
-          </SectionCardContent>
-        </SectionCard>
+        <InternRunPayloadCard payload={run.resultPayload} title="Result Payload" />
       ) : null}
       {run.failurePayload ? (
-        <SectionCard>
-          <SectionCardHeader>
-            <h2 className="text-lg font-semibold text-foreground">
-              Failure Payload
-            </h2>
-          </SectionCardHeader>
-
-          <SectionCardContent>
-            <JsonViewer value={run.failurePayload} />
-          </SectionCardContent>
-        </SectionCard>
+        <InternRunPayloadCard payload={run.failurePayload} title="Failure Payload" />
       ) : null}
       {run.siblingRuns.length > 1 ? (
         <SectionCard>
