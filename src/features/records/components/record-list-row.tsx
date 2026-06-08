@@ -6,6 +6,7 @@ import { RecordStatusBadge } from "@/components/ui/status-badge/record-status-ba
 import { RunStatusBadge } from "@/components/ui/status-badge/intern-run-status-badge"
 import { Switch } from "@/components/ui/switch"
 import { TableCell, TableRow } from "@/components/ui/table"
+import { UsageMetricInline } from "@/components/ui/usage-metric/usage-metric-inline"
 import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
 import type { ProjectSchemaField } from "@/features/project-schema/schemas/project-schema-field"
 import { RecordContextValueCell } from "@/features/records/components/record-context-value-cell"
@@ -35,6 +36,10 @@ type RecordListRowProps = {
     schemaVersion: number
     state: "active" | "archived" | "error" | "inactive" | "processing"
     updatedAt: Date
+    usage: {
+      totalCostUsd: number
+      totalTokens: number
+    }
     version: number
   }
   contextColumns: ProjectSchemaField[]
@@ -119,6 +124,12 @@ export const RecordListRow = ({
       </TableCell>
       <TableCell>
         {record.progress.completedCount}/{record.progress.totalCount}
+      </TableCell>
+      <TableCell>
+        <UsageMetricInline
+          totalCostUsd={record.usage.totalCostUsd}
+          totalTokens={record.usage.totalTokens}
+        />
       </TableCell>
       <TableCell>{record.progress.inProgressCount}</TableCell>
       <TableCell>{record.progress.failedCount}</TableCell>

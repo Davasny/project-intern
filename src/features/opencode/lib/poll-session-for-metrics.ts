@@ -196,6 +196,8 @@ export const pollSessionForMetrics = async ({
   try {
     await failInternRunCommand({
       internRunId,
+      cachedInputTokens: timeoutMetrics?.cachedInputTokens ?? null,
+      cacheWriteTokens: timeoutMetrics?.cacheWriteTokens ?? null,
       costUsd:
         timeoutMetrics?.costUsd !== null &&
         timeoutMetrics?.costUsd !== undefined

@@ -38,6 +38,8 @@ export const getInternRunById = async ({
   const run = await db
     .select({
       attemptNumber: internRunTable.attemptNumber,
+      cachedInputTokens: internRunTable.cachedInputTokens,
+      cacheWriteTokens: internRunTable.cacheWriteTokens,
       costUsd: internRunTable.costUsd,
       createdAt: internRunTable.createdAt,
       directory: internRunTable.directory,
@@ -96,6 +98,8 @@ export const getInternRunById = async ({
   const siblingRuns = await db
     .select({
       attemptNumber: internRunTable.attemptNumber,
+      cachedInputTokens: internRunTable.cachedInputTokens,
+      cacheWriteTokens: internRunTable.cacheWriteTokens,
       costUsd: internRunTable.costUsd,
       createdAt: internRunTable.createdAt,
       estimatedCostUsd: internRunTable.estimatedCostUsd,
@@ -128,6 +132,8 @@ export const getInternRunById = async ({
     }),
     siblingRuns: siblingRuns.map((sibling) => ({
       attemptNumber: sibling.attemptNumber,
+      cachedInputTokens: sibling.cachedInputTokens,
+      cacheWriteTokens: sibling.cacheWriteTokens,
       costUsd: sibling.costUsd,
       createdAt: sibling.createdAt,
       estimatedCostUsd: sibling.estimatedCostUsd,

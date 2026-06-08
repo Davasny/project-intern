@@ -61,6 +61,8 @@ export const internRunTable = pgTable(
     > | null>(),
     inputTokens: integer("input_tokens"),
     outputTokens: integer("output_tokens"),
+    cachedInputTokens: integer("cached_input_tokens"),
+    cacheWriteTokens: integer("cache_write_tokens"),
     tokenInput: integer("token_input"),
     tokenOutput: integer("token_output"),
     latencyMs: integer("latency_ms"),

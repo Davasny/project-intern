@@ -60,6 +60,8 @@ export const failScopedWorkRecord = async ({
 
     await completeInternRunCommand({
       internRunId: scope.internRun.id,
+      cachedInputTokens: null,
+      cacheWriteTokens: null,
       costUsd: null,
       latencyMs: null,
       resultPayload: {
@@ -97,6 +99,8 @@ export const failScopedWorkRecord = async ({
 
   await failInternRunCommand({
     internRunId: scope.internRun.id,
+    cachedInputTokens: null,
+    cacheWriteTokens: null,
     costUsd: null,
     errorCode: failure.code,
     failurePayload: failure,

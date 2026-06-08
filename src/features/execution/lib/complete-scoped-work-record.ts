@@ -58,6 +58,8 @@ export const completeScopedWorkRecord = async ({
 
   await completeInternRunCommand({
     internRunId: scope.internRun.id,
+    cachedInputTokens: null,
+    cacheWriteTokens: null,
     costUsd: null,
     latencyMs: null,
     resultPayload,

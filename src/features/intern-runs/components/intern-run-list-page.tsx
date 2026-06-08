@@ -7,6 +7,7 @@ import { DataTable } from "@/components/ui/data-table/data-table"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
+import { UsageBreakdownCard } from "@/components/ui/usage-metric/usage-breakdown-card"
 import {
   TableBody,
   TableCell,
@@ -64,6 +65,35 @@ export const InternRunListPage = () => {
     filters,
     runs: runsQuery.data,
   })
+  const projectUsage = runsQuery.data.reduce(
+    (usage, run) => {
+      const inputTokens = run.inputTokens ?? run.tokenInput ?? 0
+      const outputTokens = run.outputTokens ?? run.tokenOutput ?? 0
+      const cachedInputTokens = run.cachedInputTokens ?? 0
+      const cacheWriteTokens = run.cacheWriteTokens ?? 0
+      const costUsd = run.costUsd ?? run.estimatedCostUsd
+
+      return {
+        runCount: usage.runCount + 1,
+        totalCachedInputTokens:
+          usage.totalCachedInputTokens + cachedInputTokens,
+        totalCacheWriteTokens: usage.totalCacheWriteTokens + cacheWriteTokens,
+        totalCostUsd: usage.totalCostUsd + (costUsd === null ? 0 : Number(costUsd)),
+        totalInputTokens: usage.totalInputTokens + inputTokens,
+        totalOutputTokens: usage.totalOutputTokens + outputTokens,
+        totalTokens: usage.totalTokens + inputTokens + outputTokens + cachedInputTokens,
+      }
+    },
+    {
+      runCount: 0,
+      totalCachedInputTokens: 0,
+      totalCacheWriteTokens: 0,
+      totalCostUsd: 0,
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+      totalTokens: 0,
+    },
+  )
   const handleFilterChange = (
     columnId: InternRunListTextFilterColumnId,
     value: string,
@@ -116,6 +146,17 @@ export const InternRunListPage = () => {
           ) : null}
         </PageHeaderActions>
       </PageHeader>
+      <UsageBreakdownCard
+        averageCostUsd={null}
+        runCount={projectUsage.runCount}
+        title="Project usage"
+        totalCachedInputTokens={projectUsage.totalCachedInputTokens}
+        totalCacheWriteTokens={projectUsage.totalCacheWriteTokens}
+        totalCostUsd={projectUsage.totalCostUsd}
+        totalInputTokens={projectUsage.totalInputTokens}
+        totalOutputTokens={projectUsage.totalOutputTokens}
+        totalTokens={projectUsage.totalTokens}
+      />
       <DataTable>
         <TableHead>
           <TableRow>

@@ -194,6 +194,8 @@ export const TasksPage = () => {
                   <TableHeader>Failed</TableHeader>
                   <TableHeader>Skipped</TableHeader>
                   <TableHeader>Waiting</TableHeader>
+                  <TableHeader>Usage</TableHeader>
+                  <TableHeader>Avg cost</TableHeader>
                   <TableHeader>Actions</TableHeader>
                 </TableRow>
               </TableHead>

@@ -53,6 +53,8 @@ export const createInternRunCommand = async ({
   try {
     await createInternRunActor(internRunId, {
       attemptNumber,
+      cachedInputTokens: null,
+      cacheWriteTokens: null,
       costUsd: null,
       directory: null,
       estimatedCostUsd: null,
@@ -195,6 +197,8 @@ const persistInternRunOutputsCommand = async ({
 
 type CompleteInternRunCommandParams = {
   internRunId: string
+  cachedInputTokens: number | null
+  cacheWriteTokens: number | null
   costUsd: string | null
   latencyMs: number | null
   resultPayload: Record<string, unknown> | null
@@ -206,6 +210,8 @@ type CompleteInternRunCommandParams = {
 
 export const completeInternRunCommand = async ({
   internRunId,
+  cachedInputTokens,
+  cacheWriteTokens,
   costUsd,
   latencyMs,
   resultPayload,
@@ -229,6 +235,8 @@ export const completeInternRunCommand = async ({
 
   await completionActor.send("complete", {
     internRunId,
+    cachedInputTokens,
+    cacheWriteTokens,
     costUsd,
     estimatedCostUsd: costUsd,
     finishedAt: new Date(),
@@ -247,6 +255,8 @@ export const completeInternRunCommand = async ({
 
 type FailInternRunCommandParams = {
   internRunId: string
+  cachedInputTokens: number | null
+  cacheWriteTokens: number | null
   costUsd: string | null
   errorCode: string
   failurePayload: Record<string, unknown>
@@ -259,6 +269,8 @@ type FailInternRunCommandParams = {
 
 export const failInternRunCommand = async ({
   internRunId,
+  cachedInputTokens,
+  cacheWriteTokens,
   costUsd,
   errorCode,
   failurePayload,
@@ -278,6 +290,8 @@ export const failInternRunCommand = async ({
 
   await actor.send("fail", {
     internRunId,
+    cachedInputTokens,
+    cacheWriteTokens,
     costUsd,
     errorCode,
     estimatedCostUsd: costUsd,

@@ -124,6 +124,9 @@ const internRunMachineDefinition = machine<InternRunMachineContext>().define({
 
         return {
           ...context,
+          cachedInputTokens:
+            event.cachedInputTokens ?? context.cachedInputTokens,
+          cacheWriteTokens: event.cacheWriteTokens ?? context.cacheWriteTokens,
           costUsd: event.costUsd ?? context.costUsd,
           estimatedCostUsd: event.estimatedCostUsd ?? context.estimatedCostUsd,
           finishedAt: event.finishedAt,
@@ -166,6 +169,9 @@ const internRunMachineDefinition = machine<InternRunMachineContext>().define({
 
         return {
           ...context,
+          cachedInputTokens:
+            event.cachedInputTokens ?? context.cachedInputTokens,
+          cacheWriteTokens: event.cacheWriteTokens ?? context.cacheWriteTokens,
           costUsd: event.costUsd ?? context.costUsd,
           estimatedCostUsd: event.estimatedCostUsd ?? context.estimatedCostUsd,
           failurePayload: event.failurePayload,

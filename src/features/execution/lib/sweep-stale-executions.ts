@@ -44,6 +44,8 @@ export const sweepStaleExecutions = async (): Promise<{
     try {
       await failInternRunCommand({
         internRunId: run.internRunId,
+        cachedInputTokens: null,
+        cacheWriteTokens: null,
         costUsd: null,
         errorCode: "STALE_EXECUTION",
         failurePayload: {

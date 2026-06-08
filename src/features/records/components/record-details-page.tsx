@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { ProgressStrip } from "@/components/ui/progress-strip/progress-strip"
+import { UsageBreakdownCard } from "@/components/ui/usage-metric/usage-breakdown-card"
 import { RecordFilePanel } from "@/features/files/components/record-file-panel"
 import { RecordRelationsSection } from "@/features/record-edges/components/record-relations-section"
 import { RecordConfiguration } from "@/features/records/components/record-configuration"
@@ -198,6 +199,17 @@ export const RecordDetailsPage = ({
           version={recordQuery.data.version}
         />
       </div>
+      <UsageBreakdownCard
+        averageCostUsd={recordQuery.data.usage.averageCostUsd}
+        runCount={recordQuery.data.usage.runCount}
+        title="Usage"
+        totalCachedInputTokens={recordQuery.data.usage.totalCachedInputTokens}
+        totalCacheWriteTokens={recordQuery.data.usage.totalCacheWriteTokens}
+        totalCostUsd={recordQuery.data.usage.totalCostUsd}
+        totalInputTokens={recordQuery.data.usage.totalInputTokens}
+        totalOutputTokens={recordQuery.data.usage.totalOutputTokens}
+        totalTokens={recordQuery.data.usage.totalTokens}
+      />
       <RecordLinkedTasksSection
         nextWaitingSortOrder={nextWaitingSortOrder}
         recordId={recordQuery.data.id}

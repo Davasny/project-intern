@@ -3,6 +3,7 @@ import { isFailedInternRunState } from "@/features/execution/lib/is-failed-inter
 import { listExecutionMatrixRecords } from "@/features/execution/lib/list-execution-matrix-records"
 import { listExecutionMatrixTasks } from "@/features/execution/lib/list-execution-matrix-tasks"
 import { listWorkRecordExecutionReadModels } from "@/features/execution/lib/list-work-record-execution-read-models"
+import { listProjectInternRunUsageSummaries } from "@/features/intern-runs/lib/list-project-intern-run-usage-summaries"
 import { projectTable } from "@/features/projects/db"
 import { db } from "@/lib/db"
 
@@ -27,7 +28,7 @@ export const getExecutionMonitorReadModel = async ({
     return null
   }
 
-  const [records, tasks, workRecords] = await Promise.all([
+  const [records, tasks, workRecords, usageSummaries] = await Promise.all([
     listExecutionMatrixRecords({ projectId }),
     listExecutionMatrixTasks({ projectId }),
     listWorkRecordExecutionReadModels({
@@ -35,6 +36,7 @@ export const getExecutionMonitorReadModel = async ({
       recordId: null,
       taskId: null,
     }),
+    listProjectInternRunUsageSummaries({ projectId }),
   ])
   const matrixWorkRecords = workRecords.map((workRecord) => ({
     ...workRecord,
@@ -78,6 +80,7 @@ export const getExecutionMonitorReadModel = async ({
     isAutopickEnabled: project.isAutopickEnabled,
     records,
     summary,
+    usage: usageSummaries.projectUsage,
     tasks,
     workRecords: matrixWorkRecords,
   }

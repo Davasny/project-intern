@@ -136,6 +136,7 @@ export const RecordsPage = () => {
                 <TableHeader>Record</TableHeader>
                 <TableHeader>Status</TableHeader>
                 <TableHeader>Completed</TableHeader>
+                <TableHeader>Usage</TableHeader>
                 <TableHeader>Active</TableHeader>
                 <TableHeader>Failed</TableHeader>
                 <TableHeader>Skipped</TableHeader>

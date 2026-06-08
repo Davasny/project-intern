@@ -18,18 +18,24 @@ export type SyncSessionMetricsToInternRunResult =
   | { reason: "failed"; synced: false }
 
 const hasRefreshableMetrics = ({
+  cachedInputTokens,
+  cacheWriteTokens,
   costUsd,
   inputTokens,
   latencyMs,
   outputTokens,
   toolCallCount,
 }: {
+  cachedInputTokens: number | null
+  cacheWriteTokens: number | null
   costUsd: number | null
   inputTokens: number | null
   latencyMs: number | null
   outputTokens: number | null
   toolCallCount: number
 }) =>
+  cachedInputTokens !== null ||
+  cacheWriteTokens !== null ||
   costUsd !== null ||
   inputTokens !== null ||
   latencyMs !== null ||
@@ -76,6 +82,8 @@ export const syncSessionMetricsToInternRun = async ({
 
     await updateInternRunMetrics({
       internRunId,
+      cachedInputTokens: metrics.cachedInputTokens,
+      cacheWriteTokens: metrics.cacheWriteTokens,
       costUsd: metrics.costUsd,
       inputTokens: metrics.inputTokens,
       latencyMs: metrics.latencyMs,
@@ -85,6 +93,8 @@ export const syncSessionMetricsToInternRun = async ({
 
     log.info(
       {
+        cachedInputTokens: metrics.cachedInputTokens,
+        cacheWriteTokens: metrics.cacheWriteTokens,
         costUsd: metrics.costUsd,
         inputTokens: metrics.inputTokens,
         latencyMs: metrics.latencyMs,

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
+import { UsageBreakdownCard } from "@/components/ui/usage-metric/usage-breakdown-card"
 import { ExecutionMatrixSection } from "@/features/execution/components/execution-matrix-section"
 import { ExecutionSummaryStrip } from "@/features/execution/components/execution-summary-strip"
 import { useExecutionMonitorQuery } from "@/features/execution/hooks/use-execution-monitor-query"
@@ -152,6 +153,19 @@ export const ExecutionMatrixPage = () => {
         <ExecutionSummaryStrip
           isAutopickEnabled={executionQuery.data.isAutopickEnabled}
           summary={executionQuery.data.summary}
+        />
+        <UsageBreakdownCard
+          averageCostUsd={null}
+          runCount={executionQuery.data.usage.runCount}
+          title="Project usage"
+          totalCachedInputTokens={
+            executionQuery.data.usage.totalCachedInputTokens
+          }
+          totalCacheWriteTokens={executionQuery.data.usage.totalCacheWriteTokens}
+          totalCostUsd={executionQuery.data.usage.totalCostUsd}
+          totalInputTokens={executionQuery.data.usage.totalInputTokens}
+          totalOutputTokens={executionQuery.data.usage.totalOutputTokens}
+          totalTokens={executionQuery.data.usage.totalTokens}
         />
         <ExecutionMatrixSection
           debugControlsEnabled={executionQuery.data.debugControlsEnabled}

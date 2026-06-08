@@ -60,6 +60,9 @@ export const listWorkRecordExecutionReadModels = async ({
       ? await db
           .select({
             attemptNumber: internRunTable.attemptNumber,
+            cachedInputTokens: internRunTable.cachedInputTokens,
+            cacheWriteTokens: internRunTable.cacheWriteTokens,
+            costUsd: internRunTable.costUsd,
             estimatedCostUsd: internRunTable.estimatedCostUsd,
             failurePayload: internRunTable.failurePayload,
             finishedAt: internRunTable.finishedAt,
@@ -78,6 +81,8 @@ export const listWorkRecordExecutionReadModels = async ({
             workRecordId: internRunTable.workRecordId,
             toolCallCount: internRunTable.toolCallCount,
             toolSummary: internRunTable.toolSummary,
+            tokenInput: internRunTable.tokenInput,
+            tokenOutput: internRunTable.tokenOutput,
             updatedAt: internRunTable.updatedAt,
           })
           .from(internRunTable)

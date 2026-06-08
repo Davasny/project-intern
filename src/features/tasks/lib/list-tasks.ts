@@ -1,5 +1,8 @@
 import { TRPCError } from "@trpc/server"
 import { asc, eq } from "drizzle-orm"
+import { calculateAverageCostUsd } from "@/features/intern-runs/lib/calculate-average-cost-usd"
+import { emptyInternRunUsageSummary } from "@/features/intern-runs/lib/intern-run-usage-summary"
+import { listProjectInternRunUsageSummaries } from "@/features/intern-runs/lib/list-project-intern-run-usage-summaries"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { taskTable } from "@/features/tasks/db"
 import { getDerivedTaskSummaryState } from "@/features/tasks/lib/get-derived-task-summary-state"
@@ -49,12 +52,15 @@ export const listTasks = async ({
     .where(eq(taskTable.projectId, project.id))
     .orderBy(asc(taskTable.sortOrder))
 
-  const workRecordStates = await db
-    .select({
-      state: workRecordTable.state,
-      taskId: workRecordTable.taskId,
-    })
-    .from(workRecordTable)
+  const [workRecordStates, usageSummaries] = await Promise.all([
+    db
+      .select({
+        state: workRecordTable.state,
+        taskId: workRecordTable.taskId,
+      })
+      .from(workRecordTable),
+    listProjectInternRunUsageSummaries({ projectId: project.id }),
+  ])
 
   return tasks.map((task) => {
     const states = workRecordStates
@@ -75,6 +81,15 @@ export const listTasks = async ({
         waitingCount: states.filter((state) => state === "waiting").length,
       },
       summaryState: getDerivedTaskSummaryState({ states }),
+      usage: {
+        ...(usageSummaries.taskUsageMap.get(task.id) ??
+          emptyInternRunUsageSummary()),
+        averageCostUsd: calculateAverageCostUsd({
+          denominator: states.length,
+          totalCostUsd:
+            usageSummaries.taskUsageMap.get(task.id)?.totalCostUsd ?? 0,
+        }),
+      },
     }
   })
 }

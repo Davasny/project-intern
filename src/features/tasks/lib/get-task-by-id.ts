@@ -1,6 +1,9 @@
 import { TRPCError } from "@trpc/server"
 import { and, asc, desc, eq } from "drizzle-orm"
 import { listWorkRecordExecutionReadModels } from "@/features/execution/lib/list-work-record-execution-read-models"
+import { calculateAverageCostUsd } from "@/features/intern-runs/lib/calculate-average-cost-usd"
+import { emptyInternRunUsageSummary } from "@/features/intern-runs/lib/intern-run-usage-summary"
+import { listProjectInternRunUsageSummaries } from "@/features/intern-runs/lib/list-project-intern-run-usage-summaries"
 import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
@@ -96,11 +99,14 @@ export const getTaskById = async ({
     .where(eq(workRecordTable.taskId, taskId))
     .orderBy(asc(recordTable.name))
 
-  const executionReadModels = await listWorkRecordExecutionReadModels({
-    projectId: project.id,
-    recordId: null,
-    taskId,
-  })
+  const [executionReadModels, usageSummaries] = await Promise.all([
+    listWorkRecordExecutionReadModels({
+      projectId: project.id,
+      recordId: null,
+      taskId,
+    }),
+    listProjectInternRunUsageSummaries({ projectId: project.id }),
+  ])
 
   const executionReadModelMap = new Map(
     executionReadModels.map((executionReadModel) => [
@@ -130,6 +136,15 @@ export const getTaskById = async ({
     },
     revisions,
     summaryState: getDerivedTaskSummaryState({ states: workRecordStates }),
+    usage: {
+      ...(usageSummaries.taskUsageMap.get(task.id) ??
+        emptyInternRunUsageSummary()),
+      averageCostUsd: calculateAverageCostUsd({
+        denominator: workRecords.length,
+        totalCostUsd:
+          usageSummaries.taskUsageMap.get(task.id)?.totalCostUsd ?? 0,
+      }),
+    },
     workRecords: workRecords.map((workRecord) => ({
       ...workRecord,
       attemptCount: executionReadModelMap.get(workRecord.id)?.attemptCount ?? 0,
@@ -137,6 +152,9 @@ export const getTaskById = async ({
         executionReadModelMap.get(workRecord.id)?.latestInternRun ?? null,
       latestFailurePayload:
         executionReadModelMap.get(workRecord.id)?.latestFailurePayload ?? null,
+      usage:
+        usageSummaries.workRecordUsageMap.get(workRecord.id) ??
+        emptyInternRunUsageSummary(),
     })),
   }
 }

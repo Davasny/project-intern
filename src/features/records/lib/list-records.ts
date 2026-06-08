@@ -2,6 +2,8 @@ import { TRPCError } from "@trpc/server"
 import { asc, eq, inArray, sql } from "drizzle-orm"
 import { internRunTable } from "@/features/intern-runs/db"
 import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
+import { emptyInternRunUsageSummary } from "@/features/intern-runs/lib/intern-run-usage-summary"
+import { listProjectInternRunUsageSummaries } from "@/features/intern-runs/lib/list-project-intern-run-usage-summaries"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { listRecordRelationSummaries } from "@/features/record-edges/lib/list-record-relation-summaries"
 import { recordTable } from "@/features/records/db"
@@ -108,10 +110,13 @@ export const listRecords = async ({
       },
     ]),
   )
-  const relationSummaryMap = await listRecordRelationSummaries({
-    projectId: project.id,
-    recordIds,
-  })
+  const [relationSummaryMap, usageSummaries] = await Promise.all([
+    listRecordRelationSummaries({
+      projectId: project.id,
+      recordIds,
+    }),
+    listProjectInternRunUsageSummaries({ projectId: project.id }),
+  ])
 
   return records.map((record) => {
     const linkedWorkRecords = workRecords.filter(
@@ -162,6 +167,9 @@ export const listRecords = async ({
         ).length,
       },
       relationSummary,
+      usage:
+        usageSummaries.recordUsageMap.get(record.id) ??
+        emptyInternRunUsageSummary(),
     }
   })
 }

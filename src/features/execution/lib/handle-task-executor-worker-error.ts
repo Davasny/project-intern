@@ -33,6 +33,8 @@ export const handleTaskExecutorWorkerError = async ({
 
   await failInternRunCommand({
     internRunId: payloadResult.data.internRunId,
+    cachedInputTokens: null,
+    cacheWriteTokens: null,
     costUsd: null,
     errorCode: failure.code,
     failurePayload: failure,

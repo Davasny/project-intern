@@ -1,6 +1,9 @@
 import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
 import { listWorkRecordExecutionReadModels } from "@/features/execution/lib/list-work-record-execution-read-models"
+import { calculateAverageCostUsd } from "@/features/intern-runs/lib/calculate-average-cost-usd"
+import { emptyInternRunUsageSummary } from "@/features/intern-runs/lib/intern-run-usage-summary"
+import { listProjectInternRunUsageSummaries } from "@/features/intern-runs/lib/list-project-intern-run-usage-summaries"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
@@ -72,11 +75,14 @@ export const getRecordById = async ({
     .innerJoin(taskTable, eq(workRecordTable.taskId, taskTable.id))
     .where(eq(workRecordTable.recordId, recordId))
 
-  const executionReadModels = await listWorkRecordExecutionReadModels({
-    projectId: project.id,
-    recordId,
-    taskId: null,
-  })
+  const [executionReadModels, usageSummaries] = await Promise.all([
+    listWorkRecordExecutionReadModels({
+      projectId: project.id,
+      recordId,
+      taskId: null,
+    }),
+    listProjectInternRunUsageSummaries({ projectId: project.id }),
+  ])
   const executionReadModelMap = new Map(
     executionReadModels.map((executionReadModel) => [
       executionReadModel.workRecordId,
@@ -105,6 +111,9 @@ export const getRecordById = async ({
         executionReadModelMap.get(workRecord.workRecordId)
           ?.latestFailurePayload ?? null,
       sortOrder: workRecord.sortOrder,
+      usage:
+        usageSummaries.workRecordUsageMap.get(workRecord.workRecordId) ??
+        emptyInternRunUsageSummary(),
     })),
     progress: {
       completedCount: linkedWorkRecords.filter(
@@ -125,6 +134,15 @@ export const getRecordById = async ({
       waitingCount: linkedWorkRecords.filter(
         (workRecord) => workRecord.state === "waiting",
       ).length,
+    },
+    usage: {
+      ...(usageSummaries.recordUsageMap.get(record.id) ??
+        emptyInternRunUsageSummary()),
+      averageCostUsd: calculateAverageCostUsd({
+        denominator: linkedWorkRecords.length,
+        totalCostUsd:
+          usageSummaries.recordUsageMap.get(record.id)?.totalCostUsd ?? 0,
+      }),
     },
   }
 }

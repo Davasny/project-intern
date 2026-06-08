@@ -18,6 +18,8 @@ import {
 import { StatusBadge } from "@/components/ui/status-badge/status-badge"
 import { TaskStatusBadge } from "@/components/ui/status-badge/task-status-badge"
 import { TableCell, TableRow } from "@/components/ui/table"
+import { formatCostUsd } from "@/components/ui/usage-metric/format-cost-usd"
+import { UsageMetricInline } from "@/components/ui/usage-metric/usage-metric-inline"
 import {
   Tooltip,
   TooltipContent,
@@ -58,6 +60,11 @@ type TaskListRowProps = {
       | "partially_completed"
     temperature: number | null
     title: string
+    usage: {
+      averageCostUsd: number
+      totalCostUsd: number
+      totalTokens: number
+    }
   }
 }
 
@@ -234,6 +241,15 @@ export const TaskListRow = ({ task }: TaskListRowProps) => {
         <TableCell>{task.progress.failedCount}</TableCell>
         <TableCell>{task.progress.skippedCount}</TableCell>
         <TableCell>{task.progress.waitingCount}</TableCell>
+        <TableCell>
+          <UsageMetricInline
+            totalCostUsd={task.usage.totalCostUsd}
+            totalTokens={task.usage.totalTokens}
+          />
+        </TableCell>
+        <TableCell className="tabular-nums">
+          {formatCostUsd(task.usage.averageCostUsd)}
+        </TableCell>
         <TableCell>
           <div className="flex flex-row gap-2">
             {task.state === "created" ? (

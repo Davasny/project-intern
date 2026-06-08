@@ -36,6 +36,8 @@ export const listInternRuns = async ({
   const runs = await db
     .select({
       attemptNumber: internRunTable.attemptNumber,
+      cachedInputTokens: internRunTable.cachedInputTokens,
+      cacheWriteTokens: internRunTable.cacheWriteTokens,
       costUsd: internRunTable.costUsd,
       createdAt: internRunTable.createdAt,
       estimatedCostUsd: internRunTable.estimatedCostUsd,
@@ -76,6 +78,8 @@ export const listInternRuns = async ({
 
   return runs.map((run) => ({
     attemptNumber: run.attemptNumber,
+    cachedInputTokens: run.cachedInputTokens,
+    cacheWriteTokens: run.cacheWriteTokens,
     costUsd: run.costUsd,
     createdAt: run.createdAt,
     durationMs: calculateInternRunDurationMs({

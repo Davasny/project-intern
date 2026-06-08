@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
+import { UsageBreakdownCard } from "@/components/ui/usage-metric/usage-breakdown-card"
 import { TaskDetailsHeader } from "@/features/tasks/components/task-details-header"
 import { TaskForm } from "@/features/tasks/components/task-form"
 import { TaskProgressStrip } from "@/features/tasks/components/task-progress-strip"
@@ -224,6 +225,17 @@ export const TaskDetailsPage = ({
           sortOrder={taskQuery.data.sortOrder}
           temperature={taskQuery.data.temperature}
           updatedAt={taskQuery.data.updatedAt}
+        />
+        <UsageBreakdownCard
+          averageCostUsd={taskQuery.data.usage.averageCostUsd}
+          runCount={taskQuery.data.usage.runCount}
+          title="Usage"
+          totalCachedInputTokens={taskQuery.data.usage.totalCachedInputTokens}
+          totalCacheWriteTokens={taskQuery.data.usage.totalCacheWriteTokens}
+          totalCostUsd={taskQuery.data.usage.totalCostUsd}
+          totalInputTokens={taskQuery.data.usage.totalInputTokens}
+          totalOutputTokens={taskQuery.data.usage.totalOutputTokens}
+          totalTokens={taskQuery.data.usage.totalTokens}
         />
         <WorkRecordsSection
           taskId={taskQuery.data.id}

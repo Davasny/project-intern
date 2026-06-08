@@ -5,6 +5,8 @@ import { db } from "@/lib/db"
 
 type UpdateInternRunMetricsParams = {
   internRunId: string
+  cachedInputTokens: number | null
+  cacheWriteTokens: number | null
   costUsd: number | null
   inputTokens: number | null
   outputTokens: number | null
@@ -41,6 +43,8 @@ const maxNullableNumericString = (
 
 export const updateInternRunMetrics = async ({
   internRunId,
+  cachedInputTokens,
+  cacheWriteTokens,
   costUsd,
   inputTokens,
   outputTokens,
@@ -49,6 +53,8 @@ export const updateInternRunMetrics = async ({
 }: UpdateInternRunMetricsParams) => {
   const rows = await db
     .select({
+      cachedInputTokens: internRunTable.cachedInputTokens,
+      cacheWriteTokens: internRunTable.cacheWriteTokens,
       costUsd: internRunTable.costUsd,
       estimatedCostUsd: internRunTable.estimatedCostUsd,
       finishedAt: internRunTable.finishedAt,
@@ -77,6 +83,14 @@ export const updateInternRunMetrics = async ({
   })
   const nextLatencyMs = maxNullableNumber(latencyMs, persistedDurationMs)
   const nextCostUsd = maxNullableNumericString(internRun.costUsd, costUsd)
+  const nextCachedInputTokens = maxNullableNumber(
+    cachedInputTokens,
+    internRun.cachedInputTokens,
+  )
+  const nextCacheWriteTokens = maxNullableNumber(
+    cacheWriteTokens,
+    internRun.cacheWriteTokens,
+  )
   const nextEstimatedCostUsd = maxNullableNumericString(
     internRun.estimatedCostUsd,
     costUsd,
@@ -94,6 +108,8 @@ export const updateInternRunMetrics = async ({
   const result = await db
     .update(internRunTable)
     .set({
+      cachedInputTokens: nextCachedInputTokens,
+      cacheWriteTokens: nextCacheWriteTokens,
       inputTokens: nextInputTokens,
       tokenInput: maxNullableNumber(inputTokens, internRun.tokenInput),
       outputTokens: nextOutputTokens,

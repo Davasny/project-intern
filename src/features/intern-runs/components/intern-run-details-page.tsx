@@ -34,6 +34,7 @@ type InternRunDetailsPageProps = {
 }
 
 type InternRunTokenMetrics = {
+  cachedInputTokens: number | null
   inputTokens: number | null
   outputTokens: number | null
   tokenInput: number | null
@@ -46,6 +47,7 @@ type InternRunCostMetrics = {
 }
 
 const formatInternRunTokenTotal = ({
+  cachedInputTokens,
   inputTokens,
   outputTokens,
   tokenInput,
@@ -53,12 +55,13 @@ const formatInternRunTokenTotal = ({
 }: InternRunTokenMetrics) => {
   const tokensIn = inputTokens ?? tokenInput
   const tokensOut = outputTokens ?? tokenOutput
+  const tokensCached = cachedInputTokens ?? 0
 
-  if (tokensIn === null && tokensOut === null) {
+  if (tokensIn === null && tokensOut === null && tokensCached === 0) {
     return "—"
   }
 
-  return ((tokensIn ?? 0) + (tokensOut ?? 0)).toLocaleString()
+  return ((tokensIn ?? 0) + (tokensOut ?? 0) + tokensCached).toLocaleString()
 }
 
 const formatInternRunCost = ({
@@ -126,7 +129,8 @@ export const InternRunDetailsPage = ({
 
   const totalTokens =
     (run.inputTokens ?? run.tokenInput ?? 0) +
-    (run.outputTokens ?? run.tokenOutput ?? 0)
+    (run.outputTokens ?? run.tokenOutput ?? 0) +
+    (run.cachedInputTokens ?? 0)
 
   const stats = [
     { label: "Model", value: run.selectedModel ?? run.model ?? "—" },
@@ -180,6 +184,14 @@ export const InternRunDetailsPage = ({
             : run.tokenInput !== null
               ? run.tokenInput.toLocaleString()
               : "—",
+      },
+      {
+        label: "Cached Input",
+        value: run.cachedInputTokens?.toLocaleString() ?? "—",
+      },
+      {
+        label: "Cache Write",
+        value: run.cacheWriteTokens?.toLocaleString() ?? "—",
       },
       {
         label: "Token Output",
@@ -337,6 +349,7 @@ export const InternRunDetailsPage = ({
                     <TableCell>{formatDurationMs(sibling.durationMs)}</TableCell>
                     <TableCell>
                       {formatInternRunTokenTotal({
+                        cachedInputTokens: sibling.cachedInputTokens,
                         inputTokens: sibling.inputTokens,
                         outputTokens: sibling.outputTokens,
                         tokenInput: sibling.tokenInput,

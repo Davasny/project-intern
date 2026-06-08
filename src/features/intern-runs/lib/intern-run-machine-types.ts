@@ -1,6 +1,8 @@
 export type InternRunMachineContext = {
   attemptNumber: number
   costUsd: string | null
+  cachedInputTokens: number | null
+  cacheWriteTokens: number | null
   estimatedCostUsd: string | null
   failurePayload: Record<string, unknown> | null
   finishedAt: Date | null
@@ -60,6 +62,8 @@ export type PersistingOutputsEvent = {
 export type CompletedEvent = {
   internRunId: string
   costUsd: string | null
+  cachedInputTokens: number | null
+  cacheWriteTokens: number | null
   estimatedCostUsd: string | null
   finishedAt: Date | null
   inputTokens: number | null
@@ -77,6 +81,8 @@ export type CompletedEvent = {
 export type FailedEvent = {
   internRunId: string
   costUsd: string | null
+  cachedInputTokens: number | null
+  cacheWriteTokens: number | null
   errorCode: string
   estimatedCostUsd: string | null
   failurePayload: Record<string, unknown> | null

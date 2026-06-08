@@ -6,6 +6,8 @@ type SessionMessages = NonNullable<
 >
 
 export type SessionMetrics = {
+  cachedInputTokens: number | null
+  cacheWriteTokens: number | null
   costUsd: number | null
   inputTokens: number | null
   outputTokens: number | null
@@ -25,11 +27,15 @@ export const collectSessionMetrics = ({
   let totalCost = 0
   let totalInputTokens = 0
   let totalOutputTokens = 0
+  let totalCachedInputTokens = 0
+  let totalCacheWriteTokens = 0
 
   for (const message of assistantMessages) {
     totalCost += message.info.cost
     totalInputTokens += message.info.tokens.input
     totalOutputTokens += message.info.tokens.output
+    totalCachedInputTokens += message.info.tokens.cache.read
+    totalCacheWriteTokens += message.info.tokens.cache.write
   }
 
   const firstMessage = assistantMessages[0]
@@ -50,6 +56,10 @@ export const collectSessionMetrics = ({
   }
 
   return {
+    cachedInputTokens:
+      assistantMessages.length > 0 ? totalCachedInputTokens : null,
+    cacheWriteTokens:
+      assistantMessages.length > 0 ? totalCacheWriteTokens : null,
     costUsd: assistantMessages.length > 0 ? totalCost : null,
     inputTokens: assistantMessages.length > 0 ? totalInputTokens : null,
     outputTokens: assistantMessages.length > 0 ? totalOutputTokens : null,
