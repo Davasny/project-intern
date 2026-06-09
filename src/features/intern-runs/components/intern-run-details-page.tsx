@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { InternRunMessages } from "@/features/intern-runs/components/intern-run-messages"
+import { InternRunOpencodeExportButton } from "@/features/intern-runs/components/intern-run-opencode-export-button"
 import { InternRunPayloadCard } from "@/features/intern-runs/components/intern-run-payload-card"
 import { InternRunRefreshStatsButton } from "@/features/intern-runs/components/intern-run-refresh-stats-button"
 import { InternRunSummaryReasonCard } from "@/features/intern-runs/components/intern-run-summary-reason-card"
@@ -279,6 +280,12 @@ export const InternRunDetailsPage = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <InternRunOpencodeExportButton
+              internRunId={run.id}
+              organizationSlug={organizationSlug}
+              projectSlug={projectSlug}
+              sessionReference={run.sessionReference}
+            />
             <InternRunRefreshStatsButton
               attemptNumber={run.attemptNumber}
               internRunId={run.id}
