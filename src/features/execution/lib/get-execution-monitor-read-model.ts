@@ -40,7 +40,7 @@ export const getExecutionMonitorReadModel = async ({
   ])
   const matrixWorkRecords = workRecords.map((workRecord) => ({
     ...workRecord,
-    latestInternRun: workRecord.currentInternRun,
+    latestInternRun: workRecord.latestInternRun,
   }))
 
   const summary = {
