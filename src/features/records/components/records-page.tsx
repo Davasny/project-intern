@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { useAtom } from "jotai"
 import { DatabaseIcon } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
 import { Switch } from "@/components/ui/switch"
+import { TableSortHeader } from "@/components/ui/table-sort-header/table-sort-header"
 import {
   TableBody,
   TableHead,
@@ -29,11 +31,19 @@ import { useProjectScope } from "@/features/projects/context/project-scope-conte
 import { RecordCsvImportDialog } from "@/features/records/components/record-csv-import-dialog"
 import { RecordForm } from "@/features/records/components/record-form"
 import { RecordListRow } from "@/features/records/components/record-list-row"
+import { getSortedRecordList } from "@/features/records/lib/get-sorted-record-list"
+import {
+  getContextRecordListSortColumnKey,
+  getNextRecordListSort,
+  type RecordListSortColumnKey,
+} from "@/features/records/lib/record-list-sort"
+import { recordListSortAtom } from "@/features/records/state/record-list-sort-atom"
 import { useTRPC } from "@/lib/trpc/client"
 
 export const RecordsPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
   const trpc = useTRPC()
+  const [sort, setSort] = useAtom(recordListSortAtom)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [showContextValues, setShowContextValues] = useState(false)
@@ -83,6 +93,17 @@ export const RecordsPage = () => {
   const contextColumns = activeSchemaQuery.data.schemaDefinition.fields.filter(
     (field) => !field.isSystem,
   )
+  const sortedRecords = getSortedRecordList({
+    records: recordsQuery.data,
+    sort,
+  })
+
+  const handleSortChange = (columnId: RecordListSortColumnKey) => {
+    setSort(getNextRecordListSort({ columnId, currentSort: sort }))
+  }
+
+  const getSortDirection = (columnId: RecordListSortColumnKey) =>
+    sort.columnId === columnId ? sort.direction : null
 
   return (
     <>
@@ -133,27 +154,92 @@ export const RecordsPage = () => {
           <DataTable tableClassName="min-w-max">
             <TableHead>
               <TableRow>
-                <TableHeader>Record</TableHeader>
-                <TableHeader>Status</TableHeader>
-                <TableHeader>Completed</TableHeader>
-                <TableHeader>Usage</TableHeader>
-                <TableHeader>Active</TableHeader>
-                <TableHeader>Failed</TableHeader>
-                <TableHeader>Skipped</TableHeader>
-                <TableHeader>Waiting</TableHeader>
-                <TableHeader>Latest run</TableHeader>
-                <TableHeader>Relations</TableHeader>
+                <TableSortHeader
+                  direction={getSortDirection("record")}
+                  onSort={() => handleSortChange("record")}
+                >
+                  Record
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("status")}
+                  onSort={() => handleSortChange("status")}
+                >
+                  Status
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("completed")}
+                  onSort={() => handleSortChange("completed")}
+                >
+                  Completed
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("usage")}
+                  onSort={() => handleSortChange("usage")}
+                >
+                  Usage
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("active")}
+                  onSort={() => handleSortChange("active")}
+                >
+                  Active
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("failed")}
+                  onSort={() => handleSortChange("failed")}
+                >
+                  Failed
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("skipped")}
+                  onSort={() => handleSortChange("skipped")}
+                >
+                  Skipped
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("waiting")}
+                  onSort={() => handleSortChange("waiting")}
+                >
+                  Waiting
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("latestRun")}
+                  onSort={() => handleSortChange("latestRun")}
+                >
+                  Latest run
+                </TableSortHeader>
+                <TableSortHeader
+                  direction={getSortDirection("relations")}
+                  onSort={() => handleSortChange("relations")}
+                >
+                  Relations
+                </TableSortHeader>
                 {showContextValues
-                  ? contextColumns.map((field) => (
-                      <TableHeader key={field.key}>{field.label}</TableHeader>
-                    ))
+                  ? contextColumns.map((field) => {
+                      const columnId = getContextRecordListSortColumnKey(field.key)
+
+                      return (
+                        <TableSortHeader
+                          direction={getSortDirection(columnId)}
+                          key={field.key}
+                          onSort={() => handleSortChange(columnId)}
+                        >
+                          {field.label}
+                        </TableSortHeader>
+                      )
+                    })
                   : null}
-                <TableHeader>Updated</TableHeader>
+                <TableSortHeader
+                  direction={getSortDirection("updated")}
+                  onSort={() => handleSortChange("updated")}
+                >
+                  Updated
+                </TableSortHeader>
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {recordsQuery.data.map((record) => (
+              {sortedRecords.map((record) => (
                 <RecordListRow
                   contextColumns={contextColumns}
                   key={record.id}
