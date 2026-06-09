@@ -143,7 +143,18 @@ export const InternRunDetailsPage = ({
     },
     { label: "Intern", value: run.selectedIntern ?? "—" },
     { label: "Duration", value: durationDisplay },
-    { label: "Tokens", value: totalTokens.toLocaleString() },
+    {
+      label: "Input Tokens",
+      value: (run.inputTokens ?? run.tokenInput ?? 0).toLocaleString(),
+    },
+    {
+      label: "Cached Tokens",
+      value: (run.cachedInputTokens ?? 0).toLocaleString(),
+    },
+    {
+      label: "Output Tokens",
+      value: (run.outputTokens ?? run.tokenOutput ?? 0).toLocaleString(),
+    },
     { label: "Tool Calls", value: run.taskCallCount },
     {
       label: "Cost",
@@ -185,6 +196,7 @@ export const InternRunDetailsPage = ({
               ? run.tokenInput.toLocaleString()
               : "—",
       },
+      { label: "Total Tokens", value: totalTokens.toLocaleString() },
       {
         label: "Cached Input",
         value: run.cachedInputTokens?.toLocaleString() ?? "—",
