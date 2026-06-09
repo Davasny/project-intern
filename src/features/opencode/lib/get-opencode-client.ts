@@ -1,22 +1,43 @@
 import net from "node:net"
-import { createOpencode, createOpencodeClient } from "@opencode-ai/sdk"
-import { eq } from "drizzle-orm"
+import { createOpencodeClient, createOpencodeServer } from "@opencode-ai/sdk"
+import { eq, sql } from "drizzle-orm"
 import { createOrgMcpApiKey } from "@/features/auth/lib/create-org-mcp-api-key"
 import { opencodeServerTable } from "@/features/opencode/db"
 import { buildOpencodeConfig } from "@/features/opencode/lib/build-opencode-config"
+import { createOpencodeAuthHeader } from "@/features/opencode/lib/create-opencode-auth-header"
 import { getEnabledProjectSkillNames } from "@/features/opencode/lib/get-enabled-project-skill-names"
 import type { OpencodeSessionPurpose } from "@/features/opencode/lib/opencode-session-purpose"
 import { backendConfig } from "@/lib/config/backend"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
-type OpencodeInstance = Awaited<ReturnType<typeof createOpencode>>
+type OpencodeServer = Awaited<ReturnType<typeof createOpencodeServer>>
 type OpencodeClient = ReturnType<typeof createOpencodeClient>
 
 type RunningInteractiveServer = {
   client: OpencodeClient
-  instance: OpencodeInstance
+  server: OpencodeServer
   port: number
+}
+
+const opencodeAuthHeader = createOpencodeAuthHeader({
+  password: backendConfig.CRM_OPENCODE_SERVER_PASSWORD,
+  username: backendConfig.CRM_OPENCODE_SERVER_USERNAME,
+})
+
+const createAuthenticatedOpencodeClient = ({ baseUrl }: { baseUrl: string }) =>
+  createOpencodeClient({
+    baseUrl,
+    headers: {
+      Authorization: opencodeAuthHeader,
+    },
+  })
+
+const configureOpencodeServerAuthEnv = () => {
+  process.env.OPENCODE_SERVER_PASSWORD =
+    backendConfig.CRM_OPENCODE_SERVER_PASSWORD
+  process.env.OPENCODE_SERVER_USERNAME =
+    backendConfig.CRM_OPENCODE_SERVER_USERNAME
 }
 
 const globalForOpencode = globalThis as {
@@ -86,76 +107,90 @@ const startEmbeddedServer = async ({
     projectId,
   })
 
-  const port = await findAvailablePort({
-    host: backendConfig.CRM_OPENCODE_HOST,
-    startPort: backendConfig.CRM_OPENCODE_PORT,
-  })
+  const { port, server } = await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext('project-intern-opencode-server-start'))`,
+    )
 
-  logger.info(
-    {
+    const nextPort = await findAvailablePort({
       host: backendConfig.CRM_OPENCODE_HOST,
-      enabledSkillCount: enabledSkillNames.length,
-      mode: "embedded",
-      organizationId,
-      port,
-      projectId,
-    },
-    "Starting OpenCode server",
-  )
+      startPort: backendConfig.CRM_OPENCODE_PORT,
+    })
 
-  const instance = await createOpencode({
-    config: buildOpencodeConfig({
-      enabledSkillNames,
-      mcpToken: key,
-      runtimeTemperature,
-      sessionPurpose,
-    }),
-    hostname: backendConfig.CRM_OPENCODE_HOST,
-    port,
-    timeout: backendConfig.CRM_OPENCODE_TIMEOUT_MS,
+    logger.info(
+      {
+        host: backendConfig.CRM_OPENCODE_HOST,
+        enabledSkillCount: enabledSkillNames.length,
+        mode: "embedded",
+        organizationId,
+        port: nextPort,
+        projectId,
+      },
+      "Starting OpenCode server",
+    )
+
+    configureOpencodeServerAuthEnv()
+
+    const nextServer = await createOpencodeServer({
+      config: buildOpencodeConfig({
+        enabledSkillNames,
+        mcpToken: key,
+        runtimeTemperature,
+        sessionPurpose,
+      }),
+      hostname: backendConfig.CRM_OPENCODE_HOST,
+      port: nextPort,
+      timeout: backendConfig.CRM_OPENCODE_TIMEOUT_MS,
+    })
+
+    return {
+      port: nextPort,
+      server: nextServer,
+    }
   })
 
-  const serverUrl = instance.server.url
-  logger.info(
-    { serverUrl, hasClient: !!instance.client },
-    "OpenCode instance created",
-  )
+  const serverUrl = server.url
+  const client = createAuthenticatedOpencodeClient({ baseUrl: serverUrl })
+
+  logger.info({ serverUrl, hasClient: !!client }, "OpenCode instance created")
 
   const healthUrl = new URL("/global/health", serverUrl)
-  const healthResponse = await fetch(healthUrl)
+  const healthResponse = await fetch(healthUrl, {
+    headers: {
+      Authorization: opencodeAuthHeader,
+    },
+  })
   const healthBody = await healthResponse.json()
   logger.info(
     { status: healthResponse.status, body: healthBody },
     "OpenCode health check",
   )
 
-  const client = instance.client
-
   logger.info({ organizationId, port }, "OpenCode server started")
 
   return {
     apiKey: key,
     client,
-    instance,
     port,
+    server,
   }
 }
 
 const shutdownEmbeddedServer = async ({
-  instance,
   organizationId,
   port,
+  server,
 }: {
-  instance: OpencodeInstance
   organizationId: string
   port: number
+  server: OpencodeServer
 }) => {
   logger.info(
     { mode: "embedded", organizationId, port },
     "Shutting down OpenCode server",
   )
 
-  instance.server.close()
+  server.close()
 }
 
 export const withOpencodeForOrg = async <T>({
@@ -191,7 +226,7 @@ export const withOpencodeForOrg = async <T>({
       "Using configured OpenCode server; project skill permissions are not enforced by embedded config",
     )
 
-    const client = createOpencodeClient({
+    const client = createAuthenticatedOpencodeClient({
       baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
     })
 
@@ -222,9 +257,9 @@ export const withOpencodeForOrg = async <T>({
     return await fn({ client: server.client, mcpToken: server.apiKey })
   } finally {
     await shutdownEmbeddedServer({
-      instance: server.instance,
       organizationId,
       port: server.port,
+      server: server.server,
     })
 
     await db
@@ -257,7 +292,7 @@ export const startInteractiveServer = async ({
   sessionPurpose: OpencodeSessionPurpose
 }) => {
   if (backendConfig.CRM_OPENCODE_BASE_URL) {
-    const client = createOpencodeClient({
+    const client = createAuthenticatedOpencodeClient({
       baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
     })
 
@@ -292,8 +327,8 @@ export const startInteractiveServer = async ({
   const runningServers = getInteractiveServersMap()
   runningServers.set(insertedRow.id, {
     client: server.client,
-    instance: server.instance,
     port: server.port,
+    server: server.server,
   })
 
   return {
@@ -315,9 +350,9 @@ export const stopInteractiveServer = async ({
 
   if (running) {
     await shutdownEmbeddedServer({
-      instance: running.instance,
       organizationId: "",
       port: running.port,
+      server: running.server,
     })
     runningServers.delete(serverId)
   }
@@ -360,7 +395,7 @@ export const getExternalOpencodeClient = (): OpencodeClient | null => {
     return null
   }
 
-  return createOpencodeClient({
+  return createAuthenticatedOpencodeClient({
     baseUrl: backendConfig.CRM_OPENCODE_BASE_URL,
   })
 }

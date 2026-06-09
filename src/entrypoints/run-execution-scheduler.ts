@@ -6,24 +6,12 @@ import {
   taskSchedulerWorker,
   workspaceMaintenanceWorker,
 } from "@/features/execution/queues/schedule-task-executor"
-import { taskExecutorWorker } from "@/features/execution/queues/task-executor-worker"
 import { taskRetryScanQueue } from "@/features/execution/queues/task-retry-scan-queue"
 import { taskSchedulerTickQueue } from "@/features/execution/queues/task-scheduler-tick-queue"
 import { workspaceMaintenanceQueue } from "@/features/execution/queues/workspace-maintenance-queue"
 import { logger } from "@/lib/logger"
 
-const executionWorkers = [
-  {
-    name: "scheduleTaskExecutor",
-    run: scheduleTaskExecutor,
-  },
-  {
-    name: "taskExecutorWorker",
-    run: () => taskExecutorWorker.work(),
-  },
-]
-
-const stoppableWorkers = [
+const schedulerWorkers = [
   {
     name: "taskSchedulerWorker",
     worker: taskSchedulerWorker,
@@ -36,15 +24,11 @@ const stoppableWorkers = [
     name: "taskRetryScanWorker",
     worker: taskRetryScanWorker,
   },
-  {
-    name: "taskExecutorWorker",
-    worker: taskExecutorWorker,
-  },
 ]
 
 let isShuttingDown = false
 
-const stopExecutionWorkers = async () => {
+const stopExecutionScheduler = async () => {
   if (isShuttingDown) {
     return
   }
@@ -54,7 +38,7 @@ const stopExecutionWorkers = async () => {
   const drainTimeoutMs = 30_000
   await Promise.race([
     Promise.all(
-      stoppableWorkers.map(async ({ name, worker }) => {
+      schedulerWorkers.map(async ({ name, worker }) => {
         logger.info({ worker: name }, "stopping worker")
         await worker.stop()
       }),
@@ -64,18 +48,18 @@ const stopExecutionWorkers = async () => {
 }
 
 const registerShutdownHandlers = () => {
-  const signals = ["SIGINT", "SIGTERM"] as const
+  const signals: readonly NodeJS.Signals[] = ["SIGINT", "SIGTERM"]
 
   for (const signal of signals) {
     process.on(signal, () => {
       logger.info({ signal }, "received shutdown signal")
-      void stopExecutionWorkers().then(() => process.exit(0))
+      void stopExecutionScheduler().then(() => process.exit(0))
     })
   }
 }
 
 const registerWorkerEventHandlers = () => {
-  for (const { name, worker } of stoppableWorkers) {
+  for (const { name, worker } of schedulerWorkers) {
     const childLogger = logger.child({ worker: name })
 
     worker.on("ready", () => {
@@ -105,7 +89,7 @@ const registerWorkerEventHandlers = () => {
   }
 }
 
-const runExecutionWorkers = async () => {
+const runExecutionScheduler = async () => {
   try {
     registerShutdownHandlers()
     registerWorkerEventHandlers()
@@ -127,9 +111,9 @@ const runExecutionWorkers = async () => {
 
     logger.info(
       {
-        workers: executionWorkers.map((worker) => worker.name),
+        workers: schedulerWorkers.map((worker) => worker.name),
       },
-      "starting execution workers",
+      "starting execution scheduler",
     )
 
     await taskSchedulerTickQueue.schedule("*/1 * * * *", {
@@ -144,17 +128,12 @@ const runExecutionWorkers = async () => {
       projectId: null,
     })
 
-    await Promise.all(
-      executionWorkers.map(async (worker) => {
-        logger.info({ worker: worker.name }, "starting worker")
-        await worker.run()
-      }),
-    )
+    await scheduleTaskExecutor()
   } catch (error) {
-    logger.error({ error }, "failed to start execution workers")
-    await stopExecutionWorkers()
+    logger.error({ error }, "failed to start execution scheduler")
+    await stopExecutionScheduler()
     process.exit(1)
   }
 }
 
-void runExecutionWorkers()
+void runExecutionScheduler()

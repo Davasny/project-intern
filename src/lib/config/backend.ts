@@ -27,6 +27,11 @@ const backendConfigSchema = z.object({
   CRM_OPENCODE_BASE_URL: z.string().url().nullable().default(null),
   CRM_OPENCODE_HOST: z.string().min(1).default("127.0.0.1"),
   CRM_OPENCODE_PORT: z.coerce.number().int().positive().default(4096),
+  CRM_OPENCODE_SERVER_PASSWORD: z
+    .string()
+    .min(1)
+    .default("development-opencode-server-password"),
+  CRM_OPENCODE_SERVER_USERNAME: z.string().min(1).default("opencode"),
   CRM_OPENCODE_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
   CRM_STORAGE_ROOT: z
     .string()
@@ -57,6 +62,8 @@ const parsedBackendConfig = backendConfigSchema.parse({
   CRM_OPENCODE_BASE_URL: process.env.CRM_OPENCODE_BASE_URL ?? null,
   CRM_OPENCODE_HOST: process.env.CRM_OPENCODE_HOST,
   CRM_OPENCODE_PORT: process.env.CRM_OPENCODE_PORT,
+  CRM_OPENCODE_SERVER_PASSWORD: process.env.CRM_OPENCODE_SERVER_PASSWORD,
+  CRM_OPENCODE_SERVER_USERNAME: process.env.CRM_OPENCODE_SERVER_USERNAME,
   CRM_OPENCODE_TIMEOUT_MS: process.env.CRM_OPENCODE_TIMEOUT_MS,
   CRM_STORAGE_ROOT: process.env.CRM_STORAGE_ROOT,
   CRM_WORKSPACE_ROOT: process.env.CRM_WORKSPACE_ROOT,

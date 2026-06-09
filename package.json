@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "dev:worker": "pnpm exec tsx --watch src/entrypoints/run-execution-workers.ts",
+    "dev:scheduler": "pnpm exec tsx --watch src/entrypoints/run-execution-scheduler.ts",
+    "dev:worker": "pnpm exec tsx --watch src/entrypoints/run-execution-worker.ts",
     "build": "next build",
     "start": "next start",
     "check": "biome check . && tsc --noEmit && knip",
