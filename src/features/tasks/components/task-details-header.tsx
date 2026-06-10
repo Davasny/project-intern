@@ -24,6 +24,7 @@ type TaskDetailsHeaderProps = {
   deleteDisabledReason: string | null
   draftActionPending: boolean
   onAcceptDraft: () => Promise<void>
+  onDownloadTaskDescription: () => void
   onEditTask: () => void
   onRejectDraft: () => Promise<void>
   onRemoveTask: () => void
@@ -63,6 +64,7 @@ export const TaskDetailsHeader = ({
   deleteDisabledReason,
   draftActionPending,
   onAcceptDraft,
+  onDownloadTaskDescription,
   onEditTask,
   onRejectDraft,
   onRemoveTask,
@@ -120,6 +122,13 @@ export const TaskDetailsHeader = ({
         ) : null}
         <Button onClick={onEditTask} type="button">
           Edit task
+        </Button>
+        <Button
+          onClick={onDownloadTaskDescription}
+          type="button"
+          variant="outline"
+        >
+          Download task description
         </Button>
         {state === "accepted" ? (
           <Button onClick={onResetDownstream} type="button" variant="outline">

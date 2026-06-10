@@ -20,6 +20,7 @@ import { TaskProgressStrip } from "@/features/tasks/components/task-progress-str
 import { TaskPromptSection } from "@/features/tasks/components/task-prompt-section"
 import { WorkRecordsSection } from "@/features/tasks/components/work-records-section"
 import { TaskRevisionsSection } from "@/features/tasks/components/task-revisions-section"
+import { buildTaskDescriptionDownloadFilename } from "@/features/tasks/lib/build-task-description-download-filename"
 import { useTRPC } from "@/lib/trpc/client"
 
 type TaskDetailsPageProps = {
@@ -144,6 +145,27 @@ export const TaskDetailsPage = ({
     })
   }
 
+  const handleDownloadTaskDescription = () => {
+    if (!taskQuery.data) {
+      return
+    }
+
+    const blob = new Blob([taskQuery.data.descriptionMarkdown], {
+      type: "text/markdown;charset=utf-8",
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = buildTaskDescriptionDownloadFilename({
+      sortOrder: taskQuery.data.sortOrder,
+      title: taskQuery.data.title,
+    })
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   if (schemaVersionsQuery.isLoading || taskQuery.isLoading) {
     return <LoadingState label="Loading task details..." />
   }
@@ -198,6 +220,7 @@ export const TaskDetailsPage = ({
           }
           onAcceptDraft={handleAcceptDraft}
           onEditTask={() => setIsEditOpen(true)}
+          onDownloadTaskDescription={handleDownloadTaskDescription}
           onRejectDraft={handleRejectDraft}
           onRemoveTask={() => setIsRemoveDialogOpen(true)}
           onResetDownstream={() => setIsResetDialogOpen(true)}
