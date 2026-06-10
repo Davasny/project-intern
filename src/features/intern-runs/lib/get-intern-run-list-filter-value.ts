@@ -59,6 +59,12 @@ export const getInternRunListFilterValue = ({
     return run.tokenInput !== null ? run.tokenInput.toLocaleString() : "—"
   }
 
+  if (columnId === "cachedTokens") {
+    return run.cachedInputTokens !== null
+      ? run.cachedInputTokens.toLocaleString()
+      : "—"
+  }
+
   if (columnId === "tokensOut") {
     if (run.outputTokens !== null) {
       return run.outputTokens.toLocaleString()

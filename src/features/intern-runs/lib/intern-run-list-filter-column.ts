@@ -10,6 +10,7 @@ export type InternRunListFilterColumnId =
   | "duration"
   | "toolCalls"
   | "tokensIn"
+  | "cachedTokens"
   | "tokensOut"
   | "cost"
   | "started"
@@ -29,6 +30,7 @@ export type InternRunListRangeFilterColumnId =
   | "duration"
   | "toolCalls"
   | "tokensIn"
+  | "cachedTokens"
   | "tokensOut"
   | "cost"
 
@@ -47,6 +49,7 @@ export const internRunListFilterColumnLabels: Record<
   state: "State",
   task: "Task",
   temperature: "Temperature",
+  cachedTokens: "Cached Tokens",
   tokensIn: "Tokens In",
   tokensOut: "Tokens Out",
   toolCalls: "Tool Calls",
@@ -62,6 +65,7 @@ export const internRunListRangeFilterColumnIds: Array<InternRunListRangeFilterCo
     "duration",
     "toolCalls",
     "tokensIn",
+    "cachedTokens",
     "tokensOut",
     "cost",
   ]

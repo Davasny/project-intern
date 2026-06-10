@@ -53,6 +53,7 @@ export const InternRunListRow = ({
     <TableCell>{getInternRunListFilterValue({ columnId: "duration", run })}</TableCell>
     <TableCell>{getInternRunListFilterValue({ columnId: "toolCalls", run })}</TableCell>
     <TableCell>{getInternRunListFilterValue({ columnId: "tokensIn", run })}</TableCell>
+    <TableCell>{getInternRunListFilterValue({ columnId: "cachedTokens", run })}</TableCell>
     <TableCell>{getInternRunListFilterValue({ columnId: "tokensOut", run })}</TableCell>
     <TableCell>{getInternRunListFilterValue({ columnId: "cost", run })}</TableCell>
     <TableCell>{getInternRunListFilterValue({ columnId: "started", run })}</TableCell>

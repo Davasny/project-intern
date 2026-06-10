@@ -291,6 +291,17 @@ export const InternRunListPage = () => {
             />
             <InternRunListHeaderCell
               bounds={getInternRunListRangeFilterBounds({
+                columnId: "cachedTokens",
+                runs: runsQuery.data,
+              })}
+              columnId="cachedTokens"
+              filterValue={filters.ranges.cachedTokens}
+              kind="range"
+              label={internRunListFilterColumnLabels.cachedTokens}
+              onFilterChange={handleRangeFilterChange}
+            />
+            <InternRunListHeaderCell
+              bounds={getInternRunListRangeFilterBounds({
                 columnId: "tokensOut",
                 runs: runsQuery.data,
               })}
@@ -336,7 +347,7 @@ export const InternRunListPage = () => {
             ))
           ) : (
             <TableRow>
-              <TableCell className="py-8 text-center text-muted-foreground" colSpan={14}>
+              <TableCell className="py-8 text-center text-muted-foreground" colSpan={15}>
                 No intern runs match the current filters.
               </TableCell>
             </TableRow>

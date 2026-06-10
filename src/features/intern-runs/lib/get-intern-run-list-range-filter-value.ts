@@ -28,6 +28,10 @@ export const getInternRunListRangeFilterValue = ({
     return run.inputTokens ?? run.tokenInput
   }
 
+  if (columnId === "cachedTokens") {
+    return run.cachedInputTokens
+  }
+
   if (columnId === "tokensOut") {
     return run.outputTokens ?? run.tokenOutput
   }
