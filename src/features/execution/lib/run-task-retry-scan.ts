@@ -26,7 +26,7 @@ export const runTaskRetryScan = async ({ limit }: RunTaskRetryScanParams) => {
     .limit(limit)
 
   if (workRecords.length === 0) {
-    retryLogger.info("no failed work records to retry")
+    retryLogger.info("no auto-retryable work records to retry")
     return {
       retriedCount: 0,
       workRecordIds: [],
@@ -35,7 +35,7 @@ export const runTaskRetryScan = async ({ limit }: RunTaskRetryScanParams) => {
 
   retryLogger.info(
     { count: workRecords.length },
-    "found failed work records to retry",
+    "found auto-retryable work records to retry",
   )
 
   for (const workRecord of workRecords) {
