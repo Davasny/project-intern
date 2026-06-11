@@ -16,6 +16,13 @@ import {
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { ProgressStrip } from "@/components/ui/progress-strip/progress-strip"
 import { UsageBreakdownCard } from "@/components/ui/usage-metric/usage-breakdown-card"
+import { UsageBreakdownCardContent } from "@/components/ui/usage-metric/usage-breakdown-card-content"
+import { UsageBreakdownCardDescription } from "@/components/ui/usage-metric/usage-breakdown-card-description"
+import { UsageBreakdownCardHeader } from "@/components/ui/usage-metric/usage-breakdown-card-header"
+import { UsageBreakdownCardMetric } from "@/components/ui/usage-metric/usage-breakdown-card-metric"
+import { UsageBreakdownCardTitle } from "@/components/ui/usage-metric/usage-breakdown-card-title"
+import { formatCostUsd } from "@/components/ui/usage-metric/format-cost-usd"
+import { formatTokenCount } from "@/components/ui/usage-metric/format-token-count"
 import { RecordFilePanel } from "@/features/files/components/record-file-panel"
 import { RecordRelationsSection } from "@/features/record-edges/components/record-relations-section"
 import { RecordConfiguration } from "@/features/records/components/record-configuration"
@@ -23,6 +30,7 @@ import { RecordDetailsHeader } from "@/features/records/components/record-detail
 import { RecordLinkedTasksSection } from "@/features/records/components/record-linked-tasks-section"
 import { RecordPrimarySection } from "@/features/records/components/record-primary-section"
 import { useTRPC } from "@/lib/trpc/client"
+import { formatDurationMs } from "@/utils/format-duration-ms"
 
 type RecordDetailsPageProps = {
   organizationSlug: string
@@ -199,18 +207,56 @@ export const RecordDetailsPage = ({
           version={recordQuery.data.version}
         />
       </div>
-      <UsageBreakdownCard
-        averageCostUsd={recordQuery.data.usage.averageCostUsd}
-        runCount={recordQuery.data.usage.runCount}
-        title="Usage"
-        totalCachedInputTokens={recordQuery.data.usage.totalCachedInputTokens}
-        totalCacheWriteTokens={recordQuery.data.usage.totalCacheWriteTokens}
-        totalCostUsd={recordQuery.data.usage.totalCostUsd}
-        totalDurationMs={recordQuery.data.usage.totalDurationMs}
-        totalInputTokens={recordQuery.data.usage.totalInputTokens}
-        totalOutputTokens={recordQuery.data.usage.totalOutputTokens}
-        totalTokens={recordQuery.data.usage.totalTokens}
-      />
+      <UsageBreakdownCard>
+        <UsageBreakdownCardHeader>
+          <UsageBreakdownCardTitle>Usage</UsageBreakdownCardTitle>
+          <UsageBreakdownCardDescription>
+            Costs and tokens across all intern run attempts.
+          </UsageBreakdownCardDescription>
+        </UsageBreakdownCardHeader>
+        <UsageBreakdownCardContent>
+          <UsageBreakdownCardMetric
+            label="Total cost"
+            value={formatCostUsd(recordQuery.data.usage.totalCostUsd)}
+          />
+          <UsageBreakdownCardMetric
+            label="Total time"
+            value={formatDurationMs(recordQuery.data.usage.totalDurationMs)}
+          />
+          <UsageBreakdownCardMetric
+            label="Total tokens"
+            value={formatTokenCount(recordQuery.data.usage.totalTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Input"
+            value={formatTokenCount(recordQuery.data.usage.totalInputTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Output"
+            value={formatTokenCount(recordQuery.data.usage.totalOutputTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Cached input"
+            value={formatTokenCount(recordQuery.data.usage.totalCachedInputTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Cache write"
+            value={formatTokenCount(recordQuery.data.usage.totalCacheWriteTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Runs"
+            value={formatTokenCount(recordQuery.data.usage.runCount)}
+          />
+          <UsageBreakdownCardMetric
+            label="Average cost"
+            value={
+              recordQuery.data.usage.averageCostUsd === null
+                ? "—"
+                : formatCostUsd(recordQuery.data.usage.averageCostUsd)
+            }
+          />
+        </UsageBreakdownCardContent>
+      </UsageBreakdownCard>
       <RecordLinkedTasksSection
         nextWaitingSortOrder={nextWaitingSortOrder}
         recordId={recordQuery.data.id}

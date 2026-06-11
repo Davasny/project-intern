@@ -14,6 +14,13 @@ import {
 } from "@/components/ui/dialog"
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { UsageBreakdownCard } from "@/components/ui/usage-metric/usage-breakdown-card"
+import { UsageBreakdownCardContent } from "@/components/ui/usage-metric/usage-breakdown-card-content"
+import { UsageBreakdownCardDescription } from "@/components/ui/usage-metric/usage-breakdown-card-description"
+import { UsageBreakdownCardHeader } from "@/components/ui/usage-metric/usage-breakdown-card-header"
+import { UsageBreakdownCardMetric } from "@/components/ui/usage-metric/usage-breakdown-card-metric"
+import { UsageBreakdownCardTitle } from "@/components/ui/usage-metric/usage-breakdown-card-title"
+import { formatCostUsd } from "@/components/ui/usage-metric/format-cost-usd"
+import { formatTokenCount } from "@/components/ui/usage-metric/format-token-count"
 import { TaskDetailsHeader } from "@/features/tasks/components/task-details-header"
 import { TaskForm } from "@/features/tasks/components/task-form"
 import { TaskProgressStrip } from "@/features/tasks/components/task-progress-strip"
@@ -22,6 +29,7 @@ import { WorkRecordsSection } from "@/features/tasks/components/work-records-sec
 import { TaskRevisionsSection } from "@/features/tasks/components/task-revisions-section"
 import { buildTaskDescriptionDownloadFilename } from "@/features/tasks/lib/build-task-description-download-filename"
 import { useTRPC } from "@/lib/trpc/client"
+import { formatDurationMs } from "@/utils/format-duration-ms"
 
 type TaskDetailsPageProps = {
   organizationSlug: string
@@ -249,18 +257,56 @@ export const TaskDetailsPage = ({
           temperature={taskQuery.data.temperature}
           updatedAt={taskQuery.data.updatedAt}
         />
-        <UsageBreakdownCard
-          averageCostUsd={taskQuery.data.usage.averageCostUsd}
-          runCount={taskQuery.data.usage.runCount}
-          title="Usage"
-          totalCachedInputTokens={taskQuery.data.usage.totalCachedInputTokens}
-          totalCacheWriteTokens={taskQuery.data.usage.totalCacheWriteTokens}
-          totalCostUsd={taskQuery.data.usage.totalCostUsd}
-          totalDurationMs={taskQuery.data.usage.totalDurationMs}
-          totalInputTokens={taskQuery.data.usage.totalInputTokens}
-          totalOutputTokens={taskQuery.data.usage.totalOutputTokens}
-          totalTokens={taskQuery.data.usage.totalTokens}
-        />
+        <UsageBreakdownCard>
+          <UsageBreakdownCardHeader>
+            <UsageBreakdownCardTitle>Usage</UsageBreakdownCardTitle>
+            <UsageBreakdownCardDescription>
+              Costs and tokens across all intern run attempts.
+            </UsageBreakdownCardDescription>
+          </UsageBreakdownCardHeader>
+          <UsageBreakdownCardContent>
+            <UsageBreakdownCardMetric
+              label="Total cost"
+              value={formatCostUsd(taskQuery.data.usage.totalCostUsd)}
+            />
+            <UsageBreakdownCardMetric
+              label="Total time"
+              value={formatDurationMs(taskQuery.data.usage.totalDurationMs)}
+            />
+            <UsageBreakdownCardMetric
+              label="Total tokens"
+              value={formatTokenCount(taskQuery.data.usage.totalTokens)}
+            />
+            <UsageBreakdownCardMetric
+              label="Input"
+              value={formatTokenCount(taskQuery.data.usage.totalInputTokens)}
+            />
+            <UsageBreakdownCardMetric
+              label="Output"
+              value={formatTokenCount(taskQuery.data.usage.totalOutputTokens)}
+            />
+            <UsageBreakdownCardMetric
+              label="Cached input"
+              value={formatTokenCount(taskQuery.data.usage.totalCachedInputTokens)}
+            />
+            <UsageBreakdownCardMetric
+              label="Cache write"
+              value={formatTokenCount(taskQuery.data.usage.totalCacheWriteTokens)}
+            />
+            <UsageBreakdownCardMetric
+              label="Runs"
+              value={formatTokenCount(taskQuery.data.usage.runCount)}
+            />
+            <UsageBreakdownCardMetric
+              label="Average cost"
+              value={
+                taskQuery.data.usage.averageCostUsd === null
+                  ? "—"
+                  : formatCostUsd(taskQuery.data.usage.averageCostUsd)
+              }
+            />
+          </UsageBreakdownCardContent>
+        </UsageBreakdownCard>
         <WorkRecordsSection
           taskId={taskQuery.data.id}
           workRecords={taskQuery.data.workRecords}

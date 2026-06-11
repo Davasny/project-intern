@@ -15,6 +15,13 @@ import {
 import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { UsageBreakdownCard } from "@/components/ui/usage-metric/usage-breakdown-card"
+import { UsageBreakdownCardContent } from "@/components/ui/usage-metric/usage-breakdown-card-content"
+import { UsageBreakdownCardDescription } from "@/components/ui/usage-metric/usage-breakdown-card-description"
+import { UsageBreakdownCardHeader } from "@/components/ui/usage-metric/usage-breakdown-card-header"
+import { UsageBreakdownCardMetric } from "@/components/ui/usage-metric/usage-breakdown-card-metric"
+import { UsageBreakdownCardTitle } from "@/components/ui/usage-metric/usage-breakdown-card-title"
+import { formatCostUsd } from "@/components/ui/usage-metric/format-cost-usd"
+import { formatTokenCount } from "@/components/ui/usage-metric/format-token-count"
 import { ExecutionMatrixSection } from "@/features/execution/components/execution-matrix-section"
 import { ExecutionSummaryStrip } from "@/features/execution/components/execution-summary-strip"
 import { useExecutionMonitorQuery } from "@/features/execution/hooks/use-execution-monitor-query"
@@ -25,6 +32,7 @@ import { RecordForm } from "@/features/records/components/record-form"
 import { TaskForm } from "@/features/tasks/components/task-form"
 import { useTRPC } from "@/lib/trpc/client"
 import { cn } from "@/lib/utils"
+import { formatDurationMs } from "@/utils/format-duration-ms"
 
 export const ExecutionMatrixPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
@@ -154,25 +162,63 @@ export const ExecutionMatrixPage = () => {
           isAutopickEnabled={executionQuery.data.isAutopickEnabled}
           summary={executionQuery.data.summary}
         />
-        <UsageBreakdownCard
-          averageCostUsd={
-            executionQuery.data.usage.runCount > 0
-              ? executionQuery.data.usage.totalCostUsd /
-                executionQuery.data.usage.runCount
-              : null
-          }
-          runCount={executionQuery.data.usage.runCount}
-          title="Project usage"
-          totalCachedInputTokens={
-            executionQuery.data.usage.totalCachedInputTokens
-          }
-          totalCacheWriteTokens={executionQuery.data.usage.totalCacheWriteTokens}
-          totalCostUsd={executionQuery.data.usage.totalCostUsd}
-          totalDurationMs={executionQuery.data.usage.totalDurationMs}
-          totalInputTokens={executionQuery.data.usage.totalInputTokens}
-          totalOutputTokens={executionQuery.data.usage.totalOutputTokens}
-          totalTokens={executionQuery.data.usage.totalTokens}
-        />
+        <UsageBreakdownCard>
+          <UsageBreakdownCardHeader>
+            <UsageBreakdownCardTitle>Project usage</UsageBreakdownCardTitle>
+            <UsageBreakdownCardDescription>
+              Costs and tokens across all intern run attempts.
+            </UsageBreakdownCardDescription>
+          </UsageBreakdownCardHeader>
+          <UsageBreakdownCardContent>
+            <UsageBreakdownCardMetric
+              label="Total cost"
+              value={formatCostUsd(executionQuery.data.usage.totalCostUsd)}
+            />
+            <UsageBreakdownCardMetric
+              label="Total time"
+              value={formatDurationMs(executionQuery.data.usage.totalDurationMs)}
+            />
+            <UsageBreakdownCardMetric
+              label="Total tokens"
+              value={formatTokenCount(executionQuery.data.usage.totalTokens)}
+            />
+            <UsageBreakdownCardMetric
+              label="Input"
+              value={formatTokenCount(executionQuery.data.usage.totalInputTokens)}
+            />
+            <UsageBreakdownCardMetric
+              label="Output"
+              value={formatTokenCount(executionQuery.data.usage.totalOutputTokens)}
+            />
+            <UsageBreakdownCardMetric
+              label="Cached input"
+              value={formatTokenCount(
+                executionQuery.data.usage.totalCachedInputTokens,
+              )}
+            />
+            <UsageBreakdownCardMetric
+              label="Cache write"
+              value={formatTokenCount(
+                executionQuery.data.usage.totalCacheWriteTokens,
+              )}
+            />
+            <UsageBreakdownCardMetric
+              label="Runs"
+              value={formatTokenCount(executionQuery.data.usage.runCount)}
+            />
+            <UsageBreakdownCardMetric
+              label="Average cost"
+              value={
+                executionQuery.data.usage.runCount > 0
+                  ? formatCostUsd(
+                      executionQuery.data.usage.totalCostUsd /
+                        executionQuery.data.usage.runCount,
+                    )
+                  : "—"
+              }
+            />
+          </UsageBreakdownCardContent>
+        </UsageBreakdownCard>
         <ExecutionMatrixSection
           debugControlsEnabled={executionQuery.data.debugControlsEnabled}
           isAutopickEnabled={executionQuery.data.isAutopickEnabled}

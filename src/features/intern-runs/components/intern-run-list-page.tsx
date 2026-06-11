@@ -8,6 +8,13 @@ import { LoadingState } from "@/components/ui/loading-state/loading-state"
 import { PageHeader } from "@/components/ui/page-header/page-header"
 import { PageHeaderActions } from "@/components/ui/page-header/page-header-actions"
 import { UsageBreakdownCard } from "@/components/ui/usage-metric/usage-breakdown-card"
+import { UsageBreakdownCardContent } from "@/components/ui/usage-metric/usage-breakdown-card-content"
+import { UsageBreakdownCardDescription } from "@/components/ui/usage-metric/usage-breakdown-card-description"
+import { UsageBreakdownCardHeader } from "@/components/ui/usage-metric/usage-breakdown-card-header"
+import { UsageBreakdownCardMetric } from "@/components/ui/usage-metric/usage-breakdown-card-metric"
+import { UsageBreakdownCardTitle } from "@/components/ui/usage-metric/usage-breakdown-card-title"
+import { formatCostUsd } from "@/components/ui/usage-metric/format-cost-usd"
+import { formatTokenCount } from "@/components/ui/usage-metric/format-token-count"
 import {
   TableBody,
   TableCell,
@@ -34,6 +41,7 @@ import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-ru
 import { internRunListFiltersAtom } from "@/features/intern-runs/state/intern-run-list-filters-atom"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
 import { useTRPC } from "@/lib/trpc/client"
+import { formatDurationMs } from "@/utils/format-duration-ms"
 
 export const InternRunListPage = () => {
   const { organizationSlug, projectSlug } = useProjectScope()
@@ -149,22 +157,56 @@ export const InternRunListPage = () => {
           ) : null}
         </PageHeaderActions>
       </PageHeader>
-      <UsageBreakdownCard
-        averageCostUsd={
-          projectUsage.runCount > 0
-            ? projectUsage.totalCostUsd / projectUsage.runCount
-            : null
-        }
-        runCount={projectUsage.runCount}
-        title="Project usage"
-        totalCachedInputTokens={projectUsage.totalCachedInputTokens}
-        totalCacheWriteTokens={projectUsage.totalCacheWriteTokens}
-        totalCostUsd={projectUsage.totalCostUsd}
-        totalDurationMs={projectUsage.totalDurationMs}
-        totalInputTokens={projectUsage.totalInputTokens}
-        totalOutputTokens={projectUsage.totalOutputTokens}
-        totalTokens={projectUsage.totalTokens}
-      />
+      <UsageBreakdownCard>
+        <UsageBreakdownCardHeader>
+          <UsageBreakdownCardTitle>Project usage</UsageBreakdownCardTitle>
+          <UsageBreakdownCardDescription>
+            Costs and tokens across all intern run attempts.
+          </UsageBreakdownCardDescription>
+        </UsageBreakdownCardHeader>
+        <UsageBreakdownCardContent>
+          <UsageBreakdownCardMetric
+            label="Total cost"
+            value={formatCostUsd(projectUsage.totalCostUsd)}
+          />
+          <UsageBreakdownCardMetric
+            label="Total time"
+            value={formatDurationMs(projectUsage.totalDurationMs)}
+          />
+          <UsageBreakdownCardMetric
+            label="Total tokens"
+            value={formatTokenCount(projectUsage.totalTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Input"
+            value={formatTokenCount(projectUsage.totalInputTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Output"
+            value={formatTokenCount(projectUsage.totalOutputTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Cached input"
+            value={formatTokenCount(projectUsage.totalCachedInputTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Cache write"
+            value={formatTokenCount(projectUsage.totalCacheWriteTokens)}
+          />
+          <UsageBreakdownCardMetric
+            label="Runs"
+            value={formatTokenCount(projectUsage.runCount)}
+          />
+          <UsageBreakdownCardMetric
+            label="Average cost"
+            value={
+              projectUsage.runCount > 0
+                ? formatCostUsd(projectUsage.totalCostUsd / projectUsage.runCount)
+                : "—"
+            }
+          />
+        </UsageBreakdownCardContent>
+      </UsageBreakdownCard>
       <DataTable>
         <TableHead>
           <TableRow>
