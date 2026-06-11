@@ -160,9 +160,6 @@ export const InternRunListPage = () => {
       <UsageBreakdownCard>
         <UsageBreakdownCardHeader>
           <UsageBreakdownCardTitle>Project usage</UsageBreakdownCardTitle>
-          <UsageBreakdownCardDescription>
-            Costs and tokens across all intern run attempts.
-          </UsageBreakdownCardDescription>
         </UsageBreakdownCardHeader>
         <UsageBreakdownCardContent>
           <UsageBreakdownCardMetric

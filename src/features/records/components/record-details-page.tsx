@@ -210,9 +210,6 @@ export const RecordDetailsPage = ({
       <UsageBreakdownCard>
         <UsageBreakdownCardHeader>
           <UsageBreakdownCardTitle>Usage</UsageBreakdownCardTitle>
-          <UsageBreakdownCardDescription>
-            Costs and tokens across all intern run attempts.
-          </UsageBreakdownCardDescription>
         </UsageBreakdownCardHeader>
         <UsageBreakdownCardContent>
           <UsageBreakdownCardMetric
