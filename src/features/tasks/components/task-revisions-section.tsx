@@ -2,30 +2,37 @@ import { ActivityTimeline } from "@/components/ui/activity-timeline/activity-tim
 import { SectionCard } from "@/components/ui/section-card/section-card"
 import { SectionCardContent } from "@/components/ui/section-card/section-card-content"
 import { SectionCardHeader } from "@/components/ui/section-card/section-card-header"
-import { TaskRevisionItem } from "@/features/tasks/components/task-revision-item"
+import { TaskDefinitionVersionItem } from "@/features/tasks/components/task-definition-version-item"
 
 type TaskRevisionsSectionProps = {
-  revisions: {
+  versions: {
+    changes: {
+      field: string
+      label: string
+      after: string
+      before: string
+    }[]
     createdAt: Date
     id: string
-    revisionNumber: number
+    model: string | null
+    schemaVersion: number
+    temperature: number | null
+    title: string
+    versionNumber: number
   }[]
 }
 
 export const TaskRevisionsSection = ({
-  revisions,
+  versions,
 }: TaskRevisionsSectionProps) => (
   <SectionCard>
     <SectionCardHeader>
-      <h2 className="text-lg font-semibold text-foreground">Revision history</h2>
-      <p className="text-sm text-muted-foreground">
-        Append-only task description revisions.
-      </p>
+      <h2 className="text-lg font-semibold text-foreground">Versions</h2>
     </SectionCardHeader>
     <SectionCardContent>
       <ActivityTimeline>
-        {revisions.map((revision) => (
-          <TaskRevisionItem key={revision.id} revision={revision} />
+        {versions.map((version) => (
+          <TaskDefinitionVersionItem key={version.id} version={version} />
         ))}
       </ActivityTimeline>
     </SectionCardContent>

@@ -79,6 +79,7 @@ const taskMachineDefinition = machine<TaskMachineContext>().define({
           task: {
             descriptionMarkdown: context.descriptionMarkdown,
             id: event.taskId,
+            model: context.model,
             projectId: context.projectId,
             temperature: context.temperature,
             schemaVersion: context.schemaVersion,

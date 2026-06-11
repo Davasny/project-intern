@@ -23,6 +23,7 @@ import { InternRunOpencodeExportButton } from "@/features/intern-runs/components
 import { InternRunPayloadCard } from "@/features/intern-runs/components/intern-run-payload-card"
 import { InternRunRefreshStatsButton } from "@/features/intern-runs/components/intern-run-refresh-stats-button"
 import { InternRunSummaryReasonCard } from "@/features/intern-runs/components/intern-run-summary-reason-card"
+import { InternRunTaskVersionCard } from "@/features/intern-runs/components/intern-run-task-version-card"
 import { getInternRunOutcomeDetails } from "@/features/intern-runs/lib/get-intern-run-outcome-details"
 import { isInternRunStateActive } from "@/features/intern-runs/schemas/intern-run-state"
 import { useProjectScope } from "@/features/projects/context/project-scope-context"
@@ -314,6 +315,21 @@ export const InternRunDetailsPage = ({
         </div>
       </PageHeader>
       <StatsBar stats={stats} details={details} />
+      <InternRunTaskVersionCard
+        organizationSlug={organizationSlug}
+        projectSlug={projectSlug}
+        taskId={run.taskId}
+        version={{
+          createdAt: run.taskDefinitionVersionCreatedAt,
+          descriptionMarkdown: run.taskDefinitionVersionDescriptionMarkdown,
+          id: run.taskDefinitionVersionId,
+          model: run.taskDefinitionVersionModel,
+          schemaVersion: run.taskDefinitionVersionSchemaVersion,
+          temperature: run.taskDefinitionVersionTemperature,
+          title: run.taskDefinitionVersionTitle,
+          versionNumber: run.taskDefinitionVersionNumber,
+        }}
+      />
       {outcomeDetails !== null ? (
         <InternRunSummaryReasonCard details={outcomeDetails} />
       ) : null}

@@ -11,6 +11,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core"
 import type { InternRunState } from "@/features/intern-runs/schemas/intern-run-state"
+import { taskDefinitionVersionTable } from "@/features/tasks/db"
 import { workRecordTable } from "@/features/work-records/db"
 
 const createdAtColumn = () =>
@@ -29,6 +30,10 @@ export const internRunTable = pgTable(
     workRecordId: uuid("work_record_id")
       .notNull()
       .references(() => workRecordTable.id, { onDelete: "cascade" }),
+    taskDefinitionVersionId: uuid("task_definition_version_id").references(
+      () => taskDefinitionVersionTable.id,
+      { onDelete: "set null" },
+    ),
     attemptNumber: integer("attempt_number").notNull(),
     state: text("state").$type<InternRunState>().notNull(),
     provider: text("provider"),
@@ -84,6 +89,9 @@ export const internRunTable = pgTable(
       table.workRecordId,
       table.createdAt,
     ),
+    index("intern_run_task_definition_version_idx").on(
+      table.taskDefinitionVersionId,
+    ),
   ],
 )
 
@@ -91,5 +99,9 @@ export const internRunRelations = relations(internRunTable, ({ one }) => ({
   workRecord: one(workRecordTable, {
     fields: [internRunTable.workRecordId],
     references: [workRecordTable.id],
+  }),
+  taskDefinitionVersion: one(taskDefinitionVersionTable, {
+    fields: [internRunTable.taskDefinitionVersionId],
+    references: [taskDefinitionVersionTable.id],
   }),
 }))

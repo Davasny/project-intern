@@ -1,5 +1,10 @@
 import { and, eq } from "drizzle-orm"
-import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
+import {
+  taskDefinitionVersionTable,
+  taskDescriptionRevisionTable,
+  taskTable,
+} from "@/features/tasks/db"
+import { createTaskDefinitionVersion } from "@/features/tasks/lib/create-task-definition-version"
 import { fanOutWorkRecordsForTask } from "@/features/work-records/lib/fan-out-work-records-for-task"
 import type { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
@@ -15,6 +20,7 @@ type PublishTaskParams = {
   task: {
     descriptionMarkdown: string
     id: string
+    model: string | null
     projectId: string
     temperature: number | null
     schemaVersion: number
@@ -47,6 +53,34 @@ export const publishTask = async ({
       descriptionMarkdown: task.descriptionMarkdown,
       revisionNumber: 1,
       taskId: task.id,
+    })
+  }
+
+  const firstDefinitionVersion = await database
+    .select({ id: taskDefinitionVersionTable.id })
+    .from(taskDefinitionVersionTable)
+    .where(
+      and(
+        eq(taskDefinitionVersionTable.taskId, task.id),
+        eq(taskDefinitionVersionTable.versionNumber, 1),
+      ),
+    )
+    .then((rows) => rows[0] ?? null)
+
+  if (!firstDefinitionVersion) {
+    await createTaskDefinitionVersion({
+      createdByUserId,
+      database,
+      task: {
+        descriptionMarkdown: task.descriptionMarkdown,
+        id: task.id,
+        model: task.model,
+        schemaVersion: task.schemaVersion,
+        sourceSchemaVersionId: task.sourceSchemaVersionId,
+        targetSchemaVersionId: task.targetSchemaVersionId,
+        temperature: task.temperature,
+        title: task.title,
+      },
     })
   }
 

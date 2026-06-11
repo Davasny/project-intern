@@ -18,6 +18,7 @@ export type InternRunMachineContext = {
   directory: string | null
   sessionReference: string | null
   startedAt: Date | null
+  taskDefinitionVersionId: string | null
   workRecordId: string
   toolCallCount: number
   tokenInput: number | null

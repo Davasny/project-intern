@@ -10,6 +10,7 @@ import { createInternRunCommand } from "@/features/intern-runs/lib/intern-run-co
 import { activeInternRunStates } from "@/features/intern-runs/schemas/intern-run-state"
 import { projectTable } from "@/features/projects/db"
 import { taskTable } from "@/features/tasks/db"
+import { getCurrentTaskDefinitionVersion } from "@/features/tasks/lib/get-current-task-definition-version"
 import { workRecordTable } from "@/features/work-records/db"
 import { getWorkRecordActor } from "@/features/work-records/lib/get-work-record-actor"
 import { db } from "@/lib/db"
@@ -166,11 +167,18 @@ export const claimAndCreateRun = async (
     }
   }
 
+  const taskDefinitionVersion = await getCurrentTaskDefinitionVersion({
+    createdByUserId: null,
+    database: db,
+    taskId: candidate.taskId,
+  })
+
   const internRunResult = await createInternRunCommand({
     attemptNumber: candidate.attemptNumber,
     model: candidate.model,
     projectDefaultModel: candidate.projectDefaultModel,
     projectDefaultTemperature: candidate.projectDefaultTemperature,
+    taskDefinitionVersionId: taskDefinitionVersion?.id ?? null,
     workRecordId: candidate.workRecordId,
     temperature: candidate.temperature,
   }).catch((error: unknown) => {

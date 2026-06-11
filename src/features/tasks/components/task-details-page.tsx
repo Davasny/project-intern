@@ -266,14 +266,14 @@ export const TaskDetailsPage = ({
           workRecords={taskQuery.data.workRecords}
           taskTitle={taskQuery.data.title}
         />
-        <TaskRevisionsSection revisions={taskQuery.data.revisions} />
+        <TaskRevisionsSection versions={taskQuery.data.definitionVersions} />
       </div>
       <Dialog onOpenChange={setIsEditOpen} open={isEditOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit task</DialogTitle>
             <DialogDescription>
-              Updating markdown creates a new description revision.
+              Updating an accepted task creates a new immutable definition version.
             </DialogDescription>
           </DialogHeader>
           <TaskForm

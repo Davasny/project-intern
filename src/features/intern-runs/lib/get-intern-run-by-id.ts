@@ -5,7 +5,7 @@ import { calculateInternRunDurationMs } from "@/features/intern-runs/lib/calcula
 import { getInternRunStatusTooltipText } from "@/features/intern-runs/lib/get-intern-run-status-tooltip-text"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
-import { taskTable } from "@/features/tasks/db"
+import { taskDefinitionVersionTable, taskTable } from "@/features/tasks/db"
 import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
@@ -63,6 +63,16 @@ export const getInternRunById = async ({
       state: internRunTable.state,
       taskActivitySummary: internRunTable.toolActivitySummary,
       taskCallCount: internRunTable.toolCallCount,
+      taskDefinitionVersionCreatedAt: taskDefinitionVersionTable.createdAt,
+      taskDefinitionVersionDescriptionMarkdown:
+        taskDefinitionVersionTable.descriptionMarkdown,
+      taskDefinitionVersionId: internRunTable.taskDefinitionVersionId,
+      taskDefinitionVersionModel: taskDefinitionVersionTable.model,
+      taskDefinitionVersionNumber: taskDefinitionVersionTable.versionNumber,
+      taskDefinitionVersionSchemaVersion:
+        taskDefinitionVersionTable.schemaVersion,
+      taskDefinitionVersionTemperature: taskDefinitionVersionTable.temperature,
+      taskDefinitionVersionTitle: taskDefinitionVersionTable.title,
       taskId: taskTable.id,
       workRecordId: internRunTable.workRecordId,
       taskTitle: taskTable.title,
@@ -77,6 +87,10 @@ export const getInternRunById = async ({
       eq(internRunTable.workRecordId, workRecordTable.id),
     )
     .innerJoin(taskTable, eq(workRecordTable.taskId, taskTable.id))
+    .leftJoin(
+      taskDefinitionVersionTable,
+      eq(internRunTable.taskDefinitionVersionId, taskDefinitionVersionTable.id),
+    )
     .innerJoin(recordTable, eq(workRecordTable.recordId, recordTable.id))
     .where(
       and(

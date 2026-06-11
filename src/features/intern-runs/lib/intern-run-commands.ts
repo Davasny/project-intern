@@ -14,6 +14,7 @@ type CreateInternRunCommandParams = {
   model: string | null
   projectDefaultModel: string
   projectDefaultTemperature: number
+  taskDefinitionVersionId: string | null
   workRecordId: string
   temperature: number | null
 }
@@ -29,6 +30,7 @@ export const createInternRunCommand = async ({
   model,
   projectDefaultModel,
   projectDefaultTemperature,
+  taskDefinitionVersionId,
   workRecordId,
   temperature,
 }: CreateInternRunCommandParams): Promise<CreateInternRunCommandResult | null> => {
@@ -71,6 +73,7 @@ export const createInternRunCommand = async ({
       selectedTemperature,
       sessionReference: null,
       startedAt: null,
+      taskDefinitionVersionId,
       workRecordId,
       tokenInput: null,
       tokenOutput: null,

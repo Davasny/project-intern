@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server"
 import { and, desc, eq } from "drizzle-orm"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
+import { createTaskDefinitionVersion } from "@/features/tasks/lib/create-task-definition-version"
 import type { TaskUpdateInput } from "@/features/tasks/schemas/task-input"
 import { db } from "@/lib/db"
 import { validateApprovedTaskModel } from "@/lib/llm/validate-approved-task-model"
@@ -38,7 +39,13 @@ export const updateTask = async ({
     .select({
       descriptionMarkdown: taskTable.descriptionMarkdown,
       id: taskTable.id,
+      model: taskTable.model,
+      schemaVersion: taskTable.schemaVersion,
+      sourceSchemaVersionId: taskTable.sourceSchemaVersionId,
       state: taskTable.state,
+      targetSchemaVersionId: taskTable.targetSchemaVersionId,
+      temperature: taskTable.temperature,
+      title: taskTable.title,
     })
     .from(taskTable)
     .where(
@@ -89,6 +96,28 @@ export const updateTask = async ({
       title: taskTable.title,
       updatedAt: taskTable.updatedAt,
     })
+
+  if (
+    existingTask.state === "accepted" &&
+    (existingTask.descriptionMarkdown !== input.descriptionMarkdown ||
+      existingTask.model !== model ||
+      existingTask.temperature !== temperature ||
+      existingTask.schemaVersion !== input.schemaVersion ||
+      existingTask.title !== input.title)
+  ) {
+    await createTaskDefinitionVersion({
+      createdByUserId: userId,
+      database: db,
+      task,
+    })
+
+    if (existingTask.descriptionMarkdown === input.descriptionMarkdown) {
+      logger.info(
+        { projectId: project.id, taskId: input.taskId, userId },
+        "Created task definition version without description revision",
+      )
+    }
+  }
 
   if (
     existingTask.state === "accepted" &&

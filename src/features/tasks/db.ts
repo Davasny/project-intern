@@ -99,13 +99,70 @@ export const taskDescriptionRevisionTable = pgTable(
   ],
 )
 
+export const taskDefinitionVersionTable = pgTable(
+  "task_definition_version",
+  {
+    id: uuid("id").default(sql`uuidv7()`).primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+    versionNumber: integer("version_number").notNull(),
+    title: text("title").notNull(),
+    descriptionMarkdown: text("description_markdown").notNull(),
+    model: text("model"),
+    temperature: numeric("temperature", {
+      mode: "number",
+      precision: 2,
+      scale: 1,
+    }),
+    schemaVersion: integer("schema_version").notNull(),
+    sourceSchemaVersionId: uuid("source_schema_version_id").references(
+      () => projectSchemaVersionTable.id,
+      { onDelete: "set null" },
+    ),
+    targetSchemaVersionId: uuid("target_schema_version_id").references(
+      () => projectSchemaVersionTable.id,
+      { onDelete: "set null" },
+    ),
+    createdByUserId: uuid("created_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    createdAt: createdAtColumn(),
+  },
+  (table) => [
+    uniqueIndex("task_definition_version_task_version_unique_idx").on(
+      table.taskId,
+      table.versionNumber,
+    ),
+    index("task_definition_version_task_created_at_idx").on(
+      table.taskId,
+      table.createdAt,
+    ),
+  ],
+)
+
 export const taskRelations = relations(taskTable, ({ one, many }) => ({
+  definitionVersions: many(taskDefinitionVersionTable),
   descriptionRevisions: many(taskDescriptionRevisionTable),
   project: one(projectTable, {
     fields: [taskTable.projectId],
     references: [projectTable.id],
   }),
 }))
+
+export const taskDefinitionVersionRelations = relations(
+  taskDefinitionVersionTable,
+  ({ one }) => ({
+    createdByUser: one(user, {
+      fields: [taskDefinitionVersionTable.createdByUserId],
+      references: [user.id],
+    }),
+    task: one(taskTable, {
+      fields: [taskDefinitionVersionTable.taskId],
+      references: [taskTable.id],
+    }),
+  }),
+)
 
 export const taskDescriptionRevisionRelations = relations(
   taskDescriptionRevisionTable,

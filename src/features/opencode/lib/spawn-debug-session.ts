@@ -21,6 +21,7 @@ import { projectTable } from "@/features/projects/db"
 import { listRecordRelationsByProjectId } from "@/features/record-edges/lib/list-record-relations-by-project-id"
 import { recordTable } from "@/features/records/db"
 import { taskTable } from "@/features/tasks/db"
+import { getCurrentTaskDefinitionVersion } from "@/features/tasks/lib/get-current-task-definition-version"
 import { workRecordTable } from "@/features/work-records/db"
 import { createWorkRecordMachineContext } from "@/features/work-records/lib/create-work-record-machine-context"
 import { getWorkRecordActor } from "@/features/work-records/lib/get-work-record-actor"
@@ -206,11 +207,18 @@ export const spawnDebugSession = async ({
     .then((rows) => rows[0]?.maxAttempt ?? 0)
 
   debugLogger.info("Creating intern run for debug session")
+  const taskDefinitionVersion = await getCurrentTaskDefinitionVersion({
+    createdByUserId: null,
+    database: db,
+    taskId,
+  })
+
   const internRunResult = await createInternRunCommand({
     attemptNumber: existingAttempts + 1,
     model: resolvedModel,
     projectDefaultModel: task.projectDefaultModel,
     projectDefaultTemperature: task.projectDefaultTemperature,
+    taskDefinitionVersionId: taskDefinitionVersion?.id ?? null,
     workRecordId,
     temperature: resolvedTemperature,
   })

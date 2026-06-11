@@ -7,8 +7,13 @@ import { listProjectInternRunUsageSummaries } from "@/features/intern-runs/lib/l
 import { projectTable } from "@/features/projects/db"
 import { ensureProjectAccess } from "@/features/projects/lib/ensure-project-access"
 import { recordTable } from "@/features/records/db"
-import { taskDescriptionRevisionTable, taskTable } from "@/features/tasks/db"
+import {
+  taskDefinitionVersionTable,
+  taskDescriptionRevisionTable,
+  taskTable,
+} from "@/features/tasks/db"
 import { getDerivedTaskSummaryState } from "@/features/tasks/lib/get-derived-task-summary-state"
+import { getTaskDefinitionVersionChanges } from "@/features/tasks/lib/get-task-definition-version-changes"
 import { workRecordTable } from "@/features/work-records/db"
 import { db } from "@/lib/db"
 
@@ -85,6 +90,33 @@ export const getTaskById = async ({
     .where(eq(taskDescriptionRevisionTable.taskId, taskId))
     .orderBy(desc(taskDescriptionRevisionTable.revisionNumber))
 
+  const definitionVersions = await db
+    .select({
+      createdAt: taskDefinitionVersionTable.createdAt,
+      createdByUserId: taskDefinitionVersionTable.createdByUserId,
+      descriptionMarkdown: taskDefinitionVersionTable.descriptionMarkdown,
+      id: taskDefinitionVersionTable.id,
+      model: taskDefinitionVersionTable.model,
+      schemaVersion: taskDefinitionVersionTable.schemaVersion,
+      sourceSchemaVersionId: taskDefinitionVersionTable.sourceSchemaVersionId,
+      targetSchemaVersionId: taskDefinitionVersionTable.targetSchemaVersionId,
+      taskId: taskDefinitionVersionTable.taskId,
+      temperature: taskDefinitionVersionTable.temperature,
+      title: taskDefinitionVersionTable.title,
+      versionNumber: taskDefinitionVersionTable.versionNumber,
+    })
+    .from(taskDefinitionVersionTable)
+    .where(eq(taskDefinitionVersionTable.taskId, taskId))
+    .orderBy(desc(taskDefinitionVersionTable.versionNumber))
+
+  const definitionVersionsAscending = [...definitionVersions].reverse()
+  const previousVersionById = new Map(
+    definitionVersionsAscending.map((version, index) => [
+      version.id,
+      definitionVersionsAscending[index - 1] ?? null,
+    ]),
+  )
+
   const workRecords = await db
     .select({
       errorCode: workRecordTable.errorCode,
@@ -135,6 +167,13 @@ export const getTaskById = async ({
         .length,
     },
     revisions,
+    definitionVersions: definitionVersions.map((version) => ({
+      ...version,
+      changes: getTaskDefinitionVersionChanges({
+        after: version,
+        before: previousVersionById.get(version.id) ?? null,
+      }),
+    })),
     summaryState: getDerivedTaskSummaryState({ states: workRecordStates }),
     usage: {
       ...(usageSummaries.taskUsageMap.get(task.id) ??
